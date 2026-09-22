@@ -373,27 +373,12 @@ Tailwind-compatible 4px baseline scale:
 
 ## 24. Application Shell
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│ TOP UTILITY BAR (Height: 56px)                                         │
-│ [Logo: TunnelTrace AI] | Active Analysis: [Session #0042] [● Live]     │ [Theme Toggle] [User]
-├───────────────┬────────────────────────────────────────┬───────────────┤
-│ LEFT NAV      │ MAIN WORKSPACE                         │ CONTEXTUAL    │
-│ (Width: 240px)│ (Fluid Width)                          │ INSPECTOR     │
-│               │                                        │ (Width: 380px)│
-│ OVERVIEW      │ [Page Title & Breadcrumb]              │               │
-│ - Cmd Center  │ ────────────────────────────────────── │ [Evidence     │
-│ - Analyze     │                                        │  Graph Path]  │
-│               │ [Primary Analytical Grid]              │               │
-│ ANALYSIS      │                                        │ [Raw Packet   │
-│ - Protocol    │                                        │  Hex View]    │
-│ - SA Explorer │                                        │               │
-│ - Traffic ML  │                                        │ [Remediation  │
-│               │                                        │  Snippet]     │
-│ SECURITY      │                                        │               │
-│ - Assessment  │                                        │ [Close (X)]   │
-└───────────────┴────────────────────────────────────────┴───────────────┘
-```
+| Shell Region | Dimensions | Core Modules & Content | Action Controls |
+| :--- | :--- | :--- | :--- |
+| **Top Utility Bar** | Height: 56px | Logo: `TunnelTrace AI`, Active Analysis: `Session #0042 [Live]` | `[Theme Toggle]`, `[User Profile]` |
+| **Left Navigation Rail** | Width: 240px | **Overview:** Cmd Center, Analyze<br/>**Analysis:** Protocol, SA Explorer, Traffic ML<br/>**Security:** Assessment, Compliance, Threat Matrix, Evidence | Section navigation links |
+| **Main Workspace** | Fluid Width | Page Title & Breadcrumb, Primary Analytical Grid / Flow Canvas | View controls, filter bar |
+| **Contextual Inspector** | Width: 380px | Evidence Graph Path, Raw Packet Hex View, Remediation Snippet | `[Close (X)]` |
 
 ---
 
@@ -437,14 +422,12 @@ The frontend follows a strict 5-layer atomic component hierarchy:
 
 ## 29. Buttons
 
-### 29.1 Button Variants
-
-```
-[SOLID PRIMARY]       --> Background: #FF3D00 | Text: #FFFFFF | Sharp 0px corners
-[OUTLINE SECONDARY]   --> Background: Transparent | Border: 1px solid #111111 | Text: #111111
-[EDITORIAL TEXT ACTION]--> Background: None | Border: None | Vermillion Underline on Hover
-[DESTRUCTIVE ACTION]  --> Background: #D32F2F | Text: #FFFFFF | Confirmation Required
-```
+| Button Style Variant | Background Specification | Border & Typography | Interaction & Constraints |
+| :--- | :--- | :--- | :--- |
+| **Solid Primary** | `#FF3D00` (Vermillion) | Text: `#FFFFFF`, Sharp 0px corners | Reserved for high-value workflow completions |
+| **Outline Secondary** | Transparent | Border: `1px solid #111111`, Text: `#111111` | Standard table actions, filters, modal dismissals |
+| **Editorial Text Action** | None | Border: None, Vermillion Underline on Hover | Inline contextual triggers, high-level navigation |
+| **Destructive Action** | `#D32F2F` | Text: `#FFFFFF` | Critical actions requiring explicit confirmation |
 
 * **Solid Primary:** Reserved for high-value workflow completions (`Start Analysis`, `Simulate Twin`, `Validate in Lab`).
 * **Outline Secondary:** Standard table actions, filters, and modal dismissals (`Export Report`, `Cancel`, `Configure Matrix`).
@@ -463,24 +446,24 @@ The frontend follows a strict 5-layer atomic component hierarchy:
 
 ## 31. Status/Evidence Components
 
-```
-[VERIFIED]                --> Border: 1px solid #2E7D32 | Text: #2E7D32 | Icon: ✓
-[INFERRED]                --> Border: 1px solid #6A1B9A | Text: #6A1B9A | Icon: ≈
-[UNKNOWN]                 --> Border: 1px solid #616161 | Text: #616161 | Icon: ?
-[MISCONFIGURATION OBSERVED]--> Border: 1px solid #D32F2F | Text: #D32F2F | Icon: ⚠
-```
+| Badge Variant | Border Specification | Text Color | State Indicator Format |
+| :--- | :--- | :--- | :--- |
+| **VERIFIED** | `1px solid #2E7D32` | `#2E7D32` | `✓ VERIFIED` (Definitive Observation) |
+| **INFERRED** | `1px solid #6A1B9A` | `#6A1B9A` | `≈ INFERRED` (Heuristic ML Inference) |
+| **UNKNOWN** | `1px solid #616161` | `#616161` | `? UNKNOWN` (Unobserved Parameter) |
+| **MISCONFIGURATION OBSERVED** | `1px solid #D32F2F` | `#D32F2F` | `⚠ MISCONFIGURATION` (Policy Violation) |
 
 ---
 
 ## 32. Severity Components
 
-```
-[CRITICAL]  --> Text: #D32F2F | Border: 1px solid #D32F2F | Indicator: ● CRITICAL
-[HIGH]      --> Text: #E65100 | Border: 1px solid #E65100 | Indicator: ▲ HIGH
-[MEDIUM]    --> Text: #F57F17 | Border: 1px solid #F57F17 | Indicator: ◆ MEDIUM
-[LOW]       --> Text: #1976D2 | Border: 1px solid #1976D2 | Indicator: ▼ LOW
-[INFO]      --> Text: #0288D1 | Border: 1px solid #0288D1 | Indicator: ℹ INFORMATIONAL
-```
+| Severity Level | Text Color | Border Specification | Badge Indicator Format |
+| :--- | :--- | :--- | :--- |
+| **CRITICAL** | `#D32F2F` | `1px solid #D32F2F` | `● CRITICAL` |
+| **HIGH** | `#E65100` | `1px solid #E65100` | `▲ HIGH` |
+| **MEDIUM** | `#F57F17` | `1px solid #F57F17` | `◆ MEDIUM` |
+| **LOW** | `#1976D2` | `1px solid #1976D2` | `▼ LOW` |
+| **INFO** | `#0288D1` | `1px solid #0288D1` | `ℹ INFORMATIONAL` |
 
 ---
 
@@ -500,13 +483,9 @@ The frontend follows a strict 5-layer atomic component hierarchy:
 
 Reusable pattern for rendering extracted wire facts:
 
-```
-┌────────────────────────────────────────────────────────┐
-│ IKE VERSION                                            │
-│ IKEv2                                      ✓ VERIFIED │
-│ Source: Packet #1 (ISAKMP Header Flags: 0x20)          │
-└────────────────────────────────────────────────────────┘
-```
+| Property | Observed Value | Evidence State | Source Citation |
+| :--- | :--- | :--- | :--- |
+| **IKE Version** | `IKEv2` | `VERIFIED` | Packet #1 (ISAKMP Header Flags: `0x20`) |
 * Label: Inter `11px` uppercase tracking `0.1em`.
 * Value: JetBrains Mono `16px` semibold.
 * State Badge: Top-right aligned evidence badge.
@@ -543,14 +522,9 @@ Used for **Security Association Explorer** and **Evidence Explorer**:
 
 ## 38. Loading/Progress
 
-```
-[ANALYSIS PROGRESS INDICATOR]
-┌────────────────────────────────────────────────────────────────────────┐
-│ PROCESSING CAPTURE: capture_20260922_0042.pcap                         │
-│ [████████████████████████████░░░░░░░░░░░░░░░░░] 65%                    │
-│ Active Stage: ML_ENCRYPTED_FLOW_INFERENCE (130 / 200 Flows Classified)  │
-└────────────────────────────────────────────────────────────────────────┘
-```
+| Ingestion Target | Overall Progress | Active Subsystem Stage | Stage Metrics |
+| :--- | :--- | :--- | :--- |
+| `capture_20260922_0042.pcap` | **65% Completed** | `ML_ENCRYPTED_FLOW_INFERENCE` | 130 / 200 Flows Classified |
 * Reflects real backend Celery progress emitted over WebSockets; zero fake timer animations.
 
 ---
@@ -780,445 +754,293 @@ Used for **Security Association Explorer** and **Evidence Explorer**:
 
 ---
 
-## 61. Wireframes
+## 61. Wireframes & Layout Specifications
 
-### 61.1 Application Shell Wireframe
+### 61.1 Application Shell Layout Specification
 
-```
-+----------------------------------------------------------------------------------------------------+
-|  TUNNELTRACE AI  |  Session: capture_0042.pcap [● LIVE]  |  NIST SP 800-77  |  [Theme]  [User]    |
-+------------------+---------------------------------------------------------------------------------+
-|  OVERVIEW        |  COMMAND CENTER / OVERVIEW                                                      |
-|  - Cmd Center    |  -----------------------------------------------------------------------------  |
-|  - Analyze       |  POSTURE SCORE      | ACTIVE TUNNELS    | WORKLOADS DETECTED  | CRITICAL RISKS    |
-|                  |  42 / 100           | 2 Active SAs      | VoIP, File Transfer | 3 Violations      |
-|  ANALYSIS        |  [● CRITICAL RISK]  | (Tunnel Mode)     | (ESP Metadata ML)   | (Action Req.)     |
-|  - Protocol      |  -------------------+-------------------+---------------------+-----------------  |
-|  - SA Explorer   |  SECURITY FINDINGS (TOP PRIORITY)                         | TRAFFIC COMPOSITION |
-|  - Traffic ML    |  ---------------------------------------------------------+-------------------- |
-|                  |  ● [CRITICAL] Deprecated 3DES Cipher (Child SA 0x4a2b)    | [Web: 15%]          |
-|  SECURITY        |  ▲ [HIGH]     Diffie-Hellman Group 2 < 2048-bit (IKE SA)  | [VoIP: 45%]         |
-|  - Assessment    |  ▲ [HIGH]     Missing Perfect Forward Secrecy on Child SA | [File Trans: 40%]   |
-|  - Compliance    |  ---------------------------------------------------------+-------------------- |
-|  - Threat Matrix |  ACTIVE RECENT ANALYSES                                                         |
-|  - Evidence      |  [ID: 0042 | capture_0042.pcap | Score: 42 | NIST: 35% | Ready]                     |
-+------------------+---------------------------------------------------------------------------------+
-```
-
-### 61.2 Command Center Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  COMMAND CENTER                                                         [Export PDF] [New Analysis]|
-+--------------------------------------------------------------------+-------------------------------+
-|  OVERALL POSTURE SCORE                                             | CRITICAL ALERT FEED           |
-|                                                                    | ----------------------------- |
-|       ###    #####                                                 | ● 3DES-CBC Negotiated         |
-|      #   #       #                                                 |   Child SA SPI: 0x4a2b3c4d    |
-|         #       #                                                  |   Standard: NIST SP 800-77    |
-|        #       #                                                   |   [Inspect Evidence ->]       |
-|       #       #                                                    |                               |
-|      #####   #####  / 100                                          | ▲ Weak DH Group 2 (1024-bit)  |
-|                                                                    |   IKE SA Init SPI: 0x91ef     |
-|  STATUS: CRITICAL DEFICIENCIES DETECTED                            |   [View Remediation ->]       |
-|  ----------------------------------------------------------------- |                               |
-|  DEDUCTION BREAKDOWN:                                              | ▲ Missing Forward Secrecy     |
-|  - Deprecated Cipher (3DES):               -30.0 pts (Finding #01) |   Child SA renegotiation      |
-|  - Insecure DH Group (Group 2):            -18.0 pts (Finding #02) |   lacks fresh KE payload      |
-|  - PFS Disabled on Child SA:               -10.0 pts (Finding #03) | ----------------------------- |
-+--------------------------------------------------------------------+ QUICK ACTIONS                 |
-|  ENCRYPTED TRAFFIC INFERENCE SUMMARY                               | [Open Configuration Twin]     |
-|  VoIP: 45% (Calibrated Conf: 88%) | File Transfer: 40% (Conf: 92%) | [Validate in Controlled Lab]  |
-+--------------------------------------------------------------------+-------------------------------+
-```
-
-### 61.3 Analyze / Ingestion Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  ANALYZE & INGESTION PORTAL                                                                        |
-+----------------------------------------------------------------------------------------------------+
-|  [ OFFLINE CAPTURE UPLOAD ]              |  [ LIVE NETWORK STREAM ANALYSIS ]                       |
-|  --------------------------------------- |  ------------------------------------------------------ |
-|  +-------------------------------------+ |  Select Monitored Network Interface:                    |
-|  |       [UPLOAD PCAP / PCAPNG]        | |  [ eth0 (192.168.1.100 - Active)                   |v]  |
-|  |                                     | |                                                         |
-|  |   Drag & Drop capture files here    | |  BPF Capture Filter:                                    |
-|  |      or click to browse local disk  | |  [ udp port 500 or udp port 4500 or ip proto 50      ]  |
-|  |                                     | |                                                         |
-|  |   Supported: .pcap, .pcapng         | |  Buffer Sliding Window: [ 60 seconds                 |v] |
-|  +-------------------------------------+ |                                                         |
-|  Selected: capture_edge_gw.pcap (48.2 MB)|  Live Stream Controls:                                  |
-|  SHA-256: e3b0c44298fc1c149afbf4c899... |  [ START LIVE SNIFFER ]   [ PAUSE ]   [ STOP & SAVE ]   |
-|                                          |                                                         |
-|  Target Security Policy Profile:         |  Active Stream Telemetry:                               |
-|  [ NIST SP 800-77 Revision 1         |v] |  Packets Captured: 14,290 | IPsec Frames: 13,840        |
-|                                          |  Active IKE SAs: 1        | Active ESP Flows: 4         |
-|  [ START COMPREHENSIVE ANALYSIS -> ]     |                                                         |
-+------------------------------------------+---------------------------------------------------------+
-```
-
-### 61.4 Analysis Progress Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  ANALYSIS IN PROGRESS: capture_edge_gw.pcap                                         [Cancel Job]   |
-+----------------------------------------------------------------------------------------------------+
-|  OVERALL PROGRESS: [████████████████████████████████████░░░░░░░░░░░░] 68%                          |
-|                                                                                                    |
-|  PIPELINE STAGE BREAKDOWN:                                                                         |
-|  [✓] 1. INGESTION & HASHING             Completed (SHA-256: e3b0c442...)                  (0.4s)  |
-|  [✓] 2. PROTOCOL FORENSICS DISSECTION   Completed (14,290 frames parsed)                  (3.2s)  |
-|  [✓] 3. SECURITY ASSOCIATION RECONSTR.  Completed (1 IKE SA, 2 Child SAs linked)          (0.8s)  |
-|  [✓] 4. BIDIRECTIONAL FLOW AGGREGATION  Completed (4 active ESP flows assembled)           (1.1s)  |
-|  [▶] 5. ENCRYPTED TRAFFIC ML INFERENCE  In Progress: Evaluating XGBoost + 1D-CNN (3/4)     (1.5s)  |
-|  [ ] 6. POLICY-AS-CODE ASSESSMENT       Pending (NIST SP 800-77 Profile queued)                    |
-|  [ ] 7. SCORING & THREAT COMPILATION    Pending                                                    |
-|  [ ] 8. EVIDENCE GRAPH COMPILATION      Pending                                                    |
-+----------------------------------------------------------------------------------------------------+
-```
-
-### 61.5 Protocol Intelligence Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  PROTOCOL INTELLIGENCE                                                      Analysis: #0042 [✓ OK] |
-+----------------------------------------------------------------------------------------------------+
-|  IKE VERSION          | OPERATIONAL MODE     | ENCRYPTION TRANSFORM | DIFFIE-HELLMAN GROUP         |
-|  IKEv1 (Main Mode)    | Tunnel Mode          | 3DES-CBC (168-bit)   | Group 2 (1024-bit MODP)      |
-|  [✓ VERIFIED]         | [✓ VERIFIED]         | [● DEPRECATED]       | [▲ WEAK KEY EXCHANGE]        |
-|  Src: Pkt #1 Flag 0x20| Src: TS Subnet Match | Src: Pkt #1 SA Payload| Src: Pkt #1 KE Payload      |
-+----------------------------------------------------------------------------------------------------+
-|  IKE NEGOTIATION LADDER DIAGRAM                                                                    |
-|  ------------------------------------------------------------------------------------------------  |
-|  #01 [10.0.0.1:500 -> 10.0.0.2:500]  ISAKMP SA_INIT (Initiator SPI: 0x91ef234a)    [Transforms]   |
-|  #02 [10.0.0.2:500 -> 10.0.0.1:500]  ISAKMP SA_INIT (Responder SPI: 0x88bc112d)    [Selected]     |
-|  #03 [10.0.0.1:500 -> 10.0.0.2:500]  ISAKMP KE + Nonce Exchange                    [DH Group 2]   |
-|  #04 [10.0.0.2:500 -> 10.0.0.1:500]  ISAKMP KE + Nonce Exchange                    [Key Ready]    |
-|  #05 [10.0.0.1:500 -> 10.0.0.2:500]  ISAKMP ID + Authentication (Encrypted)        [PSK Identity] |
-|  ------------------------------------------------------------------------------------------------  |
-|  ESP PARAMETERS SUMMARY                                                                            |
-|  Child SA #1 (Inbound SPI: 0x4a2b3c4d | Outbound SPI: 0x110293aa) | Sequence Continuity: OK (0 Rollovers)|
-+----------------------------------------------------------------------------------------------------+
-```
-
-### 61.6 SA Explorer Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  SECURITY ASSOCIATION EXPLORER                                         [Fit View] [Reset] [Export] |
-+--------------------------------------------------------------------+-------------------------------+
-|  REACT FLOW TOPOLOGY CANVAS                                        | SA CONTEXTUAL INSPECTOR       |
-|                                                                    | ----------------------------- |
-|  [Peer: 198.51.100.1]                    [Peer: 203.0.113.1]       | Selected: Child SA #01        |
-|          │                                       │                 | Inbound SPI:  0x4a2b3c4d      |
-|          ▼                                       ▼                 | Outbound SPI: 0x110293aa      |
-|  ┌───────────────────────────────────────────────────────┐         | Mode: Tunnel Mode             |
-|  │ IKE SA: 0x91ef234a / 0x88bc112d (IKEv1 Main Mode)     │         | State: ESTABLISHED            |
-|  │ Cipher: 3DES-CBC | Integrity: HMAC-SHA1 | DH: Group 2 │         |                               |
-|  └───────────────────────────┬───────────────────────────┘         | Cryptography:                 |
-|                              │                                     | - Cipher: 3DES-CBC            |
-|              ┌───────────────┴───────────────┐                     | - Integrity: HMAC-SHA1-96     |
-|              ▼                               ▼                     | - PFS: DISABLED (No KE)       |
-|  ┌───────────────────────┐       ┌───────────────────────┐         |                               |
-|  │ Child SA #01 (ESP)    │       │ Child SA #02 (ESP)    │         | Traffic Selectors:            |
-|  │ In: 0x4a2b | Out: 0x11│       │ In: 0x9921 | Out: 0x33│         | - Local:  10.100.0.0/16       |
-|  │ Mode: Tunnel | No PFS │       │ Mode: Tunnel | PFS ON │         | - Remote: 10.200.0.0/16       |
-|  └───────────────────────┘       └───────────────────────┘         | ----------------------------- |
-|                                                                    | Associated Security Findings: |
-|                                                                    | ● Deprecated 3DES (Critical)  |
-|                                                                    | ▲ Missing PFS (High)          |
-+--------------------------------------------------------------------+-------------------------------+
-```
-
-### 61.7 Traffic Intelligence Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  ENCRYPTED TRAFFIC INTELLIGENCE (Metadata-Only Inference)                   Analysis: #0042 [Live]  |
-+----------------------------------------------------------------------------------------------------+
-|  PREDICTED DOMINANT CLASS: VoIP (Voice over IP)  | AI CONFIDENCE: 88.4% (Calibrated Temperature Scaled)|
-|  Status: KNOWN TAXONOMY CLASS                     | Payload Inspection: STRICTLY ENCRYPTED (Zero Decrypt)|
-+----------------------------------------------------------------------------------------------------+
-|  FLOW CLASSIFICATION TABLE                                         | SHAP EXPLANATION (FLOW #01)   |
-|  ----------------------------------------------------------------- | ----------------------------- |
-|  FLOW ID  | SPI        | PACKETS | PREDICTED CLASS | CONFIDENCE    | Top Feature Attributions:     |
-|  #FL-001  | 0x4a2b3c4d | 4,210   | VoIP            | 88.4% [KNOWN] | [+] mean_iat < 0.02s   (+0.38)|
-|  #FL-002  | 0x4a2b3c4d | 8,920   | File Transfer   | 92.1% [KNOWN] | [+] fwd_bytes_ratio    (+0.32)|
-|  #FL-003  | 0x992144aa | 312     | Web Browsing    | 74.2% [KNOWN] | [-] pkt_len_std_dev    (-0.12)|
-|  #FL-004  | 0x992144aa | 48      | Unknown/Unseen  | 41.0% [OOD]   |                               |
-|  ----------------------------------------------------------------- | [Normalized Entropy: 0.82]    |
-|  METADATA FINGERPRINTABILITY INDEX: 78 / 100 (HIGH DISTINGUISHABILITY)                             |
-|  Side-channel vulnerability: Packet length variation reveals underlying G.711 codec frame rates.  |
-+----------------------------------------------------------------------------------------------------+
-```
-
-### 61.8 Security Assessment + Evidence Inspector Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  SECURITY ASSESSMENT & AUDIT FINDINGS                                      Profile: NIST SP 800-77 |
-+--------------------------------------------------------------------+-------------------------------+
-|  SEVERITY | FINDING TITLE & CITATION              | AFFECTED SCOPE | CONTEXTUAL EVIDENCE DRAWER    |
-|  ---------+---------------------------------------+----------------| ----------------------------- |
-|  ● CRIT   | Deprecated Triple-DES (3DES) Cipher   | Child SA 0x4a2b| Finding: Deprecated 3DES      |
-|           | NIST SP 800-77 Rev. 1 Section 4.1.1   | [✓ VERIFIED]   | Rule: IPSEC-CRYPTO-001        |
-|  ▲ HIGH   | Weak Diffie-Hellman Group 2 (1024-bit)| IKE SA 0x91ef  |                               |
-|           | NIST SP 800-77 Rev. 1 Section 4.1.2   | [✓ VERIFIED]   | Evidence Trace:               |
-|  ▲ HIGH   | Perfect Forward Secrecy (PFS) Disabled| Child SA 0x4a2b| - Capture: capture_0042.pcap  |
-|           | RFC 7296 Section 1.3                  | [✓ VERIFIED]   | - Packet: #14 (IKE_AUTH Resp) |
-|  ◆ MED    | Replay Window Size Verification Lim.  | Child SA 0x4a2b| - Offset: 0x004c - 0x004f     |
-|           | RFC 4303 Section 3.4.3                | [≈ INFERRED]   | - Raw Value: 0x0003 (3DES)    |
-|  ---------+---------------------------------------+----------------|                               |
-|  FILTER: [All Severities |v] [Verified Only |v] [NIST Profile |v]  | Standards Guidance:           |
-|                                                                    | "Triple-DES is vulnerable to  |
-|                                                                    | birthday collision attacks    |
-|                                                                    | (Sweet32) and is deprecated." |
-|                                                                    | ----------------------------- |
-|                                                                    | Synthesized strongSwan Fix:   |
-|                                                                    | esp = aes256gcm16!            |
-|                                                                    | [Open in Config Twin ->]      |
-+--------------------------------------------------------------------+-------------------------------+
-```
-
-### 61.9 Compliance Scorecard Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  REGULATORY COMPLIANCE SCORECARD                                          Framework: NIST SP 800-77|
-+----------------------------------------------------------------------------------------------------+
-|  OVERALL COMPLIANCE: 35.7% (5 PASS / 9 FAIL / 2 UNKNOWN)                  [Export Audit CSV]       |
-|  [██████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░]                                  |
-+----------------------------------------------------------------------------------------------------+
-|  CONTROL ID   | REQUIREMENT DESCRIPTION          | OBSERVED STATE       | STATUS    | EVIDENCE     |
-|  -------------+----------------------------------+----------------------+-----------+--------------|
-|  NIST-4.1.1   | Mandatory Approved Encryption    | 3DES-CBC (Deprecated)| [FAIL]    | Pkt #14 SA   |
-|  NIST-4.1.2   | Minimum Diffie-Hellman >= 2048   | DH Group 2 (1024-bit)| [FAIL]    | Pkt #01 KE   |
-|  NIST-4.1.3   | Approved Integrity Algorithms    | HMAC-SHA1-96         | [FAIL]    | Pkt #14 SA   |
-|  NIST-4.2.1   | Perfect Forward Secrecy Enforced | No Child KE Payload  | [FAIL]    | Pkt #22 SA   |
-|  NIST-4.3.1   | Replay Protection Window Active  | Monotonic Sequences  | [PASS]    | ESP Stream   |
-|  NIST-4.4.1   | Rekey Lifetime Constraints       | Capture < 30 minutes | [UNKNOWN] | Partial Trc  |
-+----------------------------------------------------------------------------------------------------+
-```
-
-### 61.10 Threat Matrix Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  ITEMIZED THREAT MATRIX                                                     Analysis: #0042        |
-+----------------------------------------------------------------------------------------------------+
-|  THREAT ID  | ATTACK SCENARIO & VECTOR         | SCOPE    | LIKELIHOOD | IMPACT | SEVERITY | STATE |
-|  -----------+----------------------------------+----------+------------+--------+----------+-------|
-|  THREAT-01  | Sweet32 64-bit Block Collision   | Child SA | Medium     | High   | [CRIT]   | [VER] |
-|             | Passive capture of 32GB decrypts | 0x4a2b   |            |        |          |       |
-|  THREAT-02  | Logjam Precomputation Attack     | IKE SA   | Low        | Crit   | [HIGH]   | [VER] |
-|             | Discrete log recovery on DH Grp 2| 0x91ef   |            |        |          |       |
-|  THREAT-03  | Retroactive Session Decryption   | Child SA | Medium     | High   | [HIGH]   | [VER] |
-|             | Master key theft decrypts past   | 0x4a2b   |            |        |          |       |
-+----------------------------------------------------------------------------------------------------+
-```
-
-### 61.11 Evidence Explorer Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  FORENSIC EVIDENCE GRAPH EXPLORER                                        [Center Graph] [Fit View] |
-+----------------------------------------------------------------------------------------------------+
-|  TRACEABILITY GRAPH (React Flow)                                                                   |
-|                                                                                                    |
-|  [Capture: capture_0042.pcap] ──► [Frame #14: IKE_AUTH Response]                                   |
-|                                              │                                                     |
-|                                              ▼                                                     |
-|                           [Field: isakmp.transform.id == 3]                                        |
-|                                              │                                                     |
-|                                              ▼                                                     |
-|                           [Child SA: 0x4a2b3c4d Transforms]                                        |
-|                                              │                                                     |
-|                                              ▼                                                     |
-|                           [Policy Rule: IPSEC-CRYPTO-001] ──► [Standard: NIST Sec 4.1.1]           |
-|                                              │                                                     |
-|                                              ▼                                                     |
-|                           [Security Finding: Critical 3DES Negotiated]                             |
-+----------------------------------------------------------------------------------------------------+
-|  RAW PACKET DISSECTION VIEWER (Frame #14 - 158 Bytes)                                              |
-|  0000  00 0c 29 4f 8e 31 00 50 56 c0 00 08 08 00 45 00   ..|O.1.PV.....E.                         |
-|  0010  00 90 a1 22 40 00 40 11 f1 a2 0a 00 00 01 0a 00   ..."@.@.........                         |
-|  0020  00 02 01 f4 01 f4 00 7c 1a 2b 91 ef 23 4a 88 bc   .......|.+..#J..                         |
-|  0030  11 2d 01 10 02 00 00 00 00 00 00 00 00 74 00 00   .-...........t..                         |
-|  0040  00 38 00 00 00 01 00 00 00 01 00 00 00 2c 01 01   .8...........,..                         |
-|  0050  00 03 [03] 00 00 0c 01 00 00 0c 80 0e 00 80 ...   ..[3DES]........                         |
-+----------------------------------------------------------------------------------------------------+
-```
-
-### 61.12 Configuration Security Twin Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  CONFIGURATION SECURITY TWIN (What-If Policy Simulation)                                           |
-+--------------------------------------------------------------------+-------------------------------+
-|  CURRENT OBSERVED CONFIGURATION                                    | PROPOSED HARDENED CONFIG      |
-|  ----------------------------------------------------------------- | ----------------------------- |
-|  conn site-to-site                                                 | conn site-to-site             |
-|      keyexchange = ikev1             # [!] Deprecated IKEv1        |     keyexchange = ikev2       |
-|      ike = 3des-sha1-modp1024!       # [!] Weak Crypto & DH Grp 2  |     ike = aes256gcm16-modp2048|
-|      esp = 3des-sha1!                # [!] 3DES Deprecated         |     esp = aes256gcm16!        |
-|      type = tunnel                                                 |     type = tunnel             |
-|                                                                    |                               |
-+--------------------------------------------------------------------+-------------------------------+
-|  SIMULATION RESULTS:                                                                               |
-|  - Posture Score Delta:  +52.0 Points (Current: 42/100 -> Projected: 94/100)                     |
-|  - Resolved Findings:    3 Critical/High Findings Cleared                                          |
-|  - Remaining Risk:       Clean Modern Configuration (NIST Compliant)                               |
-|  [ RESET EDITOR ]                           [ SIMULATE IMPACT ]    [ VALIDATE IN CONTROLLED LAB ->]|
-+----------------------------------------------------------------------------------------------------+
-```
-
-### 61.13 Remediation Verification Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  CLOSED-LOOP REMEDIATION VERIFICATION                                                              |
-+----------------------------------------------------------------------------------------------------+
-|  VERIFICATION STATUS: [ VERIFIED_RESOLVED ]                                                        |
-|  The proposed configuration was deployed to strongSwan, traffic was recaptured, and verified clean.|
-+--------------------------------------------------------------------+-------------------------------+
-|  BEFORE REMEDIATION (capture_0042.pcap)                            | AFTER REMEDIATION (verify.pcap|
-|  ----------------------------------------------------------------- | ----------------------------- |
-|  Overall Score: 42 / 100 [CRITICAL]                                | Overall Score: 94 / 100 [SEC] |
-|  - Cipher:      3DES-CBC                                           | - Cipher:      AES-256-GCM    |
-|  - Key Exchange:DH Group 2 (1024-bit)                              | - Key Exchange:DH Group 19    |
-|  - PFS Status:  DISABLED                                           | - PFS Status:  ENABLED        |
-|  - Compliance:  35.7% (NIST SP 800-77)                             | - Compliance:  100.0% (NIST)  |
-|                                                                    |                               |
-|  Unresolved Findings: 3 Critical                                   | Unresolved Findings: 0 Clean  |
-+--------------------------------------------------------------------+-------------------------------+
-```
-
-### 61.14 Reports Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  EXECUTIVE & TECHNICAL REPORT EXPORTER                                     Analysis: #0042         |
-+--------------------------------------------------------------------+-------------------------------+
-|  EXECUTIVE SUMMARY REPORT                                          | TECHNICAL FORENSIC REPORT     |
-|  ----------------------------------------------------------------- | ----------------------------- |
-|  Format: Publication-Grade PDF (A4/Letter)                         | Format: Full Engineering PDF  |
-|  Audience: CISO, Leadership, Audit Committees                      | Audience: SOC & VPN Engineers |
-|  Contents:                                                         | Contents:                     |
-|  - High-level Security Posture Score & Trend                       | - Capture SHA-256 Checksum    |
-|  - Top-3 Strategic Cybersecurity Risks                             | - IKE Exchange Ladder Diagram |
-|  - Regulatory Compliance Scorecard Summary                         | - Active Child SA & SPI Tables|
-|  - Strategic Remediation Priorities                                | - ML Classified Traffic Flows |
-|                                                                    | - Full Itemized Threat Matrix |
-|  [ PREVIEW HTML ]        [ DOWNLOAD EXECUTIVE PDF ]                | [ PREVIEW HTML ] [DOWNLOAD TECH]|
-+--------------------------------------------------------------------+-------------------------------+
-```
-
-### 61.15 AI Analyst Console Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  AI ANALYST CONSOLE (Local RAG - Grounded in Capture Evidence)             Analysis: #0042         |
-+--------------------------------------------------------------------+-------------------------------+
-|  CONVERSATIONAL THREAD                                             | GROUNDED CITATIONS & EVIDENCE |
-|  ----------------------------------------------------------------- | ----------------------------- |
-|  Analyst: Why did Child SA 0x4a2b receive a Critical rating?       | Citation #01:                 |
-|                                                                    | NIST SP 800-77 Rev. 1         |
-|  AI Analyst:                                                       | Section 4.1.1 (Algorithms)    |
-|  Child SA 0x4a2b received a [CRITICAL] severity rating due to two  | "Triple-DES is deprecated for |
-|  verified configuration weaknesses observed in Packet #14:         | government IPsec VPNs."       |
-|                                                                    |                               |
-|  1. [OBSERVED FACT] It negotiated 3DES-CBC (Transform ID: 3).      | Evidence Node:                |
-|     Triple-DES is deprecated by NIST SP 800-77 Rev. 1 due to       | Packet #14 (IKE_AUTH Resp)    |
-|     Sweet32 birthday collision attacks on 64-bit block ciphers.    | Offset: 0x004c (Transform 3)  |
-|                                                                    |                               |
-|  2. [OBSERVED FACT] PFS is DISABLED on this Child SA. Compromise   | Rule ID: IPSEC-CRYPTO-001     |
-|     of the parent IKE secret enables retroactive decryption.       | Finding ID: FIND-0042-01      |
-|                                                                    |                               |
-|  [RECOMMENDATION]: Migrate Child SA to AES-256-GCM with PFS.       | [Inspect Raw Packet #14 ->]   |
-+--------------------------------------------------------------------+-------------------------------+
-|  Ask a grounded question... (e.g. "What traffic is moving inside ESP?")                [ SEND -> ] |
-+----------------------------------------------------------------------------------------------------+
-```
-
-### 61.16 Testbed Wireframe
-
-```
-+----------------------------------------------------------------------------------------------------+
-|  AUTOMATED IPSEC TESTBED & DATASET GENERATOR                               [Provision Environment] |
-+----------------------------------------------------------------------------------------------------+
-|  STEP 1: TOPOLOGY & MODE       | STEP 2: CRYPTOGRAPHY MATRIX    | STEP 3: WORKLOAD INJECTION       |
-|  (*) Tunnel Mode               | Cipher:      [ AES-256-GCM |v] | Workload Profile:                |
-|  ( ) Transport Mode            | Key Length:  [ 256-bit     |v] | (*) VoIP (G.711 SIP/RTP Sim)     |
-|                                | Integrity:   [ AEAD (GCM)  |v] | ( ) Chat / Messaging Simulation  |
-|  IP Stack:                     | DH Group:    [ Group 19    |v] | ( ) Video Streaming (DASH/RTSP)  |
-|  (*) IPv4                      | PFS:         [ Enabled     |v] | ( ) Bulk File Transfer (iperf3)  |
-|  ( ) IPv6                      | NAT-T:       [ Enabled (4500)v]| ( ) Web Browsing (HTTP/2)        |
-+--------------------------------+--------------------------------+----------------------------------+
-|  STEP 4: WAN NETWORK IMPAIRMENTS                                                                   |
-|  Delay: [ 45 ms ] | Jitter: [ 10 ms ] | Packet Loss: [ 1.5 % ] | Rate Limit: [ 100 Mbps ]         |
-+----------------------------------------------------------------------------------------------------+
-|  [ RESET MATRIX ]                                           [ START AUTOMATED TESTBED SWEEP -> ]   |
-+----------------------------------------------------------------------------------------------------+
-```
-
-### 61.17 Mobile Analysis Overview Wireframe ($< 768\text{px}$)
-
-```
-+-----------------------------------------+
-| [=]  TUNNELTRACE AI              [User] |
-| Session: capture_0042.pcap    [● LIVE]  |
-+-----------------------------------------+
-| SECURITY POSTURE SCORE                  |
-|                                         |
-|    42 / 100      [● CRITICAL RISK]      |
-|                                         |
-| -30.0 pts: Deprecated 3DES Cipher       |
-| -18.0 pts: Weak DH Group 2 (1024-bit)   |
-| -10.0 pts: Missing Forward Secrecy      |
-+-----------------------------------------+
-| ENCRYPTED TRAFFIC INFERENCE             |
-| Dominant: VoIP (88% Calibrated Conf)    |
-| Volume:   4,210 packets (ESP proto 50)  |
-+-----------------------------------------+
-| CRITICAL FINDINGS (3 ACTION REQ.)       |
-| --------------------------------------- |
-| ● [CRIT] Deprecated 3DES Cipher         |
-|   Child SA: 0x4a2b | NIST Sec 4.1.1     |
-|   [Inspect Proof >]                     |
-|                                         |
-| ▲ [HIGH] Diffie-Hellman Group 2         |
-|   IKE SA: 0x91ef   | NIST Sec 4.1.2     |
-|   [Inspect Proof >]                     |
-+-----------------------------------------+
-| QUICK ACTIONS                           |
-| [ Export Executive PDF ]                |
-| [ Open AI Analyst Console ]             |
-+-----------------------------------------+
-```
-
-### 61.18 Tablet Analysis View Wireframe ($768\text{px} - 1279\text{px}$)
-
-```
-+---------------------------------------------------------------------------------------+
-| [=]  TUNNELTRACE AI     | Active Analysis: capture_0042.pcap          | [Theme] [User]|
-+-------------------------+-------------------------------------------------------------+
-| POSTURE SCORE           | CRITICAL FINDINGS TABLE                                     |
-| 42 / 100 [CRITICAL]     | ----------------------------------------------------------- |
-|                         | ● [CRIT] Deprecated 3DES Cipher (Child SA 0x4a2b)  [View >] |
-| ACTIVE ENCRYPTED TRAF.  | ▲ [HIGH] Weak DH Group 2 (IKE SA 0x91ef)           [View >] |
-| VoIP: 45% (Conf: 88%)   | ▲ [HIGH] Missing Forward Secrecy on Child SA       [View >] |
-| File: 40% (Conf: 92%)   | ----------------------------------------------------------- |
-|                         | COMPLIANCE SCORECARD: 35.7% (NIST SP 800-77)                |
-+-------------------------+-------------------------------------------------------------+
-| IKE / ESP DISSECTION SUMMARY                                                          |
-| IKEv1 Main Mode | Tunnel Mode | 3DES-CBC | HMAC-SHA1 | DH Group 2 | SPI: 0x4a2b3c4d  |
-+---------------------------------------------------------------------------------------+
-| [ EXPORT REPORTS ]     [ OPEN CONFIG TWIN ]     [ OPEN AI ANALYST CONSOLE ]           |
-+---------------------------------------------------------------------------------------+
-```
+| Layout Region | Sub-Section / Panel | Displayed Attributes & Data Values | Action Triggers |
+| :--- | :--- | :--- | :--- |
+| **Header Bar** | Navigation & Status | `TUNNELTRACE AI` | Active Session: `capture_0042.pcap [LIVE]` | Standard: `NIST SP 800-77` | `[Theme Toggle]`, `[User Profile]` |
+| **Left Navigation Rail** | Module Selector | **Overview:** Cmd Center, Analyze<br/>**Analysis:** Protocol, SA Explorer, Traffic ML<br/>**Security:** Assessment, Compliance, Threat Matrix, Evidence | Navigation routing |
+| **Workspace Top Grid** | Posture Score Card | **Score: 42 / 100** `[CRITICAL RISK]` | View score breakdown |
+| **Workspace Top Grid** | Active Tunnels Card | **2 Active SAs** (Tunnel Mode) | Open SA Explorer |
+| **Workspace Top Grid** | Workloads Detected Card | **VoIP, File Transfer** (ESP Metadata ML) | Open Traffic ML |
+| **Workspace Top Grid** | Critical Risks Card | **3 Violations** (Action Required) | Open Security Findings |
+| **Workspace Middle Panel**| Security Findings Feed | - `[CRITICAL]` Deprecated 3DES Cipher (Child SA `0x4a2b`)<br/>- `[HIGH]` Diffie-Hellman Group 2 < 2048-bit (IKE SA)<br/>- `[HIGH]` Missing Perfect Forward Secrecy on Child SA | Drill-down inspector |
+| **Workspace Middle Panel**| Traffic Composition | Web: 15% | VoIP: 45% | File Transfer: 40% | View classification breakdown |
+| **Workspace Bottom Strip**| Recent Analyses | ID: 0042 | `capture_0042.pcap` | Score: 42 | NIST: 35% | Status: Ready | `[Open Analysis]` |
 
 ---
+
+### 61.2 Command Center Layout Specification
+
+| Console Panel | Displayed Metric / Component | Evaluated Value & Context | Action Trigger |
+| :--- | :--- | :--- | :--- |
+| **Header** | View Controls | Command Center Dashboard | `[Export PDF]`, `[New Analysis]` |
+| **Overall Posture Score** | Primary Gauge | **Score: 42 / 100** `[CRITICAL DEFICIENCIES DETECTED]` | Full audit history |
+| **Deduction Breakdown** | Itemized Point Deductions | - Deprecated Cipher (3DES): **-30.0 pts** (Finding #01)<br/>- Insecure DH Group (Group 2): **-18.0 pts** (Finding #02)<br/>- PFS Disabled on Child SA: **-10.0 pts** (Finding #03) | View finding trace |
+| **Critical Alert Feed** | Real-Time Alerts | - `[CRIT]` 3DES-CBC Negotiated (Child SA SPI: `0x4a2b3c4d`, NIST SP 800-77)<br/>- `[HIGH]` Weak DH Group 2 (1024-bit) (IKE SA Init SPI: `0x91ef`)<br/>- `[HIGH]` Missing Forward Secrecy (Child SA renegotiation lacks KE) | `[Inspect Evidence ->]`, `[View Remediation ->]` |
+| **Traffic Inference Summary**| Encrypted Flow Classes | VoIP: 45% (Calibrated Conf: 88%) | File Transfer: 40% (Conf: 92%) | View ML flow attribution |
+| **Quick Actions Toolbar**| Operational Shortcuts | Configuration simulation and lab testbed execution | `[Open Configuration Twin]`, `[Validate in Controlled Lab]` |
+
+---
+
+### 61.3 Analyze / Ingestion Layout Specification
+
+| Ingestion Mode | Input Element | Configuration Parameters & Fields | Action Button |
+| :--- | :--- | :--- | :--- |
+| **Offline Capture Upload** | File Dropzone | Drag & drop capture files (`.pcap`, `.pcapng`)<br/>Selected: `capture_edge_gw.pcap` (48.2 MB)<br/>SHA-256: `e3b0c44298fc1c149afbf4c899...` | Browse local storage |
+| **Offline Capture Upload** | Policy Target | Compliance Profile: `NIST SP 800-77 Revision 1` | `[START COMPREHENSIVE ANALYSIS ->]` |
+| **Live Stream Analysis** | Interface Selector | Interface: `eth0 (192.168.1.100 - Active)` | Select network adapter |
+| **Live Stream Analysis** | BPF Filter | Filter: `udp port 500 or udp port 4500 or ip proto 50` | Apply BPF filter |
+| **Live Stream Analysis** | Sliding Window | Buffer Window: `60 seconds` | Set retention window |
+| **Live Stream Analysis** | Live Telemetry | Packets: 14,290 | IPsec Frames: 13,840 | Active IKE SAs: 1 | Active ESP Flows: 4 | `[START LIVE SNIFFER]`, `[PAUSE]`, `[STOP & SAVE]` |
+
+---
+
+### 61.4 Analysis Progress Layout Specification
+
+| Pipeline Stage | Subsystem Task | Runtime Status & Metrics | Elapsed Duration |
+| :--- | :--- | :--- | :--- |
+| **Overall Progress** | Full Analysis Pipeline | **68% Completed** | Target: `capture_edge_gw.pcap` |
+| **Stage 1** | Ingestion & Hashing | `COMPLETED` (SHA-256: `e3b0c442...`) | 0.4s |
+| **Stage 2** | Protocol Forensics Dissection | `COMPLETED` (14,290 frames parsed) | 3.2s |
+| **Stage 3** | Security Association Reconstruction | `COMPLETED` (1 IKE SA, 2 Child SAs linked) | 0.8s |
+| **Stage 4** | Bidirectional Flow Aggregation | `COMPLETED` (4 active ESP flows assembled) | 1.1s |
+| **Stage 5** | Encrypted Traffic ML Inference | `IN_PROGRESS` (Evaluating XGBoost + 1D-CNN: 3/4 flows) | 1.5s |
+| **Stage 6** | Policy-as-Code Assessment | `PENDING` (NIST SP 800-77 Profile queued) | Pending |
+| **Stage 7** | Scoring & Threat Compilation | `PENDING` | Pending |
+| **Stage 8** | Evidence Graph Compilation | `PENDING` | Pending |
+
+---
+
+### 61.5 Protocol Intelligence Layout Specification
+
+| Protocol Dimension | Observed Parameter | Verification State | Source Citation / Frame Reference |
+| :--- | :--- | :--- | :--- |
+| **IKE Version** | IKEv1 (Main Mode) | `VERIFIED` | Packet #1 (ISAKMP Header Flags: `0x20`) |
+| **Operational Mode** | Tunnel Mode | `VERIFIED` | Traffic Selector Subnet Divergence |
+| **Encryption Transform** | 3DES-CBC (168-bit) | `DEPRECATED` | Packet #1 (SA Proposal Transform Payload) |
+| **Diffie-Hellman Group** | Group 2 (1024-bit MODP) | `WEAK KEY EXCHANGE` | Packet #1 (KE Payload Group ID) |
+
+#### IKE Negotiation Ladder Sequence
+
+| Frame | Endpoint Direction | Exchange Type | Dissected Payloads & Key Parameters |
+| :--- | :--- | :--- | :--- |
+| **#01** | `10.0.0.1:500 -> 10.0.0.2:500` | ISAKMP SA_INIT | Initiator SPI: `0x91ef234a`, Transform Proposals (3DES, SHA-1, DH2) |
+| **#02** | `10.0.0.2:500 -> 10.0.0.1:500` | ISAKMP SA_INIT | Responder SPI: `0x88bc112d`, Selected Transform: 3DES-CBC / DH2 |
+| **#03** | `10.0.0.1:500 -> 10.0.0.2:500` | ISAKMP KE + Nonce | Diffie-Hellman Key Exchange (MODP-1024) |
+| **#04** | `10.0.0.2:500 -> 10.0.0.1:500` | ISAKMP KE + Nonce | Responder Key Exchange + Nonce Completion |
+| **#05** | `10.0.0.1:500 -> 10.0.0.2:500` | ISAKMP ID + Auth | Encrypted Identity Payload (Pre-Shared Key Authentication) |
+
+#### ESP Tunnel Parameter Summary
+- **Child SA #1:** Inbound SPI: `0x4a2b3c4d` | Outbound SPI: `0x110293aa` | Sequence Number Continuity: Monotonic (0 Rollovers)
+
+---
+
+### 61.6 SA Explorer Layout Specification
+
+```mermaid
+graph TD
+    PEER_A["Peer: 198.51.100.1"] --- IKE_SA["IKE SA: 0x91ef234a / 0x88bc112d<br/>(IKEv1 Main Mode | Cipher: 3DES-CBC | Integrity: HMAC-SHA1 | DH: Group 2)"]
+    PEER_B["Peer: 203.0.113.1"] --- IKE_SA
+
+    CHILD_1["Child SA #01 (ESP)<br/>Inbound: 0x4a2b | Outbound: 0x1102<br/>Mode: Tunnel | PFS: DISABLED"]
+    CHILD_2["Child SA #02 (ESP)<br/>Inbound: 0x9921 | Outbound: 0x3314<br/>Mode: Tunnel | PFS: ENABLED"]
+
+    IKE_SA --> CHILD_1
+    IKE_SA --> CHILD_2
+```
+
+| Contextual Inspector Property | Selected SA Details (Child SA #01) |
+| :--- | :--- |
+| **SPI Identifiers** | Inbound SPI: `0x4a2b3c4d` | Outbound SPI: `0x110293aa` |
+| **Operational State** | Mode: `Tunnel Mode` | Lifecycle State: `ESTABLISHED` |
+| **Cryptographic Posture** | Cipher: `3DES-CBC` | Integrity: `HMAC-SHA1-96` | PFS: `DISABLED (No KE Payload)` |
+| **Traffic Selectors** | Local Subnet: `10.100.0.0/16` | Remote Subnet: `10.200.0.0/16` |
+| **Associated Findings** | `[CRITICAL]` Deprecated 3DES Cipher | `[HIGH]` Missing Forward Secrecy |
+
+---
+
+### 61.7 Traffic Intelligence Layout Specification
+
+| Flow Identifier | Encapsulated SPI | Packet Count | Inferred Traffic Class | Calibrated Confidence | Taxonomy Classification |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **#FL-001** | `0x4a2b3c4d` | 4,210 pkts | **VoIP (Voice over IP)** | 88.4% | `KNOWN TAXONOMY` |
+| **#FL-002** | `0x4a2b3c4d` | 8,920 pkts | **File Transfer (Bulk)** | 92.1% | `KNOWN TAXONOMY` |
+| **#FL-003** | `0x992144aa` | 312 pkts | **Web Browsing (HTTPS)** | 74.2% | `KNOWN TAXONOMY` |
+| **#FL-004** | `0x992144aa` | 48 pkts | **Unknown / Unseen Protocol** | 41.0% | `OUT-OF-DISTRIBUTION (OOD)` |
+
+#### Top Contributing SHAP Features (Flow #FL-001)
+| Feature Name | Observed Value | Attribution Weight | Decision Direction |
+| :--- | :--- | :--- | :--- |
+| `mean_iat` | < 0.02s (20ms cadence) | `+0.38` | Strong push toward VoIP class |
+| `fwd_bytes_ratio` | Symmetric bidirectional ratio | `+0.32` | Consistent with interactive voice |
+| `pkt_len_std_dev` | Low packet length variance | `-0.12` | Negative correlation with bulk transfer |
+
+- **Metadata Fingerprintability Index:** **78 / 100** (High Distinguishability). Side-channel packet length and timing variance exposes G.711 voice codec packetization without decrypting ESP payloads.
+
+---
+
+### 61.8 Security Assessment & Evidence Inspector Layout Specification
+
+| Severity | Finding Title & Standard Citation | Affected SA / Entity | Evidence State | Remediation Action |
+| :--- | :--- | :--- | :--- | :--- |
+| **CRITICAL** | Deprecated Triple-DES (3DES) Cipher<br/>*NIST SP 800-77 Rev. 1 Section 4.1.1* | Child SA `0x4a2b3c4d` | `VERIFIED` | Configure `esp = aes256gcm16!` in strongSwan |
+| **HIGH** | Weak Diffie-Hellman Group 2 (1024-bit)<br/>*NIST SP 800-77 Rev. 1 Section 4.1.2* | IKE SA `0x91ef234a` | `VERIFIED` | Upgrade IKE group to Group 14 (MODP-2048) or Group 19 |
+| **HIGH** | Perfect Forward Secrecy (PFS) Disabled<br/>*RFC 7296 Section 1.3* | Child SA `0x4a2b3c4d` | `VERIFIED` | Mandate fresh DH exchange during Child SA rekeying |
+| **MEDIUM** | Replay Window Size Verification Limited<br/>*RFC 4303 Section 3.4.3* | Child SA `0x4a2b3c4d` | `INFERRED` | Verify receiver kernel anti-replay configuration |
+
+#### Contextual Evidence Trace (Finding: Deprecated 3DES)
+- **Capture File:** `capture_0042.pcap`
+- **Frame Number:** Packet #14 (`IKE_AUTH` Response)
+- **Byte Offsets:** `0x004c - 0x004f` (Transform Payload)
+- **Raw Hex Byte Value:** `0x0003` (`ENCR_3DES`)
+- **Policy Rule ID:** `IPSEC-CRYPTO-001`
+- **Standards Note:** *"Triple-DES is vulnerable to Sweet32 birthday collision attacks on 64-bit block ciphers and is disallowed for federal use."*
+
+---
+
+### 61.9 Compliance Scorecard Layout Specification
+
+| Control ID | Requirement Description | Observed State | Compliance Status | Evidence Reference |
+| :--- | :--- | :--- | :--- | :--- |
+| **NIST-4.1.1** | Mandatory Approved Encryption | 3DES-CBC (Deprecated) | `FAIL` | Packet #14 SA Payload |
+| **NIST-4.1.2** | Minimum Diffie-Hellman >= 2048 | DH Group 2 (1024-bit MODP) | `FAIL` | Packet #01 KE Payload |
+| **NIST-4.1.3** | Approved Integrity Algorithms | HMAC-SHA1-96 | `FAIL` | Packet #14 SA Payload |
+| **NIST-4.2.1** | Perfect Forward Secrecy Enforced | No Child KE Payload Present | `FAIL` | Packet #22 SA Payload |
+| **NIST-4.3.1** | Replay Protection Window Active | Monotonic Sequence Numbers | `PASS` | ESP Packet Sequence Stream |
+| **NIST-4.4.1** | Rekey Lifetime Constraints | Capture Duration < 30 Minutes | `UNKNOWN` | Partial Trace / Evidentiary Gap |
+
+- **Overall Compliance:** **35.7%** (5 PASS / 9 FAIL / 2 UNKNOWN)
+
+---
+
+### 61.10 Itemized Threat Matrix Layout Specification
+
+| Threat ID | Attack Scenario & Threat Vector | Scope | Likelihood | Impact | Severity | Evidence State |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **THREAT-01** | **Sweet32 64-bit Block Collision:** Passive capture of 32GB ciphertext enables plaintext recovery. | Child SA `0x4a2b` | Medium | High | `CRITICAL` | `VERIFIED` |
+| **THREAT-02** | **Logjam Precomputation Attack:** Discrete logarithm recovery on 1024-bit MODP DH Group 2. | IKE SA `0x91ef` | Low | Critical | `HIGH` | `VERIFIED` |
+| **THREAT-03** | **Retroactive Session Decryption:** Compromise of long-term secret enables decryption of past non-PFS Child SAs. | Child SA `0x4a2b` | Medium | High | `HIGH` | `VERIFIED` |
+
+---
+
+### 61.11 Evidence Explorer Layout Specification
+
+```mermaid
+graph TD
+    CAPTURE["Capture: capture_0042.pcap"] --> FRAME["Frame #14: IKE_AUTH Response"]
+    FRAME --> FIELD["Dissected Field: isakmp.transform.id == 3"]
+    FIELD --> CHILD["Child SA: 0x4a2b3c4d Transforms"]
+    CHILD --> POLICY["Policy Rule: IPSEC-CRYPTO-001"]
+    POLICY --> STD["Standard Citation: NIST SP 800-77 Sec 4.1.1"]
+    STD --> FINDING["Security Finding: Critical 3DES Negotiated"]
+```
+
+#### Raw Packet Dissection Viewer (Frame #14 — 158 Bytes)
+| Offset | Hexadecimal Byte Stream | ASCII Representation | Decoded Protocol Meaning |
+| :--- | :--- | :--- | :--- |
+| `0000` | `00 0c 29 4f 8e 31 00 50 56 c0 00 08 08 00 45 00` | `..\|O.1.PV.....E.` | Ethernet II & IPv4 Header |
+| `0010` | `00 90 a1 22 40 00 40 11 f1 a2 0a 00 00 01 0a 00` | `..."@.@.........` | IPv4 Source: `10.0.0.1`, Dest: `10.0.0.2` |
+| `0020` | `00 02 01 f4 01 f4 00 7c 1a 2b 91 ef 23 4a 88 bc` | `.......\|.+..#J..` | UDP Port 500 (IKE), Initiator SPI |
+| `0030` | `11 2d 01 10 02 00 00 00 00 00 00 00 00 74 00 00` | `.-...........t..` | Responder SPI & ISAKMP Flags |
+| `0040` | `00 38 00 00 00 01 00 00 00 01 00 00 00 2c 01 01` | `.8...........,..` | Security Association Proposal Payload |
+| `0050` | `00 03 03 00 00 0c 01 00 00 0c 80 0e 00 80 ...` | `..[3DES]........` | **Transform ID 3 (ENCR_3DES) Highlighted** |
+
+---
+
+### 61.12 Configuration Security Twin Layout Specification
+
+| Configuration Directive | Current Observed Configuration | Proposed Hardened Configuration | Hardening Rationale |
+| :--- | :--- | :--- | :--- |
+| `keyexchange` | `ikev1` | `ikev2` | Eliminates legacy IKEv1 identity exposure |
+| `ike` | `3des-sha1-modp1024!` | `aes256gcm16-modp2048!` | Upgrades to modern AEAD and 2048-bit DH Group 14 |
+| `esp` | `3des-sha1!` | `aes256gcm16!` | Eliminates Sweet32 block collision vulnerability |
+| `type` | `tunnel` | `tunnel` | Preserved tunnel topology |
+
+#### Simulation Results & Controls
+- **Posture Score Delta:** **+52.0 Points** (Current: 42/100 -> Projected: 94/100)
+- **Resolved Findings:** 3 Critical/High Findings Cleared
+- **Remaining Risk:** Clean Modern Configuration (NIST Compliant)
+- **Action Controls:** `[RESET EDITOR]`, `[SIMULATE IMPACT]`, `[VALIDATE IN CONTROLLED LAB ->]`
+
+---
+
+### 61.13 Remediation Verification Layout Specification
+
+| Assessment Metric | Pre-Remediation State (`capture_0042.pcap`) | Post-Remediation State (`verify_0043.pcap`) | Verification Outcome |
+| :--- | :--- | :--- | :--- |
+| **Verification Status** | Pre-Flight Baseline | **`VERIFIED_RESOLVED`** | Hardened configuration proven on wire |
+| **Overall Security Score**| **42 / 100** `[CRITICAL]` | **94 / 100** `[SECURE]` | **+52 Point Uplift Confirmed** |
+| **Encryption Cipher** | `3DES-CBC` | `AES-256-GCM` | Deprecated cipher completely eliminated |
+| **Key Exchange Group** | DH Group 2 (1024-bit MODP) | DH Group 19 (256-bit ECP) | Complies with NIST Table 3 |
+| **Forward Secrecy (PFS)** | `DISABLED` | `ENABLED` | Fresh KE observed in `CREATE_CHILD_SA` |
+| **NIST SP 800-77 Score** | 35.7% | 100.0% | Full regulatory compliance |
+| **Unresolved Findings** | 3 Critical / High Findings | **0 Clean** | All vulnerabilities mitigated |
+
+---
+
+### 61.14 Reports Exporter Layout Specification
+
+| Report Tier | Target Audience | Primary Contents | Available Export Formats | Action Buttons |
+| :--- | :--- | :--- | :--- | :--- |
+| **Executive Summary Report** | CISO, Leadership, Audit Committees | - High-level Security Posture Score & Trend<br/>- Top Strategic Cybersecurity Risks<br/>- Regulatory Compliance Scorecard Summary<br/>- Strategic Remediation Priorities | Publication-Grade PDF (A4/Letter) | `[PREVIEW HTML]`, `[DOWNLOAD EXECUTIVE PDF]` |
+| **Technical Forensic Report** | SOC Analysts, Network & VPN Engineers | - Capture SHA-256 Cryptographic Checksum<br/>- Full IKE Exchange Ladder Timeline<br/>- Active Child SA & SPI Pairing Tables<br/>- ML Classified Encrypted Traffic Flows<br/>- Full Itemized Threat Matrix & Byte Offsets | Full Engineering PDF & JSON Data Dump | `[PREVIEW HTML]`, `[DOWNLOAD TECHNICAL PDF]` |
+
+---
+
+### 61.15 AI Analyst Console Layout Specification
+
+| Conversation Role | Message Content & Synthesized Explanation | Evidence Citations & Grounding | Action Controls |
+| :--- | :--- | :--- | :--- |
+| **Analyst Prompt** | *"Why did Child SA 0x4a2b receive a Critical rating?"* | Query context: Session #0042 | Submits prompt |
+| **AI Analyst Response**| Child SA `0x4a2b` received a **`[CRITICAL]`** severity rating due to two verified configuration weaknesses observed in Packet #14:<br/><br/>1. **`[OBSERVED FACT]`** It negotiated 3DES-CBC (Transform ID: 3). Triple-DES is deprecated by NIST SP 800-77 Rev. 1 due to Sweet32 birthday collision attacks on 64-bit block ciphers.<br/>2. **`[OBSERVED FACT]`** PFS is DISABLED on this Child SA. Compromise of the parent IKE secret enables retroactive decryption.<br/><br/>**Recommendation:** Migrate Child SA to `AES-256-GCM` with PFS enabled. | **Citation #01:** NIST SP 800-77 Rev. 1 Section 4.1.1<br/>*"Triple-DES is deprecated for government IPsec VPNs."*<br/><br/>**Evidence Node:** Packet #14 (`IKE_AUTH` Response), Offset `0x004c`<br/><br/>**Rule ID:** `IPSEC-CRYPTO-001`<br/>**Finding ID:** `FIND-0042-01` | `[Inspect Raw Packet #14 ->]`, `[Insert Patch into Config Twin]` |
+
+---
+
+### 61.16 Testbed & Dataset Generator Layout Specification
+
+| Configuration Step | Subsystem Parameter | Available Configuration Options | Current Selection |
+| :--- | :--- | :--- | :--- |
+| **Step 1: Topology & Mode** | Encapsulation Mode | Tunnel Mode / Transport Mode | `Tunnel Mode` |
+| **Step 1: Topology & Mode** | IP Stack | IPv4 / IPv6 | `IPv4` |
+| **Step 2: Cryptography** | Cipher & Key Length | AES-128-CBC, AES-256-CBC, AES-128-GCM, AES-256-GCM, 3DES | `AES-256-GCM (256-bit)` |
+| **Step 2: Cryptography** | Integrity Algorithm | AEAD (Implicit), HMAC-SHA256, HMAC-SHA384, HMAC-SHA1 | `AEAD (Built-in)` |
+| **Step 2: Cryptography** | Diffie-Hellman Group | Group 14 (MODP-2048), Group 19 (ECP-256), Group 20, Group 2 | `Group 19 (ECP-256)` |
+| **Step 2: Cryptography** | PFS & NAT-T | PFS: Enabled/Disabled | NAT-T: UDP/4500 Enabled/Disabled | `PFS: Enabled` \| `NAT-T: Enabled` |
+| **Step 3: Workload Injection**| Synthetic Traffic Profile | VoIP (G.711 RTP), Video (DASH), File Transfer (iperf3), Web (HTTP/2) | `VoIP (G.711 SIP/RTP Sim)` |
+| **Step 4: WAN Impairments** | Network Emulation (tc/netem) | Latency: 45ms | Jitter: 10ms | Packet Loss: 1.5% | Rate Limit: 100 Mbps | Applied to `veth_wan` |
+| **Execution Controls** | Sweep Execution | Reset matrix or launch multi-profile dataset sweep | `[RESET MATRIX]`, `[START AUTOMATED TESTBED SWEEP ->]` |
+
+---
+
+### 61.17 Mobile Triage Layout Specification (< 768px)
+
+| Mobile Card Component | Displayed Analytical Data | Action Trigger |
+| :--- | :--- | :--- |
+| **Mobile Header Bar** | `[=] TUNNELTRACE AI` | Active Session: `capture_0042.pcap [LIVE]` | User Profile |
+| **Security Posture Score Card**| **Score: 42 / 100** `[CRITICAL RISK]`<br/>- -30.0 pts: Deprecated 3DES Cipher<br/>- -18.0 pts: Weak DH Group 2 (1024-bit)<br/>- -10.0 pts: Missing Forward Secrecy | Expand breakdown |
+| **Encrypted Traffic Inference Card**| **Dominant Class: VoIP** (88% Calibrated Confidence)<br/>Volume: 4,210 packets (ESP Protocol 50) | Open Traffic ML |
+| **Critical Findings Card** | - `[CRIT]` Deprecated 3DES Cipher (Child SA `0x4a2b`, NIST Sec 4.1.1)<br/>- `[HIGH]` Diffie-Hellman Group 2 (IKE SA `0x91ef`, NIST Sec 4.1.2) | `[Inspect Proof >]` |
+| **Quick Actions Toolbar** | Export reports and chat with AI assistant | `[Export Executive PDF]`, `[Open AI Analyst Console]` |
+
+---
+
+### 61.18 Tablet Analysis View Layout Specification (768px - 1279px)
+
+| View Area | Component / Panel | Layout Details & Displayed Data | Interactive Controls |
+| :--- | :--- | :--- | :--- |
+| **Header Bar** | Navigation & Session Context | `[=] TUNNELTRACE AI` | Active Analysis: `capture_0042.pcap` | `[Theme Toggle]`, `[User Profile]` |
+| **Primary Panel (Left)** | Posture Score | **Score: 42 / 100** `[CRITICAL]` | View score breakdown |
+| **Primary Panel (Left)** | Encrypted Traffic Profile | VoIP: 45% (Conf: 88%) | File Transfer: 40% (Conf: 92%) | View ML feature attribution |
+| **Primary Panel (Right)** | Critical Findings Table | - `[CRIT]` Deprecated 3DES Cipher (Child SA `0x4a2b`)<br/>- `[HIGH]` Weak DH Group 2 (IKE SA `0x91ef`)<br/>- `[HIGH]` Missing Forward Secrecy on Child SA | `[View >]` on each finding |
+| **Primary Panel (Right)** | Compliance Scorecard | **35.7%** compliance against NIST SP 800-77 Rev. 1 | View policy matrix |
+| **Summary Strip** | IKE / ESP Dissection Summary | `IKEv1 Main Mode` | `Tunnel Mode` | `3DES-CBC` | `HMAC-SHA1` | `DH Group 2` | `SPI: 0x4a2b3c4d` | Inspect raw packet frame |
+| **Action Toolbar** | Quick Operations | Export & remediation workflows | `[EXPORT REPORTS]`, `[OPEN CONFIG TWIN]`, `[OPEN AI ANALYST CONSOLE]` |
+
+---
+
 
 ## 62. Copywriting/Microcopy
 

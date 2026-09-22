@@ -228,40 +228,41 @@ flowchart TD
 
 The data transformation pipeline formally traces data structures from binary packets to executive insights:
 
-```
-[Raw Binary Capture (PCAP/PCAPNG)]
-        │
-        ▼ (TShark Dissection & Normalization)
-[Normalized Protocol Observations (JSON Stream)]
-        │
-        ├──► (IKE Transform & Exchange Parsing) ────► [IKE Session State]
-        │                                                     │
-        │                                                     ▼
-        ├──► (ESP Header Parsing & SPI Demux) ──────► [Child Security Associations]
-        │                                                     │
-        ▼                                                     ▼
-[Bidirectional ESP Flows] ◄────────────────────── [Stateful SA Graph]
-        │
-        ├──► (Tabular Feature Extraction) ────────► [Statistical Feature Vector (1D)] ──► XGBoost
-        │                                                                                     │
-        └──► (Temporal Sequence Extraction) ──────► [Packet Sequence Tensor (3xN)]   ──► 1D-CNN
-                                                                                              │
-                                                                                              ▼
-                                                                                    [Fused Probabilities]
-                                                                                              │
-                                                                                              ▼
-                                                                                    [Calibrated Prediction & OOD]
-                                                                                              │
-[Stateful SA Graph] ──► (Policy-as-Code Evaluation) ──► [Security Findings]                 │
-                                                                 │                            ▼
-                                                                 ├──► [0-100 Score] ◄── [Metadata Exposure]
-                                                                 │
-                                                                 ├──► [Threat Matrix]
-                                                                 │
-                                                                 └──► [Forensic Evidence Graph]
-                                                                              │
-                                                                              ▼
-                                                              [Executive & Technical Reports]
+```mermaid
+graph TD
+    RAW["Raw Binary Capture (PCAP/PCAPNG)"] --> NORM["Normalized Protocol Observations (JSON Stream)"]
+    
+    NORM -->|IKE Transform & Exchange Parsing| IKE_ST["IKE Session State"]
+    NORM -->|ESP Header Parsing & SPI Demux| CHILD_SA["Child Security Associations"]
+    
+    IKE_ST --> SA_GRAPH["Stateful SA Graph"]
+    CHILD_SA --> SA_GRAPH
+    
+    NORM --> ESP_FLOWS["Bidirectional ESP Flows"]
+    SA_GRAPH --> ESP_FLOWS
+    
+    ESP_FLOWS -->|Tabular Feature Extraction| TAB_VEC["Statistical Feature Vector (1D)"]
+    ESP_FLOWS -->|Temporal Sequence Extraction| SEQ_TENS["Packet Sequence Tensor (3xN)"]
+    
+    TAB_VEC --> XGB["Model A: XGBoost Classifier"]
+    SEQ_TENS --> CNN["Model B: 1D-CNN Sequence Model"]
+    
+    XGB --> FUSED["Fused Softmax Probabilities"]
+    CNN --> FUSED
+    
+    FUSED --> CALIB["Calibrated Prediction & OOD Gate"]
+    
+    SA_GRAPH -->|Policy-as-Code Evaluation| SEC_FIND["Security Findings"]
+    
+    SEC_FIND --> SCORE["0-100 Security Posture Score"]
+    CALIB -->|Metadata Exposure| SCORE
+    
+    SEC_FIND --> THREAT["Threat Matrix"]
+    SEC_FIND --> EVID["Forensic Evidence Graph"]
+    
+    SCORE --> REP["Executive & Technical Reports"]
+    THREAT --> REP
+    EVID --> REP
 ```
 
 ---
@@ -635,17 +636,12 @@ flowchart TD
 
 The workflow enforces strict mathematical rules for propagating uncertainty through the system:
 
-```
-[Observation State]                 [Policy / System Consequence]
-       │
-       ├──► VERIFIED ──────────────► Full score evaluation; definitive Pass/Fail.
-       │
-       ├──► INFERRED ──────────────► Score evaluation with lower confidence weight; explicit badge.
-       │
-       ├──► UNKNOWN ───────────────► Zero score penalty; reported as INCONCLUSIVE / UNKNOWN.
-       │
-       └──► MISCONFIGURATION ─────► Direct critical score penalty; high-severity finding emitted.
-```
+| Observation State | Policy Evaluation Semantics | System & Scoring Consequence |
+| :--- | :--- | :--- |
+| **VERIFIED** | Direct observable packet proof | Full score evaluation; definitive Pass / Fail emitted |
+| **INFERRED** | Heuristic or statistical derivation | Score evaluation with lower confidence weight; explicit badge displayed |
+| **UNKNOWN** | Unobserved or encrypted parameter | Zero score penalty; reported as INCONCLUSIVE / UNKNOWN |
+| **MISCONFIGURATION OBSERVED** | Confirmed specification breach | Direct critical score penalty; high-severity finding emitted |
 
 * **Propagation Rule 1:** If an SA transform is `UNKNOWN`, any policy rule asserting on that transform emits status `INCONCLUSIVE_PASSIVE_EVIDENCE`, not `FAIL`.
 * **Propagation Rule 2:** If PFS status is `UNKNOWN` (no Child SA rekey captured), the Threat Matrix displays a warning: *"PFS cannot be verified from partial capture"*, rather than claiming PFS is disabled.
@@ -1301,19 +1297,19 @@ sequenceDiagram
 
 ## 55. Persistence Flow
 
-```
-[Raw PCAP File]                     ──► Object Storage (/storage/captures/{sha256}.pcap)
-[Analysis Session Record]           ──► PostgreSQL (analysis_sessions)
-[Protocol Observations]             ──► PostgreSQL (protocol_observations)
-[Security Associations & Graph]     ──► PostgreSQL (security_associations)
-[ESP Flows & Feature Arrays]        ──► PostgreSQL (esp_flows)
-[ML Predictions & SHAP Values]      ──► PostgreSQL (flow_predictions)
-[Security Findings & Deductions]    ──► PostgreSQL (security_findings, score_deductions)
-[Evidence Nodes & Edges]            ──► PostgreSQL (evidence_nodes, evidence_edges)
-[Generated PDF/HTML Reports]        ──► Object Storage (/storage/reports/{id}.pdf)
-[Standards Text & Embeddings]       ──► PostgreSQL pgvector (standards_knowledge)
-[Active Job Status & Telemetry]     ──► Redis Key-Value Store (TTL: 24h)
-```
+| Data Artifact / Entity | Target Storage Destination | Storage Layer / Engine |
+| :--- | :--- | :--- |
+| **Raw PCAP File** | `/storage/captures/{sha256}.pcap` | Object Storage / Local POSIX Volume |
+| **Analysis Session Record** | `analysis_sessions` table | PostgreSQL Relational Database |
+| **Protocol Observations** | `protocol_observations` table | PostgreSQL Relational Database |
+| **Security Associations & Graph** | `security_associations` table | PostgreSQL Relational Database |
+| **ESP Flows & Feature Arrays** | `esp_flows` table | PostgreSQL Relational Database |
+| **ML Predictions & SHAP Values** | `flow_predictions` table | PostgreSQL Relational Database |
+| **Security Findings & Deductions** | `security_findings`, `score_deductions` tables | PostgreSQL Relational Database |
+| **Evidence Nodes & Edges** | `evidence_nodes`, `evidence_edges` tables | PostgreSQL Relational Database |
+| **Generated PDF/HTML Reports** | `/storage/reports/{id}.pdf` | Object Storage / Local POSIX Volume |
+| **Standards Text & Embeddings** | `standards_knowledge` table | PostgreSQL with `pgvector` Extension |
+| **Active Job Status & Telemetry** | Key-Value Store (`TTL: 24h`) | Redis In-Memory Cache |
 
 ---
 

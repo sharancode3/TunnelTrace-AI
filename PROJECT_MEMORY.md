@@ -287,24 +287,45 @@ graph TD
 
 ## 13. Intelligence Separation
 
-```
-[INGESTED PACKET STREAM]
-           │
-           ├──► OBSERVABLE PROTOCOL FIELDS ──► DETERMINISTIC TSHARK PARSER
-           │    (IKE transforms, DH groups,     ├── IKE Version (IKEv1 vs IKEv2)
-           │     SPIs, outer IP, Next Header)   ├── Negotiated Ciphers & Key Sizes
-           │                                    ├── Diffie-Hellman Group
-           │                                    └── SA State Graph
-           │
-           ├──► ENCRYPTED ESP FLOW METRICS ──► MACHINE LEARNING ENGINE
-           │    (Packet lengths, inter-arrival  ├── Tabular Features ──► XGBoost
-           │     times, burst directions)       ├── Sequence Tensor  ──► 1D-CNN
-           │                                    └── Calibration Gate ──► Calibrated Class
-           │
-           └──► EXTRACTED CONFIGURATION    ──► DETERMINISTIC POLICY ENGINE
-                (All reconstructed facts)       ├── NIST SP 800-77 Rules
-                                                ├── RFC 8221 Compliance Rules
-                                                └── Security Score Deductions (0-100)
+```mermaid
+graph TD
+    IPS["Ingested Packet Stream"]
+    
+    subgraph Parser ["Deterministic TShark Parser"]
+        OPF["Observable Protocol Fields<br/>(IKE transforms, DH groups, SPIs, outer IP, Next Header)"]
+        P1["IKE Version (IKEv1 vs IKEv2)"]
+        P2["Negotiated Ciphers & Key Sizes"]
+        P3["Diffie-Hellman Group"]
+        P4["SA State Graph"]
+        OPF --> P1
+        OPF --> P2
+        OPF --> P3
+        OPF --> P4
+    end
+
+    subgraph ML ["Machine Learning Engine"]
+        EFM["Encrypted ESP Flow Metrics<br/>(Packet lengths, inter-arrival times, burst directions)"]
+        M1["Tabular Features --> XGBoost"]
+        M2["Sequence Tensor --> 1D-CNN"]
+        M3["Calibration Gate --> Calibrated Class"]
+        EFM --> M1
+        EFM --> M2
+        EFM --> M3
+    end
+
+    subgraph Policy ["Deterministic Policy Engine"]
+        EC["Extracted Configuration<br/>(All reconstructed facts)"]
+        R1["NIST SP 800-77 Rules"]
+        R2["RFC 8221 Compliance Rules"]
+        R3["Security Score Deductions (0-100)"]
+        EC --> R1
+        EC --> R2
+        EC --> R3
+    end
+
+    IPS --> OPF
+    IPS --> EFM
+    IPS --> EC
 ```
 
 ---

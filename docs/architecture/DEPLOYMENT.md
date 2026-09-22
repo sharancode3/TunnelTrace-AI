@@ -115,41 +115,13 @@ The deployment philosophy of TunnelTrace AI is anchored upon six uncompromising 
 
 ## 8. Technical Stack
 
-```
-[FRONTEND TIER]
-├── Runtime: Node.js 20 LTS (Alpine base)
-├── Framework: Next.js 14 (App Router, TypeScript, Strict Mode)
-├── Styling: Vanilla CSS + Tailwind CSS (Custom Design System, 0px radius)
-├── Visualization: Apache ECharts 5.x, React Flow 11.x
-└── Client Shell: Progressive Web Application (PWA), Service Worker, Web App Manifest
-
-[APPLICATION & API TIER]
-├── Runtime: Python 3.11 (Debian Slim base)
-├── Framework: FastAPI 0.110+ (ASGI / Starlette, Uvicorn)
-├── Asynchronous Engine: asyncio, WebSockets
-├── Validation: Pydantic v2 (Strict Schema Enforcement)
-└── Subprocess Wrappers: subprocess32, psutil (Resource-bounded execution)
-
-[DATA & CACHING TIER]
-├── Relational Database: PostgreSQL 15
-├── Vector Database: pgvector extension (0.6+)
-├── Task Broker & Cache: Redis 7 (In-Memory, Append-Only Persistence)
-└── Storage Abstraction: Standard POSIX Local File Volume / S3 Adapter Interface
-
-[ANALYTICAL & ML RUNTIME]
-├── Protocol Dissection: TShark (Wireshark 4.x), PyShark 0.6+, Scapy (Packet crafting only)
-├── Tabular Classification: XGBoost 2.0+ (Calibrated Probabilities)
-├── Spatial Classification: PyTorch 2.2+ (1D-CNN, CPU-optimized inference)
-├── Tabular Baseline: scikit-learn 1.4+ (Random Forest, Isolation Forest)
-└── Explainability: SHAP 0.44+ (TreeExplainer & KernelExplainer)
-
-[PRIVILEGED TESTBED & NETWORK TIER]
-├── OS Platform: Dedicated Linux Kernel 5.15+ / 6.x (Ubuntu 22.04 LTS / Debian 12)
-├── VPN Daemon: strongSwan 5.9.8+ (charon, vici interface, swanctl)
-├── Kernel Subsystems: XFRM (IPsec State & Policy), Linux Network Namespaces (netns)
-├── Traffic Conditioning: Linux tc (Traffic Control), netem (Network Emulator)
-└── Interception: tcpdump 4.99+, libpcap 1.10+
-```
+| Architecture Tier | Technology & Runtime | Specifications & Frameworks | Capabilities & Implementations |
+| :--- | :--- | :--- | :--- |
+| **Frontend Tier** | Node.js 20 LTS (Alpine base) | Next.js 14 (App Router, TypeScript, Strict Mode) | Vanilla CSS + Tailwind CSS (0px radius), Apache ECharts 5.x, React Flow 11.x, PWA / Service Worker |
+| **Application & API Tier** | Python 3.11 (Debian Slim base) | FastAPI 0.110+ (ASGI / Starlette, Uvicorn) | Asyncio, WebSockets, Pydantic v2 validation, resource-bounded subprocess execution (`subprocess32`, `psutil`) |
+| **Data & Caching Tier** | PostgreSQL 15 & Redis 7 | pgvector 0.6+, Redis append-only persistence | Relational schemas, semantic vector embeddings, in-memory task broker, POSIX / S3 storage abstraction |
+| **Analytical & ML Runtime** | TShark (Wireshark 4.x), PyTorch 2.2+, XGBoost 2.0+ | Scikit-learn 1.4+, PyShark 0.6+, SHAP 0.44+ | Protocol dissection, tabular classification (calibrated), 1D-CNN sequence classification, TreeExplainer |
+| **Privileged Testbed Tier** | Dedicated Linux Kernel 5.15+/6.x | strongSwan 5.9.8+ (charon, vici, swanctl) | Linux `netns`, `tc/netem` traffic conditioning, XFRM state/policy engine, `tcpdump` 4.99+, `libpcap` 1.10+ |
 
 ---
 
@@ -215,27 +187,38 @@ graph TB
 
 ## 11. Trust / Privilege Boundaries
 
-```
-[UNTRUSTED ZONE]
-  │  External Users / Web Browsers / Untrusted Uploaded PCAP Files
-  ▼
-[BOUNDARY 1: Application Ingress Filter]
-  │  Reverse Proxy / Input Sanitizer / File Magic Byte Verification / Size Cap
-  ▼
-[ZONE 1: Application Domain (Unprivileged Class A)]
-  │  Next.js Frontend (UID 10001)
-  │  FastAPI Application (UID 10001)
-  │  Celery Worker (UID 10001)
-  │  PostgreSQL Database (UID 999)
-  │  Redis Cache (UID 999)
-  ▼
-[BOUNDARY 2: IPC Parameterized Gateway (Strict Loopback / mTLS)]
-  │  JSON Schema Validation / Allowed Action Whitelist / No Raw Shell Execution
-  ▼
-[ZONE 2: Privileged System Domain (Class B)]
-  │  Privileged Network Agent (Root / CAP_NET_ADMIN, CAP_NET_RAW)
-  │  strongSwan VPN Engine (charon)
-  │  Linux Kernel XFRM / Netfilter Subsystems
+```mermaid
+graph TD
+    subgraph UntrustedZone ["Untrusted Zone"]
+        U1["External Users / Web Browsers / Untrusted Uploaded PCAP Files"]
+    end
+
+    subgraph Boundary1 ["Boundary 1: Application Ingress Filter"]
+        B1["Reverse Proxy / Input Sanitizer / File Magic Byte Verification / Size Cap"]
+    end
+
+    subgraph Zone1 ["Zone 1: Application Domain (Unprivileged Class A)"]
+        Z1_1["Next.js Frontend (UID 10001)"]
+        Z1_2["FastAPI Application (UID 10001)"]
+        Z1_3["Celery Worker (UID 10001)"]
+        Z1_4["PostgreSQL Database (UID 999)"]
+        Z1_5["Redis Cache (UID 999)"]
+    end
+
+    subgraph Boundary2 ["Boundary 2: IPC Parameterized Gateway (Strict Loopback / mTLS)"]
+        B2["JSON Schema Validation / Allowed Action Whitelist / No Raw Shell Execution"]
+    end
+
+    subgraph Zone2 ["Zone 2: Privileged System Domain (Class B)"]
+        Z2_1["Privileged Network Agent (Root / CAP_NET_ADMIN, CAP_NET_RAW)"]
+        Z2_2["strongSwan VPN Engine (charon)"]
+        Z2_3["Linux Kernel XFRM / Netfilter Subsystems"]
+    end
+
+    U1 --> B1
+    B1 --> Zone1
+    Zone1 --> B2
+    B2 --> Zone2
 ```
 
 ---

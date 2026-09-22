@@ -92,11 +92,13 @@ graph TD
 
 ## 7. V&V Principles
 
-```
-[ REQUIREMENT ] ──► [ TEST CASE ] ──► [ CONTROLLED EXECUTION ]
-                                                │
-                                                ▼
-[ TRACEABILITY ] ◄── [ EVALUATION ] ◄── [ RETAINED EVIDENCE ]
+```mermaid
+graph LR
+    REQ["Requirement"] --> TC["Test Case"]
+    TC --> CE["Controlled Execution"]
+    CE --> RE["Retained Evidence"]
+    RE --> EVAL["Evaluation"]
+    EVAL --> TRACE["Traceability"]
 ```
 
 1. **No Requirement Without a Test:** Every functional claim in the PRD must have at least one test case.
@@ -192,16 +194,11 @@ graph TD
 
 ## 15. Test Data Strategy
 
-```
-                          TEST DATA REPOSITORY
-  ┌───────────────────────────────┬───────────────────────────────┐
-  │     Controlled Lab Data       │    Adversarial / Malformed    │
-  ├───────────────────────────────┼───────────────────────────────┤
-  │ • IPsecFlowBench (Native)     │ • Fuzzed IKE Packets          │
-  │ • Golden PCAP Fixtures (v1)   │ • Truncated / Zero-Byte PCAPs │
-  │ • Network Impairment Traces   │ • Inverted Sequence Floods    │
-  └───────────────────────────────┴───────────────────────────────┘
-```
+| Controlled Lab Data | Adversarial / Malformed Traffic |
+| :--- | :--- |
+| • IPsecFlowBench (Native) | • Fuzzed IKE Packets |
+| • Golden PCAP Fixtures (v1) | • Truncated / Zero-Byte PCAPs |
+| • Network Impairment Traces | • Inverted Sequence Floods |
 
 All test captures are versioned, cataloged with SHA-256 checksums, and stored in `/tests/fixtures/captures/`. Raw enterprise customer traffic is strictly prohibited in automated test suites.
 
@@ -313,10 +310,12 @@ Tests verify that the ingestion pipeline properly classifies incoming binary str
 
 Validates deterministic extraction against known strongSwan parameters:
 
-```
-[Known swanctl.conf] ──► [Captured Frame Bytes] ──► [TShark Dissector] ──► [Extracted Fact]
-         │                                                                          │
-         └──────────────────────── EXACT MATCH ASSERTION ───────────────────────────┘
+```mermaid
+graph LR
+    CONF["Known swanctl.conf"] --> FRAME["Captured Frame Bytes"]
+    FRAME --> DISSECT["TShark Dissector"]
+    DISSECT --> FACT["Extracted Fact"]
+    CONF -.->|Exact Match Assertion| FACT
 ```
 
 ---
@@ -745,14 +744,18 @@ Post-deployment smoke test suite:
 
 The master acceptance test for the SIH 2026 evaluation:
 
-```
-[Start strongSwan Lab] ──► [Establish IKEv2 Tunnel] ──► [Generate VoIP Workload]
-                                                                  │
-                                                                  ▼
-[Trace Byte Evidence] ◄── [Verify Score 85] ◄── [Classify VoIP] ◄── [Capture ESP]
-         │
-         ▼
-[Apply Remediation Patch] ──► [Recapture] ──► [Re-Analyze] ──► [Verify Score 100]
+```mermaid
+graph LR
+    A["Start strongSwan Lab"] --> B["Establish IKEv2 Tunnel"]
+    B --> C["Generate VoIP Workload"]
+    C --> D["Capture ESP"]
+    D --> E["Classify VoIP"]
+    E --> F["Verify Score 85"]
+    F --> G["Trace Byte Evidence"]
+    G --> H["Apply Remediation Patch"]
+    H --> I["Recapture"]
+    I --> J["Re-Analyze"]
+    J --> K["Verify Score 100"]
 ```
 
 ---

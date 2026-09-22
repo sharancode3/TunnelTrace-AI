@@ -1540,62 +1540,17 @@ pie title Project Scope Allocation
 
 To achieve successful demonstration during Smart India Hackathon 2026 judging, **TunnelTrace AI** must execute the following unbroken live demonstration script:
 
-```
-[LIVE DEMO STEP-BY-STEP VERIFICATION SCRIPT]
-1. TESTBED SETUP:
-   - Execute testbed script to provision an intentionally weak IPsec tunnel:
-     (IKEv1, 3DES-CBC, HMAC-SHA1, DH Group 2, No PFS, Tunnel Mode).
-   - Inject a mixture of active VoIP and bulk File Transfer traffic.
-
-2. CAPTURE & INGESTION:
-   - Ingest the resulting traffic stream (via live capture or immediate PCAP upload).
-   - Display instantaneous SHA-256 computation and frame ingestion counter.
-
-3. PROTOCOL & SA DECONSTRUCTION:
-   - Dashboard deterministically displays:
-     * IKE Version: IKEv1 (Main Mode) [VERIFIED]
-     * Mode: Tunnel Mode [VERIFIED]
-     * Cipher: 3DES-CBC (168-bit) [VERIFIED]
-     * Integrity: HMAC-SHA1 [VERIFIED]
-     * Key Exchange: DH Group 2 (1024-bit) [VERIFIED]
-     * PFS: Disabled [VERIFIED]
-
-4. ENCRYPTED TRAFFIC INFERENCE & EXPLAINABILITY:
-   - ML engine classifies encapsulated ESP flows into VoIP and File Transfer without decryption.
-   - Display calibrated confidence scores (e.g., 88% calibrated confidence).
-   - Open SHAP explanation panel: highlight high packet rate/small packet sizes driving VoIP label,
-     and massive unidirectional byte bursts driving File Transfer label.
-
-5. SECURITY ASSESSMENT & SCORING:
-   - Policy-as-Code engine evaluates deployment against NIST SP 800-77 Rev. 1 profile.
-   - Flags Critical findings: Deprecated 3DES cipher, Weak DH Group 2, Insecure SHA-1, Missing PFS.
-   - Displays low baseline Security Posture Score.
-   - Displays Threat Matrix mapping 3DES to Sweet32 collision attacks and DH2 to precomputation risks.
-   - Displays Metadata Fingerprintability Index indicating high side-channel distinguishable patterns.
-
-6. EVIDENCE TRACEABILITY:
-   - Click on the Critical 3DES finding.
-   - Evidence Graph highlights the exact IKE SA proposal packet, byte offset, and standard clause citation.
-
-7. WHAT-IF CONFIGURATION TWIN:
-   - Open Configuration Security Twin.
-   - Propose hardened configuration: (IKEv2, AES-256-GCM, DH Group 19 Curve25519, PFS Enabled).
-   - Twin displays simulated score improvement and projected resolution of all 4 Critical findings.
-
-8. CLOSED-LOOP LAB REMEDIATION & VERIFICATION:
-   - Click "Apply & Validate in Lab".
-   - System deploys hardened config to strongSwan container, re-establishes tunnel, injects traffic,
-     recaptures trace, and executes automatic re-analysis.
-   - UI displays Before vs. After comparison card:
-     * Previous Critical Findings: RESOLVED
-     * New Cryptographic State: AES-256-GCM / DH19 / PFS Enabled [VERIFIED]
-     * New Security Posture Score: Significantly improved, validated clean posture.
-
-9. REPORTING & AI ANALYST:
-   - Export publication-grade Executive Report PDF and Technical Report PDF.
-   - In AI Analyst panel, ask: "Why was our initial Diffie-Hellman configuration marked Critical?"
-   - AI Analyst provides local, grounded response citing NIST SP 800-77 Rev. 1 and Logjam attack vectors.
-```
+| Step | Demonstration Phase | Execution Actions & Stimuli | Expected Verification & Evidence Output |
+| :--- | :--- | :--- | :--- |
+| **1** | **Testbed Setup** | Execute testbed script to provision an intentionally weak IPsec tunnel: (IKEv1, 3DES-CBC, HMAC-SHA1, DH Group 2, No PFS, Tunnel Mode). Inject a mixture of active VoIP and bulk File Transfer traffic. | Testbed provisioning log confirms running weak tunnel and traffic generation. |
+| **2** | **Capture & Ingestion** | Ingest the resulting traffic stream via live capture or immediate PCAP upload. | Instantaneous SHA-256 computation and frame ingestion counter displayed. |
+| **3** | **Protocol & SA Deconstruction** | Deterministically extract observable protocol fields and handshake parameters. | Dashboard deterministically displays:<br/>• IKE Version: `IKEv1 (Main Mode) [VERIFIED]`<br/>• Mode: `Tunnel Mode [VERIFIED]`<br/>• Cipher: `3DES-CBC (168-bit) [VERIFIED]`<br/>• Integrity: `HMAC-SHA1 [VERIFIED]`<br/>• Key Exchange: `DH Group 2 (1024-bit) [VERIFIED]`<br/>• PFS: `Disabled [VERIFIED]` |
+| **4** | **Encrypted Traffic Inference & Explainability** | ML engine classifies encapsulated ESP flows into VoIP and File Transfer without decryption. Display calibrated confidence scores. Open SHAP explanation panel. | Flows classified into VoIP and File Transfer with calibrated confidence (e.g., 88% calibrated confidence). SHAP highlights high packet rate / small packet sizes driving VoIP label, and massive unidirectional byte bursts driving File Transfer label. |
+| **5** | **Security Assessment & Scoring** | Policy-as-Code engine evaluates deployment against NIST SP 800-77 Rev. 1 profile. | Flags Critical findings: Deprecated 3DES cipher, Weak DH Group 2, Insecure SHA-1, Missing PFS. Displays low baseline Security Posture Score, Threat Matrix (mapping 3DES to Sweet32 collision attacks and DH2 to precomputation risks), and Metadata Fingerprintability Index indicating high side-channel patterns. |
+| **6** | **Evidence Traceability** | Click on the Critical 3DES finding. | Evidence Graph highlights the exact IKE SA proposal packet, byte offset, and standard clause citation. |
+| **7** | **What-If Configuration Twin** | Open Configuration Security Twin. Propose hardened configuration: (IKEv2, AES-256-GCM, DH Group 19 Curve25519, PFS Enabled). | Twin displays simulated score improvement and projected resolution of all 4 Critical findings. |
+| **8** | **Closed-Loop Lab Remediation & Verification** | Click "Apply & Validate in Lab". System deploys hardened config to strongSwan container, re-establishes tunnel, injects traffic, recaptures trace, and executes automatic re-analysis. | UI displays Before vs. After comparison card:<br/>• Previous Critical Findings: `RESOLVED`<br/>• New Cryptographic State: `AES-256-GCM / DH19 / PFS Enabled [VERIFIED]`<br/>• New Security Posture Score: Significantly improved, validated clean posture. |
+| **9** | **Reporting & AI Analyst** | Export publication-grade Executive Report PDF and Technical Report PDF. In AI Analyst panel, ask: *"Why was our initial Diffie-Hellman configuration marked Critical?"* | Instantaneous PDF report export; AI Analyst provides local, grounded response citing NIST SP 800-77 Rev. 1 and Logjam attack vectors. |
 
 ---
 

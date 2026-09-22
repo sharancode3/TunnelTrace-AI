@@ -160,74 +160,63 @@ Verification claims must point to verifiable project artifacts:
 
 ## 11. Official PS Requirement Register
 
-```
-[SECTION A: VPN TESTBED GENERATION]
-├── PS-LAB-001: Tunnel Mode
-├── PS-LAB-002: Transport Mode
-├── PS-LAB-003: AES-128 Encryption
-├── PS-LAB-004: AES-256 Encryption
-├── PS-LAB-005: AES-GCM Authenticated Encryption
-├── PS-LAB-006: AES-CBC + HMAC Legacy Combinations
-├── PS-LAB-007: Multiple Diffie-Hellman Groups (Group 14, 19, 20, 21)
-├── PS-LAB-008: Perfect Forward Secrecy (PFS) Enabled
-├── PS-LAB-009: Perfect Forward Secrecy (PFS) Disabled
-├── PS-LAB-010: IPv4 Encapsulated Communication
-├── PS-LAB-011: IPv6 Encapsulated Communication
-├── PS-LAB-012: VoIP Traffic Simulation
-├── PS-LAB-013: WhatsApp / Messaging Traffic Simulation
-├── PS-LAB-014: E-mail Traffic Simulation
-├── PS-LAB-015: Web Browsing Traffic Simulation
-├── PS-LAB-016: ICMP Diagnostic Traffic Simulation
-└── PS-LAB-017: Video Streaming Traffic Simulation
-
-[SECTION B: TRAFFIC CAPTURE]
-├── PS-CAP-001: IKE Protocol Negotiation Interception
-├── PS-CAP-002: ESP Packet Capture
-├── PS-CAP-003: AH Packet Capture (Optional Clause)
-├── PS-CAP-004: Normal Communication Background Traffic Representation
-├── PS-CAP-005: Offline PCAP/PCAPNG Trace Analysis
-└── PS-CAP-006: Live Network Interface Stream Capture
-
-[SECTION C: AI-BASED PROTOCOL IDENTIFICATION]
-├── PS-PROTO-001: IPsec Protocol Identification
-├── PS-PROTO-002: IKE Version Identification (IKEv1 vs IKEv2)
-├── PS-PROTO-003: Tunnel Mode Identification
-├── PS-PROTO-004: Transport Mode Identification
-├── PS-PROTO-005: Encryption Algorithm Identification
-├── PS-PROTO-006: Authentication / Integrity Algorithm Identification
-├── PS-PROTO-007: Key-Exchange Method Identification
-├── PS-PROTO-008: Security Association (SA) Parameter Extraction
-└── PS-PROTO-009: Encrypted ESP Inner Traffic Classification (Primary ML Mandate)
-
-[SECTION D: SECURITY ASSESSMENT]
-├── PS-SEC-001: Cryptographic Strength Audit
-├── PS-SEC-002: Configuration Compliance Audit (NIST SP 800-77 / RFC 8221)
-├── PS-SEC-003: Security Association Parameter Evaluation
-├── PS-SEC-004: Key Lifetime & Rekeying Evaluation
-├── PS-SEC-005: Anti-Replay Protection Evaluation
-├── PS-SEC-006: Forward Secrecy (PFS) Rigor Assessment
-├── PS-SEC-007: Cipher-Suite Strength & Vulnerability Scoring
-└── PS-SEC-008: Metadata Exposure & Side-Channel Assessment
-
-[SECTION E: REQUIRED OUTPUTS]
-├── PS-OUT-001: Comprehensive Security Score (0–100 Scale)
-├── PS-OUT-002: Encrypted Traffic Analysis & Class Distribution
-├── PS-OUT-003: Metadata Exposure Inference
-├── PS-OUT-004: Executive Summary Report (PDF)
-├── PS-OUT-005: Technical Deep-Dive Audit Report (PDF/HTML)
-├── PS-OUT-006: Categorized Risk Score
-├── PS-OUT-007: Dynamic Threat Matrix (STRIDE / MITRE ATT&CK Mapped)
-└── PS-OUT-008: Calibrated AI Confidence Score
-
-[SECTION F: EXPECTED DELIVERABLES]
-├── PS-DEL-001: Working Software Prototype
-├── PS-DEL-002: AI Classification Engine (XGBoost + 1D-CNN)
-├── PS-DEL-003: Interactive Web Dashboard (PWA)
-├── PS-DEL-004: Security Assessment & Compliance Audit Report
-├── PS-DEL-005: Live Demonstration Video
-├── PS-DEL-006: Comprehensive Technical Documentation Suite
-└── PS-DEL-007: IPsec Training & Validation Dataset
-```
+| Requirement Section | Clause ID | Requirement Clause Scope & Objective |
+| :--- | :--- | :--- |
+| **Section A: VPN Testbed Generation** | `PS-LAB-001` | Tunnel Mode |
+| **Section A: VPN Testbed Generation** | `PS-LAB-002` | Transport Mode |
+| **Section A: VPN Testbed Generation** | `PS-LAB-003` | AES-128 Encryption |
+| **Section A: VPN Testbed Generation** | `PS-LAB-004` | AES-256 Encryption |
+| **Section A: VPN Testbed Generation** | `PS-LAB-005` | AES-GCM Authenticated Encryption |
+| **Section A: VPN Testbed Generation** | `PS-LAB-006` | AES-CBC + HMAC Legacy Combinations |
+| **Section A: VPN Testbed Generation** | `PS-LAB-007` | Multiple Diffie-Hellman Groups (Group 14, 19, 20, 21) |
+| **Section A: VPN Testbed Generation** | `PS-LAB-008` | Perfect Forward Secrecy (PFS) Enabled |
+| **Section A: VPN Testbed Generation** | `PS-LAB-009` | Perfect Forward Secrecy (PFS) Disabled |
+| **Section A: VPN Testbed Generation** | `PS-LAB-010` | IPv4 Encapsulated Communication |
+| **Section A: VPN Testbed Generation** | `PS-LAB-011` | IPv6 Encapsulated Communication |
+| **Section A: VPN Testbed Generation** | `PS-LAB-012` | VoIP Traffic Simulation |
+| **Section A: VPN Testbed Generation** | `PS-LAB-013` | WhatsApp / Messaging Traffic Simulation |
+| **Section A: VPN Testbed Generation** | `PS-LAB-014` | E-mail Traffic Simulation |
+| **Section A: VPN Testbed Generation** | `PS-LAB-015` | Web Browsing Traffic Simulation |
+| **Section A: VPN Testbed Generation** | `PS-LAB-016` | ICMP Diagnostic Traffic Simulation |
+| **Section A: VPN Testbed Generation** | `PS-LAB-017` | Video Streaming Traffic Simulation |
+| **Section B: Traffic Capture** | `PS-CAP-001` | IKE Protocol Negotiation Interception |
+| **Section B: Traffic Capture** | `PS-CAP-002` | ESP Packet Capture |
+| **Section B: Traffic Capture** | `PS-CAP-003` | AH Packet Capture (Optional Clause) |
+| **Section B: Traffic Capture** | `PS-CAP-004` | Normal Communication Background Traffic Representation |
+| **Section B: Traffic Capture** | `PS-CAP-005` | Offline PCAP/PCAPNG Trace Analysis |
+| **Section B: Traffic Capture** | `PS-CAP-006` | Live Network Interface Stream Capture |
+| **Section C: AI-Based Protocol Identification** | `PS-PROTO-001` | IPsec Protocol Identification |
+| **Section C: AI-Based Protocol Identification** | `PS-PROTO-002` | IKE Version Identification (IKEv1 vs IKEv2) |
+| **Section C: AI-Based Protocol Identification** | `PS-PROTO-003` | Tunnel Mode Identification |
+| **Section C: AI-Based Protocol Identification** | `PS-PROTO-004` | Transport Mode Identification |
+| **Section C: AI-Based Protocol Identification** | `PS-PROTO-005` | Encryption Algorithm Identification |
+| **Section C: AI-Based Protocol Identification** | `PS-PROTO-006` | Authentication / Integrity Algorithm Identification |
+| **Section C: AI-Based Protocol Identification** | `PS-PROTO-007` | Key-Exchange Method Identification |
+| **Section C: AI-Based Protocol Identification** | `PS-PROTO-008` | Security Association (SA) Parameter Extraction |
+| **Section C: AI-Based Protocol Identification** | `PS-PROTO-009` | Encrypted ESP Inner Traffic Classification (Primary ML Mandate) |
+| **Section D: Security Assessment** | `PS-SEC-001` | Cryptographic Strength Audit |
+| **Section D: Security Assessment** | `PS-SEC-002` | Configuration Compliance Audit (NIST SP 800-77 / RFC 8221) |
+| **Section D: Security Assessment** | `PS-SEC-003` | Security Association Parameter Evaluation |
+| **Section D: Security Assessment** | `PS-SEC-004` | Key Lifetime & Rekeying Evaluation |
+| **Section D: Security Assessment** | `PS-SEC-005` | Anti-Replay Protection Evaluation |
+| **Section D: Security Assessment** | `PS-SEC-006` | Forward Secrecy (PFS) Rigor Assessment |
+| **Section D: Security Assessment** | `PS-SEC-007` | Cipher-Suite Strength & Vulnerability Scoring |
+| **Section D: Security Assessment** | `PS-SEC-008` | Metadata Exposure & Side-Channel Assessment |
+| **Section E: Required Outputs** | `PS-OUT-001` | Comprehensive Security Score (0–100 Scale) |
+| **Section E: Required Outputs** | `PS-OUT-002` | Encrypted Traffic Analysis & Class Distribution |
+| **Section E: Required Outputs** | `PS-OUT-003` | Metadata Exposure Inference |
+| **Section E: Required Outputs** | `PS-OUT-004` | Executive Summary Report (PDF) |
+| **Section E: Required Outputs** | `PS-OUT-005` | Technical Deep-Dive Audit Report (PDF/HTML) |
+| **Section E: Required Outputs** | `PS-OUT-006` | Categorized Risk Score |
+| **Section E: Required Outputs** | `PS-OUT-007` | Dynamic Threat Matrix (STRIDE / MITRE ATT&CK Mapped) |
+| **Section E: Required Outputs** | `PS-OUT-008` | Calibrated AI Confidence Score |
+| **Section F: Expected Deliverables** | `PS-DEL-001` | Working Software Prototype |
+| **Section F: Expected Deliverables** | `PS-DEL-002` | AI Classification Engine (XGBoost + 1D-CNN) |
+| **Section F: Expected Deliverables** | `PS-DEL-003` | Interactive Web Dashboard (PWA) |
+| **Section F: Expected Deliverables** | `PS-DEL-004` | Security Assessment & Compliance Audit Report |
+| **Section F: Expected Deliverables** | `PS-DEL-005` | Live Demonstration Video |
+| **Section F: Expected Deliverables** | `PS-DEL-006` | Comprehensive Technical Documentation Suite |
+| **Section F: Expected Deliverables** | `PS-DEL-007` | IPsec Training & Validation Dataset |
 
 ---
 
@@ -424,33 +413,37 @@ graph TD
 
 ## 19. ML Traceability
 
-```
-[INGESTION] ──> Reconstructed ESP Flow (Bidirectional)
-                   │
-                   ▼
-[FEATURE PIPELINE] ──> 24 Tabular Statistical Features (Sizes, Times, Bursts)
-                   ├──> 64-Packet Sequence Spatial Tensor (Direction, Size, Δt)
-                   │
-                   ├──► MODEL A: XGBoost 2.0 (Tabular Statistical Classifier)
-                   │       └── Raw Probabilities (Softmax)
-                   │
-                   ├──► MODEL B: PyTorch 1D-CNN (Sequential Spatial Classifier)
-                   │       └── Raw Probabilities (Softmax)
-                   │
-                   ▼
-[ENSEMBLE FUSION] ──> Weighted Average Probability Distribution
-                   │
-                   ▼
-[TEMPERATURE CALIBRATION] ──> Platt Scaling (Tuned on Validation Set)
-                   │
-                   ▼
-[OOD / UNCERTAINTY GATE]
-    ├── Predictive Entropy > H_threshold? ──► Output: "UNKNOWN / UNSEEN TRAFFIC"
-    ├── Isolation Forest Anomaly Score < 0? ──► Output: "BEHAVIORAL ANOMALY"
-    └── Calibrated Confidence >= C_min? ──► Output: Predicted Class (Web, Video, etc.)
-                   │
-                   ▼
-[EXPLAINABILITY ENGINE] ──> TreeSHAP Feature Attribution (Local Feature Importances)
+```mermaid
+graph TD
+    ING["INGESTION: Reconstructed ESP Flow (Bidirectional)"]
+    FP["FEATURE PIPELINE<br/>• 24 Tabular Statistical Features (Sizes, Times, Bursts)<br/>• 64-Packet Sequence Spatial Tensor (Direction, Size, Δt)"]
+    
+    subgraph ParallelModels ["Parallel ML Models"]
+        MA["MODEL A: XGBoost 2.0<br/>Tabular Statistical Classifier<br/>(Raw Softmax Probabilities)"]
+        MB["MODEL B: PyTorch 1D-CNN<br/>Sequential Spatial Classifier<br/>(Raw Softmax Probabilities)"]
+    end
+    
+    EF["ENSEMBLE FUSION<br/>Weighted Average Probability Distribution"]
+    TC["TEMPERATURE CALIBRATION<br/>Platt Scaling (Tuned on Validation Set)"]
+    
+    subgraph OOD_Gate ["OOD / Uncertainty Gate"]
+        G1["Predictive Entropy > H_threshold?<br/>Output: UNKNOWN / UNSEEN TRAFFIC"]
+        G2["Isolation Forest Anomaly Score < 0?<br/>Output: BEHAVIORAL ANOMALY"]
+        G3["Calibrated Confidence >= C_min?<br/>Output: Predicted Class (Web, Video, etc.)"]
+    end
+    
+    EXP["EXPLAINABILITY ENGINE<br/>TreeSHAP Feature Attribution (Local Feature Importances)"]
+
+    ING --> FP
+    FP --> MA
+    FP --> MB
+    MA --> EF
+    MB --> EF
+    EF --> TC
+    TC --> G1
+    TC --> G2
+    TC --> G3
+    G3 --> EXP
 ```
 
 ---
@@ -493,23 +486,13 @@ remediation:
 
 To maintain forensic integrity, every analytical conclusion traces back to an unalterable chain of custody:
 
-```
-[RAW PCAP FILE] ── SHA-256 Hash Recorded at Ingestion
-      │
-      ▼
-[PACKET OFFSET] ── Byte offset & frame number in capture (e.g., Frame #14, Offset 0x04A2)
-      │
-      ▼
-[EXTRACTED FACT] ── Structured Key-Value Property (e.g., ike.transform.encr = AES_CBC_128)
-      │
-      ▼
-[POLICY EVALUATION] ── Applied Rule ID (e.g., SEC-CRYPTO-003, NIST SP 800-77)
-      │
-      ▼
-[AUDIT FINDING] ── Immutable database record with foreign key linking to Packet Offset
-      │
-      ▼
-[REPORT / UI NODE] ── Displayed with clickable inspection link opening raw packet bytes
+```mermaid
+graph TD
+    A["RAW PCAP FILE<br/>SHA-256 Hash Recorded at Ingestion"] --> B["PACKET OFFSET<br/>Byte offset & frame number in capture (e.g., Frame #14, Offset 0x04A2)"]
+    B --> C["EXTRACTED FACT<br/>Structured Key-Value Property (e.g., ike.transform.encr = AES_CBC_128)"]
+    C --> D["POLICY EVALUATION<br/>Applied Rule ID (e.g., SEC-CRYPTO-003, NIST SP 800-77)"]
+    D --> E["AUDIT FINDING<br/>Immutable database record with foreign key linking to Packet Offset"]
+    E --> F["REPORT / UI NODE<br/>Displayed with clickable inspection link opening raw packet bytes"]
 ```
 
 ---
@@ -728,17 +711,17 @@ An honest engineering appraisal reveals the following implementation gaps and te
 
 The core technical critical path for Grand Finale evaluation consists of 10 sequential milestones:
 
-```
-[1. strongSwan Lab Setup] ──► [2. Multi-Profile PCAP Capture] ──► [3. TShark Protocol Parsing]
-                                                                           │
-                                                                           ▼
-[6. Calibrated ML Classifier] ◄── [5. ESP Flow Extraction] ◄── [4. SA State Graph Builder]
-        │
-        ▼
-[7. YAML Policy Assessment] ──► [8. Security Score Engine] ──► [9. Evidence Graph Engine]
-                                                                           │
-                                                                           ▼
-                                                                [10. Dashboard & Report UI]
+```mermaid
+graph LR
+    S1["1. strongSwan Lab Setup"] --> S2["2. Multi-Profile PCAP Capture"]
+    S2 --> S3["3. TShark Protocol Parsing"]
+    S3 --> S4["4. SA State Graph Builder"]
+    S4 --> S5["5. ESP Flow Extraction"]
+    S5 --> S6["6. Calibrated ML Classifier"]
+    S6 --> S7["7. YAML Policy Assessment"]
+    S7 --> S8["8. Security Score Engine"]
+    S8 --> S9["9. Evidence Graph Engine"]
+    S9 --> S10["10. Dashboard & Report UI"]
 ```
 
 ---

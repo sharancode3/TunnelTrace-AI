@@ -81,20 +81,12 @@ The platform is designed to achieve six core security objectives:
 
 ## 7. Security Principles
 
-```
-  [ OBSERVABLE EVIDENCE ]
-            │
-            ▼
-  [ DETERMINISTIC FORENSICS ]
-            │
-            ▼
-  [ VERSIONED POLICY RULES ]
-            │
-            ▼
-  [ STRUCTURED FINDINGS ]
-            │
-            ▼
-  [ GROUNDED EXPLANATIONS ]
+```mermaid
+graph TD
+    OE["Observable Evidence"] --> DF["Deterministic Forensics"]
+    DF --> VPR["Versioned Policy Rules"]
+    VPR --> SF["Structured Findings"]
+    SF --> GE["Grounded Explanations"]
 ```
 
 1. **Evidence Precedes Conclusion:** No security finding, compliance failure, or risk deduction may be asserted without direct protocol evidence.
@@ -165,22 +157,13 @@ Security Scope B defines the security architecture, threat defenses, and hardeni
 
 When conflicting security recommendations arise across standards, TunnelTrace AI applies a strict precedence hierarchy:
 
-```
-  ┌─────────────────────────────────────────────────────────┐
-  │  Level 1: Explicit Organizational Custom Policy        │
-  ├─────────────────────────────────────────────────────────┤
-  │  Level 2: National Standards (NIST SP 800-77 Rev. 1,    │
-  │           SP 800-57 Part 1 Rev. 5)                      │
-  ├─────────────────────────────────────────────────────────┤
-  │  Level 3: Protocol Standards Track RFCs (RFC 8221,      │
-  │           RFC 8247, RFC 7296)                           │
-  ├─────────────────────────────────────────────────────────┤
-  │  Level 4: IANA Cryptographic Algorithm Registries      │
-  ├─────────────────────────────────────────────────────────┤
-  │  Level 5: Vendor Hardening Guidelines (strongSwan,      │
-  │           Cisco, Juniper)                               │
-  └─────────────────────────────────────────────────────────┘
-```
+| Hierarchy Level | Authority Tier | Governing Documents & References | System Precedence Rule |
+| :--- | :--- | :--- | :--- |
+| **Level 1** | Organizational Policy | Explicit Organizational Custom Policy YAML rules | Highest precedence; overrides lower standard defaults |
+| **Level 2** | National Standards | NIST SP 800-77 Rev. 1, NIST SP 800-57 Part 1 Rev. 5 | Baseline federal and defense compliance requirements |
+| **Level 3** | Standards Track RFCs | RFC 8221, RFC 8247, RFC 7296, RFC 4301, RFC 4303 | Core protocol implementation and transform requirements |
+| **Level 4** | IANA Registries | IANA Cryptographic Algorithm and Transform Registries | Authoritative algorithm identifier mapping tables |
+| **Level 5** | Vendor Guidelines | strongSwan, Cisco, and Juniper hardening guidelines | Operational implementation recommendations |
 
 Every policy rule implemented in the system explicitly declares its governing authority from this hierarchy.
 
@@ -206,20 +189,12 @@ Every policy rule implemented in the system explicitly declares its governing au
 
 To prevent false accusations and unwarranted security conclusions, all analytical findings must carry an explicit evidence state:
 
-```
-                  ┌───────────────────────────────┐
-                  │    Passive Network Evidence   │
-                  └──────────────┬────────────────┘
-                                 │
-         ┌───────────────────────┼───────────────────────┐
-         ▼                       ▼                       ▼
-  ┌──────────────┐        ┌──────────────┐        ┌──────────────┐
-  │   VERIFIED   │        │   INFERRED   │        │   UNKNOWN    │
-  └──────────────┘        └──────────────┘        └──────────────┘
-         │
-         └───────────────► ┌───────────────────────────────┐
-                           │   MISCONFIGURATION OBSERVED   │
-                           └───────────────────────────────┘
+```mermaid
+graph TD
+    EV["Passive Network Evidence"] --> VER["VERIFIED"]
+    EV --> INF["INFERRED"]
+    EV --> UNK["UNKNOWN"]
+    VER --> MISC["MISCONFIGURATION OBSERVED"]
 ```
 
 | Evidence State | Strict Definition | Operational Example | Fallback / Reporting Rule |
@@ -335,25 +310,25 @@ Before any policy rule is admitted into the platform's active catalog, it must u
 
 The cryptographic assessment subsystem evaluates the combined strength of all negotiated cryptographic primitives:
 
-```
-                      Negotiated Transform Primitives
-   ┌──────────────────┬─────────────────┬──────────────────┬─────────────────┐
-   │ Encryption (ENC) │ Integrity (INT) │     PRF (PRF)    │ Diffie-Hellman  │
-   └────────┬─────────┴────────┬────────┴────────┬─────────┴────────┬────────┘
-            │                  │                 │                  │
-            ▼                  ▼                 ▼                  ▼
-     [Bit Strength]     [Bit Strength]    [Bit Strength]     [Bit Strength]
-            │                  │                 │                  │
-            └──────────────────┴────────┬────────┴──────────────────┘
-                                        │
-                                        ▼
-                         MINIMUM EFFECTIVE BIT STRENGTH
-                                        │
-                                        ▼
-                         NIST SP 800-57 MAPPING TABLE
-                                        │
-                                        ▼
-                       [CRYPTOGRAPHIC SECURITY CLASS]
+```mermaid
+graph TD
+    subgraph Primitives ["Negotiated Transform Primitives"]
+        ENC["Encryption (ENC)<br/>Bit Strength"]
+        INT["Integrity (INT)<br/>Bit Strength"]
+        PRF["Pseudo-Random Function (PRF)<br/>Bit Strength"]
+        DH["Diffie-Hellman (DH)<br/>Bit Strength"]
+    end
+
+    MIN["Minimum Effective Bit Strength<br/>(Weakest Link Principle)"]
+    NIST["NIST SP 800-57 Mapping Table"]
+    CLASS["Cryptographic Security Class Assessment"]
+
+    ENC --> MIN
+    INT --> MIN
+    PRF --> MIN
+    DH --> MIN
+    MIN --> NIST
+    NIST --> CLASS
 ```
 
 *Rule:* The effective cryptographic strength of an IPsec SA is bounded by its **weakest link**. If an SA negotiates AES-256 (256-bit encryption) with Diffie-Hellman Group 2 (MODP-1024, providing $\approx 80$ bits of security), the effective security strength of the SA is assessed as **$\approx 80$ bits (Insecure / Deprecated)**, regardless of the cipher key length.
@@ -447,20 +422,19 @@ Replay protection prevents adversaries from capturing valid ESP packets and re-i
 
 The analyzer compiles a unified state model for every observed Security Association:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                      SECURITY ASSOCIATION RECORD                       │
-├────────────────────────────────────────────────────────────────────────┤
-│ Inbound SPI: 0xC3F1A29D       │ Outbound SPI: 0x8A4B92E1               │
-│ Protocol: ESP (50)            │ Mode: Tunnel (Inferred)                │
-│ IP Version: IPv4              │ NAT-T Encap: UDP/4500 (Observed)       │
-│ Encrypt: AES-GCM-16 (256-bit) │ Integrity: Combined AEAD               │
-│ PRF: PRF-HMAC-SHA256          │ DH Group: Group 19 (ECP-256)           │
-│ Traffic Selectors:            │ Lifetime Observed: 1420s / 142 MB      │
-│   Local: 10.0.1.0/24          │ Sequence Number Status: Monotonic      │
-│   Remote: 10.0.2.0/24         │ Rekey Observed: Yes (Child SA #2)      │
-└────────────────────────────────────────────────────────────────────────┘
-```
+| Parameter Property | Inbound Channel State | Outbound Channel State |
+| :--- | :--- | :--- |
+| **Security Parameter Index (SPI)** | `0xC3F1A29D` | `0x8A4B92E1` |
+| **Protocol / Operational Mode** | `ESP (50)` | `Tunnel Mode (Inferred)` |
+| **IP Version / Encapsulation** | `IPv4` | `NAT-T Encap: UDP/4500 (Observed)` |
+| **Encryption Algorithm** | `AES-GCM-16 (256-bit)` | `AES-GCM-16 (256-bit)` |
+| **Integrity Mechanism** | `Combined AEAD Tag` | `Combined AEAD Tag` |
+| **Pseudo-Random Function (PRF)** | `PRF-HMAC-SHA256` | `PRF-HMAC-SHA256` |
+| **Diffie-Hellman Group** | `Group 19 (ECP-256)` | `Group 19 (ECP-256)` |
+| **Traffic Selectors** | Local: `10.0.1.0/24` | Remote: `10.0.2.0/24` |
+| **Observed Lifetime & Volume** | `1420 seconds / 142 MB` | `1420 seconds / 142 MB` |
+| **Sequence Number Status** | `Strictly Monotonic` | `Strictly Monotonic` |
+| **Rekeying Observation** | `Yes (Child SA #2 Linked)` | `Yes (Child SA #2 Linked)` |
 
 ---
 
@@ -497,23 +471,19 @@ graph LR
 
 All security findings generated by TunnelTrace AI are structured entities with mandatory schema fields:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                           SECURITY FINDING                             │
-├────────────────────────────────────────────────────────────────────────┤
-│ Finding ID: FIND-2026-0042                                            │
-│ Title: Insecure Diffie-Hellman Group Negotiated (Group 2)             │
-│ Category: Cryptographic Weakness                                       │
-│ Severity: HIGH                                                        │
-│ Evidence State: VERIFIED                                               │
-│ Affected Entity: Peer Gateway 198.51.100.1 <-> 203.0.113.5            │
-│ Governing Rule: POL-NIST-004 (v1.2.0)                                  │
-│ Authoritative Reference: NIST SP 800-77 Rev. 1, Section 5.1.2         │
-│ Packet Reference: Frame #14 (IKE_SA_INIT Response)                     │
-│ Remediation: Upgrade strongSwan config to 'dhgroup = ecp256'          │
-│ Lifecycle Status: OPEN                                                 │
-└────────────────────────────────────────────────────────────────────────┘
-```
+| Finding Schema Attribute | Audit Value & Evidence |
+| :--- | :--- |
+| **Finding ID** | `FIND-2026-0042` |
+| **Title** | Insecure Diffie-Hellman Group Negotiated (Group 2) |
+| **Category** | Cryptographic Weakness |
+| **Severity** | `HIGH` |
+| **Evidence State** | `VERIFIED` |
+| **Affected Entity** | Peer Gateway `198.51.100.1` $\leftrightarrow$ `203.0.113.5` |
+| **Governing Rule** | `POL-NIST-004` (v1.2.0) |
+| **Authoritative Reference**| NIST SP 800-77 Rev. 1, Section 5.1.2 |
+| **Packet Reference** | Frame #14 (`IKE_SA_INIT` Response) |
+| **Prescribed Remediation** | Upgrade strongSwan configuration to `dhgroup = ecp256` |
+| **Lifecycle Status** | `OPEN` |
 
 ---
 
@@ -587,17 +557,11 @@ The Threat Matrix translates compliance findings into concrete operational threa
 
 Recommendations are generated deterministically by linking each policy violation finding to an approved, versioned remediation template. The engine does not rely on generative AI to invent configuration directives.
 
-```
-[Finding: POL-NIST-004 (DH Group 2)]
-                │
-                ▼
-[Remediation Lookup Table]
-                │
-                ▼
-[strongSwan 5.9+ Target Directive: 'ike = aes256gcm16-prfsha256-ecp256!']
-                │
-                ▼
-[Grounded LLM Translation: Explanation of why ECP-256 mitigates discrete log attacks]
+```mermaid
+graph TD
+    F["Finding: POL-NIST-004 (DH Group 2)"] --> T["Remediation Lookup Table"]
+    T --> D["strongSwan 5.9+ Target Directive:<br/>ike = aes256gcm16-prfsha256-ecp256!"]
+    D --> L["Grounded LLM Translation:<br/>Explanation of why ECP-256 mitigates discrete log attacks"]
 ```
 
 ---
@@ -623,14 +587,12 @@ Remediation capabilities are governed by strict safety bounds:
 
 Executing a remediation action inside the controlled lab requires explicit, multi-step human authorization:
 
-```
-[Finding Displayed] ──► [Analyst Reviews Patch] ──► [Explicit Authorization Challenge]
-                                                             │
-                                                             ▼
-                                                    [Pre-Flight Validation]
-                                                             │
-                                                             ▼
-                                                    [Lab Action Executed]
+```mermaid
+graph TD
+    A["Finding Displayed in Console"] --> B["Analyst Reviews Proposed Patch"]
+    B --> C["Explicit Authorization Challenge"]
+    C --> D["Pre-Flight Validation in Testbed"]
+    D --> E["Lab Action Executed & Verified"]
 ```
 
 ---
@@ -678,13 +640,13 @@ Compliance reports are generated as tamper-evident PDF and JSON artifacts contai
 
 Every policy rule implemented in the system maps directly to an authoritative standard paragraph:
 
-```
-POL-NIST-001  ──►  NIST SP 800-77 Rev. 1, Sec 5.1.1 (Disallow DES/3DES)
-POL-NIST-004  ──►  NIST SP 800-77 Rev. 1, Sec 5.1.2 (Mandate DH >= 2048-bit)
-POL-RFC-8221  ──►  RFC 8221, Sec 4 (Mandatory-to-Implement ESP Ciphers)
-POL-RFC-8247  ──►  RFC 8247, Sec 3 (Mandatory-to-Implement IKEv2 Transforms)
-POL-RFC-9395  ──►  RFC 9395, Sec 2 (Deprecation of 3DES in IETF Specs)
-```
+| Policy Rule ID | Authoritative Standard Citation | Mandatory Requirement |
+| :--- | :--- | :--- |
+| `POL-NIST-001` | NIST SP 800-77 Rev. 1, Sec 5.1.1 | Disallow deprecated DES and Triple-DES (3DES) |
+| `POL-NIST-004` | NIST SP 800-77 Rev. 1, Sec 5.1.2 | Mandate Diffie-Hellman groups $\ge$ 2048-bit (Group 14+) |
+| `POL-RFC-8221` | RFC 8221, Sec 4 | Mandatory-to-Implement ESP ciphers (AES-GCM, AES-CBC) |
+| `POL-RFC-8247` | RFC 8247, Sec 3 | Mandatory-to-Implement IKEv2 cryptographic transforms |
+| `POL-RFC-9395` | RFC 9395, Sec 2 | Deprecation of 3DES across all IETF protocol specifications |
 
 ---
 
@@ -700,23 +662,13 @@ All policy rule definitions are stored in Git-backed, semantically versioned dir
 
 Cryptographic standards evolve as mathematical breakthroughs and computing capabilities advance. TunnelTrace AI implements a structured reference update cycle:
 
-```
-[New RFC / NIST Release Published]
-                │
-                ▼
-[Security Architecture Review & Diff]
-                │
-                ▼
-[Draft New Policy Bundle (vNext)]
-                │
-                ▼
-[Controlled Lab Testing (Regression Suites)]
-                │
-                ▼
-[Cryptographic Signing of Policy Bundle]
-                │
-                ▼
-[Production Deployment to Platform]
+```mermaid
+graph TD
+    A["New RFC / NIST Release Published"] --> B["Security Architecture Review & Diff"]
+    B --> C["Draft New Policy Bundle (vNext)"]
+    C --> D["Controlled Lab Testing (Regression Suites)"]
+    D --> E["Cryptographic Signing of Policy Bundle"]
+    E --> F["Production Deployment to Platform"]
 ```
 
 ---
@@ -1082,21 +1034,17 @@ Raw PCAP files and generated reports stored in MinIO or S3:
 
 All security-relevant actions generate immutable records in the `audit_events` table:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                           AUDIT EVENT RECORD                           │
-├────────────────────────────────────────────────────────────────────────┤
-│ Event ID: aud_8f91c0b2-4d1a-4c2e-9b81-e2a1b94d8e33                    │
-│ Timestamp: 2026-09-22T21:45:12.802Z                                    │
-│ Actor ID: usr_3b1f9c84 (Senior Security Analyst)                       │
-│ Action: REMEDIATION_AUTHORIZED                                         │
-│ Resource Type: LAB_SCENARIO                                            │
-│ Resource ID: lab_scen_weak_crypto_04                                   │
-│ Client IP: 192.168.10.45                                               │
-│ Details: Authorized upgrade of strongSwan DH group from Group 2 to 19  │
-│ Result: SUCCESS                                                        │
-└────────────────────────────────────────────────────────────────────────┘
-```
+| Audit Event Attribute | Recorded Immutable Value |
+| :--- | :--- |
+| **Event ID** | `aud_8f91c0b2-4d1a-4c2e-9b81-e2a1b94d8e33` |
+| **Timestamp** | `2026-09-22T21:45:12.802Z` |
+| **Actor ID** | `usr_3b1f9c84` (Senior Security Analyst) |
+| **Action** | `REMEDIATION_AUTHORIZED` |
+| **Resource Type** | `LAB_SCENARIO` |
+| **Resource ID** | `lab_scen_weak_crypto_04` |
+| **Client IP** | `192.168.10.45` |
+| **Event Details** | Authorized upgrade of strongSwan DH group from Group 2 to Group 19 |
+| **Result** | `SUCCESS` |
 
 ---
 

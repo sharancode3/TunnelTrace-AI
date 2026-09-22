@@ -118,23 +118,12 @@ graph LR
 
 The platform enforces strict epistemic separation between four distinct classes of outputs:
 
-```
-┌────────────────────────────────────────────────────────────────────────┐
-│                      OUTPUT INTELLIGENCE HIERARCHY                     │
-├────────────────────────────────────────────────────────────────────────┤
-│ 1. DETERMINISTIC PROTOCOL FACTS   │ Exact packet header extractions    │
-│                                   │ (SPI, Ciphers, IKE version, D-H)   │
-├───────────────────────────────────┼────────────────────────────────────┤
-│ 2. ML TRAFFIC PREDICTIONS         │ Calibrated probabilistic inference │
-│                                   │ (Web, Video, VoIP, OOD/Unknown)    │
-├───────────────────────────────────┼────────────────────────────────────┤
-│ 3. SECURITY FINDINGS              │ Policy-as-Code evaluations         │
-│                                   │ (NIST SP 800-77, RFC 8221 rules)  │
-├───────────────────────────────────┼────────────────────────────────────┤
-│ 4. AI ANALYST EXPLANATIONS        │ Grounded natural-language synthesis│
-│                                   │ (Local RAG over extracted facts)   │
-└───────────────────────────────────┴────────────────────────────────────┘
-```
+| Layer | Output Class | Description & Methodology | Key Examples |
+| :--- | :--- | :--- | :--- |
+| **1** | **Deterministic Protocol Facts** | Exact packet header extractions (zero guesswork) | SPI, Ciphers, IKE version, Diffie-Hellman groups |
+| **2** | **ML Traffic Predictions** | Calibrated probabilistic inference (zero decryption) | Web, Video, VoIP, Bulk Exfiltration, OOD/Unknown |
+| **3** | **Security Findings** | Versioned Policy-as-Code evaluations | NIST SP 800-77 Rev. 1, RFC 8221 compliance rules |
+| **4** | **AI Analyst Explanations** | Grounded natural-language synthesis | Local RAG over extracted facts and RFC citations |
 
 ### Core Evidence States
 - **`VERIFIED`:** Directly proven by explicit byte sequences in the packet capture (e.g., Transform Payload specifying AES-CBC-128).
@@ -186,26 +175,22 @@ The platform enforces strict epistemic separation between four distinct classes 
 
 The console uses a persistent left-hand brutalist navigation rail (fixed width `240px`):
 
-```
-┌──────────────────────────────────────┐
-│ TunnelTrace AI // v1.0               │
-├──────────────────────────────────────┤
-│ [CMD]  Command Center                │
-│ [CAP]  Analyze (Upload & Live)       │
-│ [PRT]  Protocol Intelligence         │
-│ [SA]   SA Explorer (Graph)           │
-│ [TRF]  Traffic Intelligence (ML)     │
-│ [SEC]  Security Assessment           │
-│ [CMP]  Compliance (NIST / RFC)       │
-│ [THR]  Threat Matrix                 │
-│ [EVD]  Evidence Explorer             │
-│ [TWN]  Configuration Twin            │
-│ [REM]  Remediation Verification      │
-│ [RPT]  Reports (PDF / JSON)          │
-│ [AI]   AI Analyst (RAG Assistant)    │
-│ [LAB]  Testbed Console               │
-└──────────────────────────────────────┘
-```
+| Shortcut Key | Platform Module | Core Purpose & Route |
+| :--- | :--- | :--- |
+| `[CMD]` | **Command Center** | Consolidated operational dashboard, score gauge, recent jobs |
+| `[CAP]` | **Analyze (Upload & Live)** | File dropzone, promiscuous live capture, validation |
+| `[PRT]` | **Protocol Intelligence** | Dissected IKE/ESP parameters, transform tables, ladder flow |
+| `[SA]` | **SA Explorer (Graph)** | Interactive React Flow cryptographic session topology |
+| `[TRF]` | **Traffic Intelligence (ML)** | Encrypted application classification, SHAP feature importance |
+| `[SEC]` | **Security Assessment** | Itemized vulnerability findings, severity ratings, deductions |
+| `[CMP]` | **Compliance (NIST / RFC)** | Automated scorecard against NIST SP 800-77 & RFC 8221 |
+| `[THR]` | **Threat Matrix** | Actionable attack scenarios mapped to observed conditions |
+| `[EVD]` | **Evidence Explorer** | Merkle DAG breadcrumb tracing findings to wire byte offsets |
+| `[TWN]` | **Configuration Twin** | What-if simulation of ciphersuite upgrades and score deltas |
+| `[REM]` | **Remediation Verification** | Automated patch execution and re-test in strongSwan lab |
+| `[RPT]` | **Reports (PDF / JSON)** | Publication-grade signed executive and engineering PDF reports |
+| `[AI]` | **AI Analyst (RAG Assistant)** | Offline grounded natural-language assistant citing RFC sections |
+| `[LAB]` | **Testbed Console** | Automated multi-namespace traffic synthesis and impairment injection |
 
 ---
 
@@ -214,19 +199,17 @@ The console uses a persistent left-hand brutalist navigation rail (fixed width `
 ### Purpose
 Provides a consolidated operational dashboard showing overall system posture, recent analysis jobs, critical security alerts, and system health.
 
-```
-+-------------------------------------------------------------------------------+
-| COMMAND CENTER // ACTIVE SESSION                                              |
-+-------------------------------------------------------------------------------+
-| [ ANALYSIS POSTURE ]       [ CRYPTO HEALTH ]        [ TRAFFIC INFERENCE ]     |
-| Score: 45 / 100 [CRITICAL]  IKEv1 Observed (Legacy)  Class: Video Streaming   |
-| Findings: 3 High, 1 Med    DH Group 2 (1024-bit)    Confidence: 94.2% (Cal)   |
-+-------------------------------------------------------------------------------+
-| RECENT ANALYSES:                                                              |
-| * capture_site_a_2026.pcapng | SHA-256: e3b0c44... | COMPLETED | [VIEW REPORT] |
-| * strongswan_lab_retest.pcap | SHA-256: 8f4b2a1... | COMPLETED | [VIEW REPORT] |
-+-------------------------------------------------------------------------------+
-```
+| Analytical Dimension | Displayed Posture & Metric | Operational Status |
+| :--- | :--- | :--- |
+| **Analysis Posture** | Security Score: **45 / 100** (Findings: 3 High, 1 Medium) | `CRITICAL RISK` |
+| **Crypto Health** | IKEv1 Observed (Legacy), DH Group 2 (1024-bit MODP) | `NON-COMPLIANT` |
+| **Traffic Inference** | Dominant Class: **Video Streaming** (Calibrated Confidence: 94.2%) | `ML INFERRED (Zero Decrypt)` |
+
+#### Recent Analytical Sessions
+| Capture File Name | SHA-256 Cryptographic Checksum | Pipeline Status | Action Trigger |
+| :--- | :--- | :--- | :--- |
+| `capture_site_a_2026.pcapng` | `e3b0c44298fc1c149afbf4c8996fb924...` | `COMPLETED` | `[VIEW REPORT]` |
+| `strongswan_lab_retest.pcap` | `8f4b2a105c8d3e9f4a1b2c3d4e5f6a7b...` | `COMPLETED` | `[VIEW REPORT]` |
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
 
@@ -257,22 +240,13 @@ graph TD
 
 ## 17. Offline PCAP Analysis
 
-```
-+-------------------------------------------------------------------------------+
-| INGESTION // OFFLINE PCAP UPLOAD                                              |
-+-------------------------------------------------------------------------------+
-| +---------------------------------------------------------------------------+ |
-| |  DROP PCAP / PCAPNG CAPTURE HERE                                          | |
-| |  [ SELECT FILE FROM DISK ]                                                | |
-| |  Maximum file size: 100 MB | Supported: .pcap, .pcapng, .cap              | |
-| +---------------------------------------------------------------------------+ |
-| [x] Compute SHA-256 checksum immediately upon ingestion                       | |
-| [x] Execute ML Encrypted Traffic Classification                              | |
-| [x] Apply NIST SP 800-77 Rev. 1 Policy Audit                                 | |
-|                                                                               | |
-| [ START ASYNCHRONOUS ANALYSIS ]                                              | |
-+-------------------------------------------------------------------------------+
-```
+| Ingestion Parameter | Specification & Default Value | Operational Details |
+| :--- | :--- | :--- |
+| **Dropzone Interface** | Drag & drop or `[ SELECT FILE FROM DISK ]` | Supported formats: `.pcap`, `.pcapng`, `.cap` (Max: 100 MB) |
+| **Checksum Verification**| `[x] Compute SHA-256 checksum immediately upon ingestion` | Anchors immutable provenance DAG |
+| **ML Inference Toggle**| `[x] Execute ML Encrypted Traffic Classification` | Runs dual-ensemble XGBoost + 1D-CNN pipeline |
+| **Policy Audit Toggle**| `[x] Apply NIST SP 800-77 Rev. 1 Policy Audit` | Evaluates against versioned YAML rules |
+| **Execution Trigger** | `[ START ASYNCHRONOUS ANALYSIS ]` | Dispatches job to Celery worker queue |
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
 
@@ -290,18 +264,13 @@ graph TD
 
 *(Requires Privileged Execution Class B Agent)*
 
-```
-+-------------------------------------------------------------------------------+
-| LIVE WIRE CAPTURE // PRIVILEGED NETWORK AGENT                                 |
-+-------------------------------------------------------------------------------+
-| Network Interface: [ eth0 / br-ipsec-lab  v ]   Packet Limit: [ 10000     ]  |
-| Capture Filter:    [ udp port 500 or udp port 4500 or proto 50           ]  |
-|                                                                               |
-| [!] OPERATIONAL WARNING: Live capture requires CAP_NET_ADMIN / CAP_NET_RAW.  |
-|                                                                               |
-| [ START LIVE CAPTURE ]         [ STOP & FINALIZE ]        [ CANCEL ]          |
-+-------------------------------------------------------------------------------+
-```
+| Live Capture Control | Configured Parameter | Operational Notes |
+| :--- | :--- | :--- |
+| **Monitored Interface** | `eth0 / br-ipsec-lab` | Selected via privileged network agent |
+| **Packet Cap Limit** | `10,000 packets` | Prevents ring buffer exhaustion |
+| **BPF Capture Filter** | `udp port 500 or udp port 4500 or proto 50` | Restricts capture to IKE and ESP frames |
+| **Privilege Requirement**| `CAP_NET_ADMIN / CAP_NET_RAW` | Managed via Execution Class B agent |
+| **Operator Actions** | `[ START LIVE CAPTURE ]`, `[ STOP & FINALIZE ]`, `[ CANCEL ]` | Stream controls |
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
 
@@ -340,18 +309,20 @@ If an analysis job encounters a failure in a non-critical subsystem (such as an 
 
 Displays deterministic extractions from IKE negotiations and ESP encapsulations:
 
-```
-+-------------------------------------------------------------------------------+
-| PROTOCOL INTELLIGENCE // PARSER EVIDENCE                                      |
-+-------------------------------------------------------------------------------+
-| Protocol Detected:  IPsec (IKEv1 + ESP)    | Mode:       TUNNEL [INFERRED]    |
-| Initiator SPI:      0x3b892a71f09cde12     | Responder:  0x9a10cb54e3d17892   |
-| Inbound ESP SPI:    0xc01a4e21             | Outbound:   0xd89f31a4           |
-| Encryption Trans:   AES-CBC-128            | Integrity:  HMAC-SHA1-96         |
-| D-H / KE Group:     Group 2 (MODP-1024)    | PRF:        PRF-HMAC-SHA1        |
-| Perfect Fwd Sec:    DISABLED [VERIFIED]    | Sequence:   32-bit (No ESN)      |
-+-------------------------------------------------------------------------------+
-```
+| Dissected Protocol Attribute | Observed Wire Value | Verification State | Operational Context |
+| :--- | :--- | :--- | :--- |
+| **Protocol Detected** | `IPsec (IKEv1 + ESP)` | `VERIFIED` | Both IKE handshake and ESP packets observed |
+| **Encapsulation Mode** | `Tunnel Mode` | `INFERRED` | Inner and outer subnet divergence verified |
+| **Initiator SPI** | `0x3b892a71f09cde12` | `VERIFIED` | Parsed from ISAKMP header |
+| **Responder SPI** | `0x9a10cb54e3d17892` | `VERIFIED` | Parsed from ISAKMP header |
+| **Inbound ESP SPI** | `0xc01a4e21` | `VERIFIED` | Outer ESP header inspection |
+| **Outbound ESP SPI** | `0xd89f31a4` | `VERIFIED` | Outer ESP header inspection |
+| **Encryption Transform** | `AES-CBC-128` | `VERIFIED` | SA proposal transform type 1 |
+| **Integrity Transform** | `HMAC-SHA1-96` | `VERIFIED` | SA proposal transform type 3 |
+| **Diffie-Hellman Group** | `Group 2 (MODP-1024)` | `VERIFIED` | Key Exchange payload group ID |
+| **PRF Transform** | `PRF-HMAC-SHA1` | `VERIFIED` | IKEv1 PRF attribute |
+| **Perfect Forward Secrecy**| `DISABLED` | `VERIFIED` | Quick Mode renegotiation lacks KE payload |
+| **Sequence Numbering** | `32-bit (No ESN)` | `VERIFIED` | Monotonic 32-bit counters observed |
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
 
@@ -375,18 +346,19 @@ Details the complete timeline of the IKE handshake:
 
 Renders an interactive topological graph mapping the cryptographic relationships between peers, IKE SAs, Child SAs, and ESP data flows:
 
-```
-[ Peer A: 192.168.10.1 ] <=======================> [ Peer B: 192.168.20.1 ]
-                                   |
-                       [ IKE SA: 0x3b89... / 0x9a10... ]
-                       (IKEv1 Main Mode | DH Group 2)
-                                   |
-         +-------------------------+-------------------------+
-         |                                                   |
-[ Child SA: 0xc01a4e21 ]                            [ Child SA: 0xd89f31a4 ]
-Direction: Inbound (B -> A)                         Direction: Outbound (A -> B)
-ESP Bytes: 4,892,100                                ESP Bytes: 12,410,240
-Pkt Count: 3,450                                    Pkt Count: 8,920
+```mermaid
+graph TD
+    PEER_A["Peer A: 192.168.10.1"] <-->|"IPsec Tunnel Enclave"| PEER_B["Peer B: 192.168.20.1"]
+    
+    IKE_SA["IKE SA: 0x3b89... / 0x9a10...<br/>(IKEv1 Main Mode | DH Group 2)"]
+    PEER_A --- IKE_SA
+    PEER_B --- IKE_SA
+
+    CHILD_IN["Child SA (Inbound: B -> A)<br/>SPI: 0xc01a4e21<br/>ESP Bytes: 4,892,100 | Packets: 3,450"]
+    CHILD_OUT["Child SA (Outbound: A -> B)<br/>SPI: 0xd89f31a4<br/>ESP Bytes: 12,410,240 | Packets: 8,920"]
+
+    IKE_SA --> CHILD_IN
+    IKE_SA --> CHILD_OUT
 ```
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
@@ -400,22 +372,20 @@ Pkt Count: 3,450                                    Pkt Count: 8,920
 
 Performs application classification inside encrypted ESP tunnels **without payload decryption**:
 
-```
-+-------------------------------------------------------------------------------+
-| ENCRYPTED TRAFFIC INTELLIGENCE // DUAL ENSEMBLE CLASSIFIER                   |
-+-------------------------------------------------------------------------------+
-| Inferred Application:  VIDEO STREAMING                                       |
-| Calibrated Confidence: 94.2%  [RELIABLE]                                      |
-| Dual-Ensemble Agree:   XGBoost (95.1%) | 1D-CNN (93.3%)                       |
-| OOD Entropy Score:     0.28 (Threshold: 0.85 -> In-Distribution)              |
-| Anomaly Assessment:    NORMAL ENCRYPTED PROFILE                               |
-+-------------------------------------------------------------------------------+
-| TOP CONTRIBUTING METADATA FEATURES:                                          |
-| 1. Packet Length Kurtosis:         +0.42 (High packet size variation)         |
-| 2. Downlink/Uplink Byte Ratio:     +0.38 (Heavy inbound streaming asymmetry)  |
-| 3. Mean Inter-Arrival Time:        +0.18 (Regular 20ms burst cadence)         |
-+-------------------------------------------------------------------------------+
-```
+| Inference Metric | Classification Value | Calibration / Epistemic State |
+| :--- | :--- | :--- |
+| **Inferred Application** | **VIDEO STREAMING** | Dominant flow prediction |
+| **Calibrated Confidence** | **94.2%** | Platt Temperature Scaled (`RELIABLE`) |
+| **Dual-Ensemble Agreement**| XGBoost: **95.1%** \| 1D-CNN: **93.3%** | High consensus across models |
+| **OOD Entropy Score** | **0.28** (Threshold: 0.85) | `IN-DISTRIBUTION` (Known class) |
+| **Anomaly Assessment** | Normal Encrypted Profile | No evasion or tunneling anomaly |
+
+#### Top Contributing Metadata Features (TreeSHAP)
+| Feature Rank | Feature Name | SHAP Attribution Weight | Physical Traffic Characteristic |
+| :--- | :--- | :--- | :--- |
+| **1** | `Packet Length Kurtosis` | `+0.42` | High packet size variation typical of video keyframes |
+| **2** | `Downlink/Uplink Byte Ratio` | `+0.38` | Heavy inbound media streaming asymmetry |
+| **3** | `Mean Inter-Arrival Time` | `+0.18` | Regular frame cadence matching video buffer refill |
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
 
@@ -451,18 +421,12 @@ When a flow exhibits packet length and inter-arrival distributions divergent fro
 
 ## 27. Explainability / SHAP
 
-```
-+-------------------------------------------------------------------------------+
-| TREESHAP FEATURE ATTRIBUTION // LOCAL PREDICTION EXPLANATION                  |
-+-------------------------------------------------------------------------------+
-| Feature Name                   Value      Contribution Direction               |
-| ----------------------------------------------------------------------------- |
-| downlink_byte_ratio            14.2       =======> [+0.48 toward Video]       |
-| packet_length_std              482.1      ====>    [+0.32 toward Video]       |
-| mean_burst_duration_ms         1240.0     ==>      [+0.14 toward Video]       |
-| uplink_packet_ratio            0.08       <==      [-0.10 against VoIP]       |
-+-------------------------------------------------------------------------------+
-```
+| Feature Name | Measured Metric Value | SHAP Attribution Score | Decision Direction |
+| :--- | :--- | :--- | :--- |
+| `downlink_byte_ratio` | `14.2` | `+0.48` | Strong positive contribution toward Video class |
+| `packet_length_std` | `482.1` | `+0.32` | Positive contribution toward Video class |
+| `mean_burst_duration_ms` | `1240.0 ms` | `+0.14` | Moderate contribution toward Video class |
+| `uplink_packet_ratio` | `0.08` | `-0.10` | Negative contribution against VoIP class |
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
 
@@ -482,25 +446,16 @@ Using an unsupervised Isolation Forest baseline, the engine detects volumetric a
 
 Evaluates observed protocol parameters against active security profiles:
 
-```
-+-------------------------------------------------------------------------------+
-| SECURITY ASSESSMENT // NIST SP 800-77 REV. 1 AUDIT                           |
-+-------------------------------------------------------------------------------+
-| Overall Security Score: 45 / 100 [CRITICAL DEFICIENCIES]                      |
-| Evaluated Rules: 14 | Passed: 8 | Failed: 4 | Unknown: 2                      |
-+-------------------------------------------------------------------------------+
-| CRITICAL FINDINGS:                                                            |
-| [!] FINDING SEC-001: Legacy IKEv1 Protocol Active                            |
-|     Affected Entity: Peer 192.168.10.1 <-> 192.168.20.1                      |
-|     Policy Citation: NIST SP 800-77 Sec 5.1 / RFC 8221                        |
-|     Remediation:     Migrate strongSwan peer configuration to IKEv2.          |
-|                                                                               |
-| [!] FINDING SEC-002: Insecure Diffie-Hellman Group 2 (MODP-1024)              |
-|     Affected Entity: IKE SA 0x3b892a71f09cde12                                |
-|     Policy Citation: NIST SP 800-77 Table 3 (Requires Group 14+ / 2048-bit)  |
-|     Remediation:     Configure 'ike = aes256-sha256-modp2048!' in swanctl.    |
-+-------------------------------------------------------------------------------+
-```
+| Assessment Summary | Evaluated Metric | Value & Compliance State |
+| :--- | :--- | :--- |
+| **Overall Security Score** | Mathematical Posture Gauge | **45 / 100** `[CRITICAL DEFICIENCIES]` |
+| **Rule Evaluation Tally** | NIST SP 800-77 Rev. 1 Rules | **14 Evaluated** (8 Passed, 4 Failed, 2 Unknown) |
+
+#### Critical Findings Inventory
+| Finding ID | Finding Title | Affected Entity | Policy Citation | Prescribed Remediation |
+| :--- | :--- | :--- | :--- | :--- |
+| **FINDING SEC-001** | Legacy IKEv1 Protocol Active | Peer `192.168.10.1` $\leftrightarrow$ `192.168.20.1` | NIST SP 800-77 Sec 5.1 / RFC 8221 | Migrate strongSwan peer configuration to IKEv2 |
+| **FINDING SEC-002** | Insecure Diffie-Hellman Group 2 (MODP-1024) | IKE SA `0x3b892a71f09cde12` | NIST SP 800-77 Table 3 (Mandates Group 14+) | Configure `ike = aes256-sha256-modp2048!` in `swanctl.conf` |
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
 
@@ -562,20 +517,12 @@ Quantifies the degree to which an eavesdropper can distinguish application types
 
 The core auditability engine linking findings directly to raw capture bytes:
 
-```
-[ Finding SEC-002: Weak DH Group 2 ]
-                 │
-                 ▼
-[ Policy Rule: nist_sp800_77_r1_dh_min ]
-                 │
-                 ▼
-[ Protocol Fact: DH_GROUP = 2 (MODP-1024) ]
-                 │
-                 ▼
-[ Packet Event: Frame #4 | IKE_SA_INIT Response ]
-                 │
-                 ▼
-[ Wire Hex Offset: 0x0042 | Bytes: 00 02 00 00 ]
+```mermaid
+graph TD
+    F["Finding SEC-002: Weak DH Group 2"] --> R["Policy Rule: nist_sp800_77_r1_dh_min"]
+    R --> P["Protocol Fact: DH_GROUP = 2 (MODP-1024)"]
+    P --> E["Packet Event: Frame #4 | IKE_SA_INIT Response"]
+    E --> H["Wire Hex Offset: 0x0042 | Bytes: 00 02 00 00"]
 ```
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
@@ -599,27 +546,19 @@ Every generated analysis retains cryptographic provenance metadata:
 
 Simulates the security impact of proposed configuration changes prior to production deployment:
 
-```
-+-------------------------------------------------------------------------------+
-| CONFIGURATION SECURITY TWIN // PROPOSAL SIMULATOR                             |
-+-------------------------------------------------------------------------------+
-| PARAMETER             CURRENT OBSERVED              PROPOSED HARDENED         |
-| ----------------------------------------------------------------------------- |
-| IKE Version           IKEv1                         IKEv2                     |
-| Cipher Suite          AES-CBC-128                   AES-GCM-256               |
-| Integrity             HMAC-SHA1-96                  AEAD (Built-in)           |
-| D-H Group             Group 2 (MODP-1024)           Group 14 (MODP-2048)      |
-| Perfect Fwd Secrecy   DISABLED                      ENABLED                   |
-+-------------------------------------------------------------------------------+
-| CURRENT SCORE: 45 / 100 [CRITICAL]    ==>   PROJECTED SCORE: 100 / 100 [PASS] |
-| Current Findings: 4 Critical/High     ==>   Projected Findings: 0             |
-|                                                                               |
-| [!] NOTICE: All projected scores are simulated. Real verification requires   |
-|     applying changes to the testbed and re-analyzing wire traffic.            |
-|                                                                               |
-| [ GENERATE LAB REMEDIATION PATCH ]                                            |
-+-------------------------------------------------------------------------------+
-```
+| Configuration Parameter | Current Observed Value | Proposed Hardened Value | Security Impact |
+| :--- | :--- | :--- | :--- |
+| **IKE Version** | `IKEv1` | `IKEv2` | Eliminates legacy identity exposure |
+| **Cipher Suite** | `AES-CBC-128` | `AES-GCM-256` | Modern AEAD authenticated encryption |
+| **Integrity Mechanism** | `HMAC-SHA1-96` | `AEAD (Built-in)` | Eliminates deprecated SHA-1 hashing |
+| **Diffie-Hellman Group** | `Group 2 (MODP-1024)` | `Group 14 (MODP-2048)` | Meets NIST 112-bit security threshold |
+| **Perfect Forward Secrecy**| `DISABLED` | `ENABLED` | Prevents retroactive session decryption |
+
+#### Score Uplift Simulation
+- **Current Score:** **45 / 100** `[CRITICAL]` (4 Critical/High Findings)
+- **Projected Score:** **100 / 100** `[PASS]` (0 Projected Findings)
+- **Notice:** All projected scores are simulated. Real verification requires applying changes to the testbed and re-analyzing wire traffic.
+- **Action Trigger:** `[ GENERATE LAB REMEDIATION PATCH ]`
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
 
@@ -712,24 +651,10 @@ Designed for network engineers and security auditors:
 
 An interactive, natural-language security assistant powered by local Retrieval-Augmented Generation (RAG):
 
-```
-+-------------------------------------------------------------------------------+
-| AI ANALYST // GROUNDED INTERACTIVE ASSISTANT                                  |
-+-------------------------------------------------------------------------------+
-| USER: Why was this session flagged with a Critical Security Score?            |
-|                                                                               |
-| AI ANALYST:                                                                   |
-| The session received a score of 45/100 due to two mandatory policy failures:  |
-| 1. Finding SEC-001 (NIST SP 800-77 Sec 5.1): Legacy IKEv1 protocol in use.   |
-| 2. Finding SEC-002 (NIST SP 800-77 Table 3): Diffie-Hellman Group 2           |
-|    (MODP-1024) provides only 80 bits of security strength, which NIST marked  |
-|    unacceptable for federal use after 2013.                                   |
-|                                                                               |
-| Grounding Evidence:                                                           |
-| * Frame #4, Byte Offset 0x0042 (Transform Attribute = Group 2)                |
-| * NIST SP 800-77 Rev. 1 Rule ID: 'nist_sp800_77_r1_dh_min'                   |
-+-------------------------------------------------------------------------------+
-```
+| Interaction Component | Conversation Content | Grounded Evidence Citation |
+| :--- | :--- | :--- |
+| **User Query** | *"Why was this session flagged with a Critical Security Score?"* | Query target: Active session analysis |
+| **AI Analyst Response**| The session received a score of **45/100** due to two mandatory policy failures:<br/><br/>1. **Finding SEC-001** (*NIST SP 800-77 Sec 5.1*): Legacy IKEv1 protocol in use.<br/>2. **Finding SEC-002** (*NIST SP 800-77 Table 3*): Diffie-Hellman Group 2 (MODP-1024) provides only 80 bits of security strength, which NIST marked unacceptable for federal use after 2013. | • **Packet Frame:** Frame #4, Byte Offset `0x0042` (Transform Attribute = Group 2)<br/>• **Policy Rule:** `nist_sp800_77_r1_dh_min` |
 
 *SCREENSHOT PLACEHOLDER — Capture from validated current build.*
 

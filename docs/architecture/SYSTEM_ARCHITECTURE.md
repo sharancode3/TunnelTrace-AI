@@ -146,42 +146,13 @@ The architectural design is directly driven by six core technical mandates:
 
 ## 13. Technology Baseline
 
-```
-[FRONTEND TIER]
-├── Runtime: Node.js 20 LTS (Alpine base)
-├── Framework: Next.js 14 (App Router, Strict TypeScript)
-├── Styling: Vanilla CSS + Custom Brutalist Tailwind Tokens (0px radius, Light Theme Default)
-├── Visualization: Apache ECharts 5.x, React Flow 11.x
-└── Client Shell: Progressive Web Application (PWA), Service Worker, Web App Manifest
-
-[APPLICATION & API TIER]
-├── Language & Runtime: Python 3.11 (Debian Slim base)
-├── Framework: FastAPI 0.110+ (ASGI / Starlette, Uvicorn)
-├── Asynchronous Engine: asyncio, WebSockets
-├── Validation & Serialization: Pydantic v2
-└── Task Broker & Worker: Redis 7-alpine, Celery 5.3+
-
-[PERSISTENCE & STORAGE TIER]
-├── Relational Database: PostgreSQL 15
-├── Vector Extension: pgvector 0.6+
-├── ORM & Migrations: SQLAlchemy 2.0 (async), Alembic
-└── Binary Blob Storage: Standard POSIX Local File Volume (/storage) / S3-compatible interface
-
-[ANALYTICAL & ML RUNTIME]
-├── Protocol Dissectors: TShark 4.x, PyShark 0.6+, Scapy (Packet crafting only)
-├── Tabular Classifier: XGBoost 2.0+ (Calibrated Probabilities)
-├── Spatial Classifier: PyTorch 2.2+ (1D-CNN, CPU-optimized inference)
-├── Baseline & Anomaly: scikit-learn 1.4+ (Isolation Forest, Random Forest)
-├── Explainability: SHAP 0.44+ (TreeExplainer)
-└── Document Synthesizer: WeasyPrint 61+, Jinja2
-
-[PRIVILEGED TESTBED & NETWORK TIER]
-├── OS Platform: Dedicated Linux Kernel 5.15+ / 6.x (Ubuntu 22.04 LTS / Debian 12)
-├── VPN Daemon: strongSwan 5.9.8+ (charon, vici interface, swanctl)
-├── Kernel Subsystems: XFRM (IPsec State & Policy), Linux Network Namespaces (netns)
-├── Traffic Shaping: Linux tc (Traffic Control), netem (Network Emulator)
-└── Interception: tcpdump 4.99+, libpcap 1.10+
-```
+| Architecture Tier | Technology & Runtime | Specifications & Frameworks | Capabilities & Implementations |
+| :--- | :--- | :--- | :--- |
+| **Frontend Tier** | Node.js 20 LTS (Alpine base) | Next.js 14 (App Router, Strict TypeScript) | Vanilla CSS + Custom Brutalist Tailwind Tokens (0px radius, Light Theme Default), Apache ECharts 5.x, React Flow 11.x, PWA / Service Worker |
+| **Application & API Tier** | Python 3.11 (Debian Slim base) | FastAPI 0.110+ (ASGI / Starlette, Uvicorn) | Asyncio, WebSockets, Pydantic v2 validation & serialization, Redis 7-alpine, Celery 5.3+ |
+| **Persistence & Storage Tier** | PostgreSQL 15 & Redis 7 | pgvector 0.6+, SQLAlchemy 2.0 (async), Alembic | Relational schemas, semantic vector embeddings, POSIX local file volume (`/storage`) / S3-compatible interface |
+| **Analytical & ML Runtime** | TShark 4.x, PyTorch 2.2+, XGBoost 2.0+ | Scikit-learn 1.4+, PyShark 0.6+, SHAP 0.44+ | Protocol dissection, calibrated probabilities, 1D-CNN spatial classification, TreeExplainer, WeasyPrint 61+, Jinja2 |
+| **Privileged Testbed Tier** | Dedicated Linux Kernel 5.15+/6.x | strongSwan 5.9.8+ (charon, vici, swanctl) | Linux `netns`, `tc/netem` traffic shaping, XFRM state/policy engine, `tcpdump` 4.99+, `libpcap` 1.10+ |
 
 ---
 
@@ -1056,23 +1027,12 @@ graph TB
 
 ## 60. Trust Boundaries
 
-```
-[BOUNDARY 1: Web Ingress Trust Boundary]
-  Users / Web Browsers ──► Reverse Proxy / FastAPI API Gateway
-  • Controls: JWT authentication, CORS restrictions, rate-limiting, strict Pydantic payload validation.
-
-[BOUNDARY 2: Untrusted Packet Dissection Boundary]
-  Uploaded PCAP Files ──► TShark / PyShark Child Process
-  • Controls: Memory limits (RLIMIT_AS 1GB), execution timeout (120s), unprivileged execution, non-root parser.
-
-[BOUNDARY 3: Privileged Command Escalation Boundary]
-  FastAPI Backend ──► Privileged Network Agent (UNIX Domain Socket)
-  • Controls: Strict JSON schema, command whitelisting, regex interface validation, root-only socket file permissions.
-
-[BOUNDARY 4: External AI Gateway Boundary]
-  RAG Engine ──► External / Cloud LLM APIs
-  • Controls: Context sanitization, raw PCAP exclusion, strict system prompts prohibiting speculative security claims.
-```
+| Trust Boundary | Boundary Path / Transition | Enforced Security Controls & Mitigations |
+| :--- | :--- | :--- |
+| **Boundary 1: Web Ingress** | Users / Web Browsers $\to$ Reverse Proxy / FastAPI API Gateway | JWT authentication, CORS restrictions, rate-limiting, strict Pydantic payload validation |
+| **Boundary 2: Untrusted Packet Dissection** | Uploaded PCAP Files $\to$ TShark / PyShark Child Process | Memory limits (`RLIMIT_AS 1GB`), execution timeout (120s), unprivileged execution, non-root parser |
+| **Boundary 3: Privileged Command Escalation** | FastAPI Backend $\to$ Privileged Network Agent (UNIX Domain Socket) | Strict JSON schema, command whitelisting, regex interface validation, root-only socket file permissions |
+| **Boundary 4: External AI Gateway** | RAG Engine $\to$ External / Cloud LLM APIs | Context sanitization, raw PCAP exclusion, strict system prompts prohibiting speculative security claims |
 
 ---
 

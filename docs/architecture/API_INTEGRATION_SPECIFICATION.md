@@ -83,11 +83,13 @@ This specification interfaces directly with the master system documentation:
 
 ## 7. Design Principles
 
-```
-  [ Client Request ] ──► [ Schema Validation ] ──► [ Auth / RBAC Gate ]
-                                                           │
-                                                           ▼
-  [ Database DTO ]  ◄── [ Business Engine ]  ◄── [ Object-Level Ownership ]
+```mermaid
+graph LR
+    CR["Client Request"] --> SV["Schema Validation"]
+    SV --> AR["Auth / RBAC Gate"]
+    AR --> OLO["Object-Level Ownership"]
+    OLO --> BE["Business Engine"]
+    BE --> DTO["Database DTO"]
 ```
 
 1. **Schema Strictness:** Reject unexpected request fields (`extra = "forbid"`). Never silently ignore malformed inputs.
@@ -915,11 +917,13 @@ Internal communication between modular subsystems is governed by typed Python da
 
 ## 60. Protocol Engine Integration
 
-```
-[Celery Worker] ──► [Invoke TShark Subprocess (safe args)] ──► [Read EK JSON Stream]
-                                                                        │
-                                                                        ▼
-[Persist Security Facts] ◄── [Normalize Protocol DTO] ◄── [Dissection Parser]
+```mermaid
+graph LR
+    CW["Celery Worker"] --> SUB["Invoke TShark Subprocess (safe args)"]
+    SUB --> EK["Read EK JSON Stream"]
+    EK --> DP["Dissection Parser"]
+    DP --> DTO["Normalize Protocol DTO"]
+    DTO --> PSF["Persist Security Facts"]
 ```
 
 - **Execution Contract:** TShark output is parsed line-by-line via JSON stream reader; frames are aggregated into `DissectedFrameDTO` structures.
