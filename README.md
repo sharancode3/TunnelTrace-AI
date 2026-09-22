@@ -22,36 +22,6 @@
 
 ---
 
-## Table of Contents
-
-1. [Executive Summary](#executive-summary)
-2. [Architectural Mandate: The Epistemic Separation](#architectural-mandate-the-epistemic-separation)
-3. [Competitive Matrix & Value Proposition](#competitive-matrix--value-proposition)
-4. [Core Architectural Pillars](#core-architectural-pillars)
-5. [System Architecture & Execution Topologies](#system-architecture--execution-topologies)
-   - [High-Level Execution Topology (Class A vs. Class B Isolation)](#high-level-execution-topology-class-a-vs-class-b-isolation)
-   - [End-to-End Forensic Processing Pipeline](#end-to-end-forensic-processing-pipeline)
-   - [Zero-Decryption ML Inference Engine (Dual Ensemble)](#zero-decryption-ml-inference-engine-dual-ensemble)
-   - [Configuration Security Twin & Closed-Loop Remediation Cycle](#configuration-security-twin--closed-loop-remediation-cycle)
-6. [Subsystem Capabilities & Technical Specifications](#subsystem-capabilities--technical-specifications)
-   - [1. Deterministic Protocol Forensics & State Reconstruction](#1-deterministic-protocol-forensics--state-reconstruction)
-   - [2. Encrypted Traffic Intelligence (Zero Payload Decryption)](#2-encrypted-traffic-intelligence-zero-payload-decryption)
-   - [3. Policy-as-Code & Audit-Proof Security Scoring](#3-policy-as-code--audit-proof-security-scoring)
-   - [4. The Configuration Security Twin](#4-the-configuration-security-twin)
-   - [5. Automated strongSwan Remediation Testbed](#5-automated-strongswan-remediation-testbed)
-   - [6. Byte-Level Cryptographic Evidence DAG](#6-byte-level-cryptographic-evidence-dag)
-   - [7. Air-Gapped Grounded AI Analyst (Local RAG)](#7-air-gapped-grounded-ai-analyst-local-rag)
-7. [Repository Structure & Specification Suite](#repository-structure--specification-suite)
-8. [Technology Stack](#technology-stack)
-9. [Quickstart & Local-First Deployment](#quickstart--local-first-deployment)
-10. [Golden SIH 2026 Demonstration Flow](#golden-sih-2026-demonstration-flow)
-11. [Regulatory Compliance & RFC Standards Matrix](#regulatory-compliance--rfc-standards-matrix)
-12. [Security, Privacy & Zero-Egress Governance](#security-privacy--zero-egress-governance)
-13. [Problem Statement Attribution](#problem-statement-attribution)
-14. [License & Intellectual Property](#license--intellectual-property)
-
----
-
 ## Executive Summary
 
 **TunnelTrace AI** is an enterprise-grade, evidence-first **IPsec VPN Protocol Analyzer and Security Assessment Framework** engineered for the **National Technical Research Organisation (NTRO)** under Smart India Hackathon 2026 (Problem Statement ID: `26160`).
@@ -66,19 +36,275 @@ Modern national defense organizations, intelligence entities, and critical infra
 
 ---
 
-## Architectural Mandate: The Epistemic Separation
+## Master Architecture & Technical Blueprints
 
-The defining architectural principle of TunnelTrace AI is **strict epistemic separation** between deterministic protocol observation and probabilistic machine learning inference:
+### Figure 1: Master System Architecture & Security Boundary Topology (Class A vs. Class B)
+
+The platform enforces strict privilege boundary separation between unprivileged containerized applications (Execution Class A) and host-level networking operations (Execution Class B) communicating across an authenticated UNIX domain socket.
+
+```mermaid
+graph TD
+    classDef client fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
+    classDef api fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
+    classDef worker fill:#0f172a,stroke:#a78bfa,stroke-width:2px,color:#f8fafc;
+    classDef storage fill:#0f172a,stroke:#34d399,stroke-width:2px,color:#f8fafc;
+    classDef agent fill:#1c1917,stroke:#f97316,stroke-width:2px,color:#f8fafc;
+    classDef network fill:#1c1917,stroke:#fb7185,stroke-width:2px,color:#f8fafc;
+
+    subgraph Tier_Client [Presentation Tier - Web Interface]
+        UI([Next.js 14 High-Density Web Console]):::client
+    end
+
+    subgraph Tier_ClassA [Execution Class A - Unprivileged Container Stack]
+        API([FastAPI Gateway & Realtime Hub]):::api
+        CELERY([Celery Asynchronous Task Pipeline]):::worker
+        REDIS[(Redis 7 - Broker & State Cache)]:::storage
+        POSTGRES[(PostgreSQL 15 & pgvector - Evidence DAG & Relational Store)]:::storage
+        MINIO[(Local Object Storage - PCAPs & Reports)]:::storage
+        LLM([Local LLM Engine - Ollama / vLLM]):::worker
+    end
+
+    subgraph Tier_ClassB [Execution Class B - Privileged Host Network Domain]
+        SOCK{{UNIX Domain Socket RPC - /run/tunneltrace.sock}}:::agent
+        AGENT([Privileged Network Management Agent]):::agent
+        SWAN[strongSwan 5.9+ IPsec Daemon - Multi-Namespace Lab]:::network
+        NETEM[Linux tc/netem - Impairment Injection Engine]:::network
+        SNIFF[Raw Socket Packet Sniffer - Promiscuous Ring]:::network
+    end
+
+    UI <-->|HTTP REST & WebSockets| API
+    API <-->|Dispatch Jobs & Event Stream| REDIS
+    API <-->|SQL Queries & Session State| POSTGRES
+    API <-->|Direct PCAP Upload & Retrieval| MINIO
+    API <-->|Unix Domain Socket IPC| SOCK
+    SOCK <-->|Authenticated Local RPC| AGENT
+
+    CELERY <-->|Consume Jobs & Publish Events| REDIS
+    CELERY <-->|Persist Sessions, SAs & DAG Nodes| POSTGRES
+    CELERY <-->|Read Raw PCAPs & Save Reports| MINIO
+    CELERY <-->|Grounded Vector RAG Queries| LLM
+
+    AGENT <-->|swanctl & stroke VICI Interface| SWAN
+    AGENT <-->|Netlink qdisc Impairment Rules| NETEM
+    AGENT <-->|AF_PACKET Promiscuous Ingestion| SNIFF
+```
+
+---
+
+### Figure 2: End-to-End Forensic Processing & Remediation Pipeline
+
+A four-phase pipeline governing trace ingestion, deterministic protocol extraction, side-channel machine learning, policy evaluation, and closed-loop lab verification.
+
+```mermaid
+graph TD
+    classDef input fill:#1e293b,stroke:#38bdf8,stroke-width:1px,color:#f8fafc;
+    classDef dissect fill:#0f172a,stroke:#818cf8,stroke-width:1px,color:#f8fafc;
+    classDef branch fill:#1e1e38,stroke:#a78bfa,stroke-width:1px,color:#f8fafc;
+    classDef engine fill:#0f172a,stroke:#f59e0b,stroke-width:1px,color:#f8fafc;
+    classDef verified fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+    classDef report fill:#1e293b,stroke:#ec4899,stroke-width:1px,color:#f8fafc;
+
+    subgraph Phase1_Ingestion [Phase 1: Ingestion & Dissection]
+        IN_FILE[/Raw PCAP / PCAPNG Trace Capture/]:::input
+        IN_LIVE[/Live Interface Capture Stream/]:::input
+        INGEST[Packet Header Ingestion & Integrity Validation]:::dissect
+        TSHARK[TShark Wire Dissector Subsystem]:::dissect
+
+        IN_FILE --> INGEST
+        IN_LIVE --> INGEST
+        INGEST --> TSHARK
+    end
+
+    subgraph Phase2_Deterministic [Phase 2: Deterministic Protocol Forensics]
+        IKE_MOD[IKEv1 / IKEv2 Dissection Module]:::branch
+        ESP_MOD[ESP Tunnel Dissection Module]:::branch
+
+        IKE_TRANS[Extract Cryptographic Transforms: ENCR, INTEG, PRF, DH]:::branch
+        IKE_STATE[Reconstruct IKE SA State Machine]:::branch
+        ESP_SPI[Pair Bidirectional Child SA SPIs & Flow Volumes]:::branch
+        ESP_SEQ[Verify Sequence Numbers & Anti-Replay Window]:::branch
+
+        TSHARK --> IKE_MOD
+        TSHARK --> ESP_MOD
+
+        IKE_MOD --> IKE_TRANS
+        IKE_MOD --> IKE_STATE
+        ESP_MOD --> ESP_SPI
+        ESP_MOD --> ESP_SEQ
+
+        POLICY[Policy-as-Code Engine: NIST SP 800-77 & RFC 8221]:::engine
+        SCORE[Deterministic 0-100 Security Scoring Engine]:::engine
+
+        IKE_TRANS --> POLICY
+        IKE_STATE --> POLICY
+        ESP_SPI --> POLICY
+        ESP_SEQ --> POLICY
+        POLICY --> SCORE
+    end
+
+    subgraph Phase3_Inference [Phase 3: Zero-Decryption Encrypted Traffic ML]
+        SIDE_MOD[Side-Channel Feature Extraction Module]:::branch
+        TAB_STAT[24 Tabular Metrics: Lengths, IAT, Bursts]:::branch
+        SEQ_TENS[(3, N) Directional Sequence Tensors]:::branch
+
+        TSHARK --> SIDE_MOD
+        SIDE_MOD --> TAB_STAT
+        SIDE_MOD --> SEQ_TENS
+
+        ML_DUAL[Dual-Ensemble Model: XGBoost + PyTorch 1D-CNN]:::engine
+        CALIB[Platt Temperature Scaling & Entropy OOD Gate]:::engine
+
+        TAB_STAT --> ML_DUAL
+        SEQ_TENS --> ML_DUAL
+        ML_DUAL --> CALIB
+    end
+
+    subgraph Phase4_ClosedLoop [Phase 4: Evidence Synthesis & Closed-Loop Remediation]
+        DAG[(Cryptographic Evidence DAG - Byte-Level Provenance)]:::verified
+        TWIN[Configuration Security Twin - What-If Simulation]:::engine
+        LAB[strongSwan Remediation Testbed - ns-peer-a <-> ns-peer-b]:::engine
+        REPORT[\Cryptographically Signed Defense Audit Report\]:::report
+
+        SCORE --> DAG
+        CALIB --> DAG
+        DAG --> TWIN
+        TWIN --> LAB
+        LAB -->|Automated Verification Loop| DAG
+        DAG --> REPORT
+    end
+```
+
+---
+
+### Figure 3: Zero-Decryption Encrypted Traffic Machine Learning Engine
+
+Dual-stream feature engineering feeding a parallel model architecture (XGBoost + 1D-CNN) with weighted late fusion, post-hoc Platt temperature scaling, and Shannon entropy out-of-distribution gating.
+
+```mermaid
+graph TD
+    classDef stream fill:#0f172a,stroke:#38bdf8,stroke-width:1px,color:#f8fafc;
+    classDef feat fill:#1e1e38,stroke:#a78bfa,stroke-width:1px,color:#f8fafc;
+    classDef model fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
+    classDef fusion fill:#1e293b,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
+    classDef gate fill:#312e81,stroke:#c084fc,stroke-width:2px,color:#f8fafc;
+    classDef passed fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+    classDef ood fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#f8fafc;
+
+    RAW_ESP[/Encapsulated ESP Packet Flow Stream/]:::stream
+
+    subgraph FeatureEngineering [Dual-Stream Feature Extraction]
+        FEAT_TAB[Tabular Feature Extractor<br/>24 Statistical Metrics: Mean, Std, Skew, IAT Quantiles]:::feat
+        FEAT_SEQ[Spatio-Temporal Sequence Constructor<br/>Direction, Length, Delta-Time 3x100 Tensor]:::feat
+    end
+
+    subgraph ModelHeads [Dual-Model Architecture]
+        MODEL_XGB[XGBoost Gradient Boosted Trees<br/>500 Trees, Max Depth 6, Subsample 0.8]:::model
+        MODEL_CNN[PyTorch 1D-CNN Deep Network<br/>3 Conv1D Blocks + BatchNorm + GlobalMaxPool]:::model
+    end
+
+    subgraph PostProcessing [Calibration & Epistemic Uncertainty Gating]
+        FUSION[Weighted Late Fusion Layer<br/>Logits = 0.55 * XGB + 0.45 * CNN]:::fusion
+        PLATT[Platt Temperature Scaling<br/>Calibrated Probability Distribution]:::fusion
+        GATE{Shannon Entropy Gate<br/>H = -SUM p*log p <= 1.85?}:::gate
+    end
+
+    subgraph DecisionOutput [Classification Outcome]
+        PRED_KNOWN[Confident Inferred Application Class<br/>VoIP, Video, Web, SSH, SFTP, Bulk Exfil, DNS]:::passed
+        PRED_OOD[Quarantined Out-of-Distribution<br/>Unseen Protocol / Tunnel Evasion Anomaly]:::ood
+    end
+
+    RAW_ESP --> FEAT_TAB
+    RAW_ESP --> FEAT_SEQ
+
+    FEAT_TAB --> MODEL_XGB
+    FEAT_SEQ --> MODEL_CNN
+
+    MODEL_XGB --> FUSION
+    MODEL_CNN --> FUSION
+
+    FUSION --> PLATT
+    PLATT --> GATE
+
+    GATE -->|Pass: H <= 1.85| PRED_KNOWN
+    GATE -->|Fail: H > 1.85| PRED_OOD
+```
+
+---
+
+### Figure 4: Configuration Security Twin & Closed-Loop Remediation Cycle
+
+Automated remediation workflow: projecting safe cryptographic migrations in a virtual twin before applying and verifying them in an isolated Linux network namespace testbed.
+
+```mermaid
+graph TD
+    classDef finding fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#f8fafc;
+    classDef twin fill:#1e1e38,stroke:#a78bfa,stroke-width:1px,color:#f8fafc;
+    classDef synth fill:#0f172a,stroke:#818cf8,stroke-width:1px,color:#f8fafc;
+    classDef lab fill:#1c1917,stroke:#f97316,stroke-width:2px,color:#f8fafc;
+    classDef verify fill:#312e81,stroke:#c084fc,stroke-width:2px,color:#f8fafc;
+    classDef passed fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
+    classDef failed fill:#450a0a,stroke:#f43f5e,stroke-width:1px,color:#f8fafc;
+
+    VULN[Vulnerability Detected: Weak Ciphersuite or Missing PFS]:::finding
+
+    subgraph Simulation_Twin [Phase 1: Configuration Security Twin]
+        CONF_INGEST[Ingest Live strongSwan / swanctl.conf Topology]:::twin
+        WHATIF[What-If Simulation Engine: Compatibility, Crypto Overhead & MTU]:::twin
+        PROJECTION[Score Uplift Projection: Baseline 38/100 -> Target 96/100]:::twin
+        PATCH_GEN[Automated Hardening Patch Synthesizer - Unified Diff]:::synth
+
+        CONF_INGEST --> WHATIF
+        WHATIF --> PROJECTION
+        PROJECTION --> PATCH_GEN
+    end
+
+    subgraph Verification_Lab [Phase 2: Closed-Loop strongSwan Lab Testbed]
+        NS_SETUP[Provision Isolated Linux Namespaces: ns-peer-a <-> ns-peer-b]:::lab
+        NETEM_INJECT[Inject Tactical Network Impairments: tc/netem Latency & Jitter]:::lab
+        APPLY_CONFIG[Deploy Synthesized Hardened Configuration]:::lab
+        TRAFFIC_RUN[Establish IPsec Child SA & Stream Synthetic Traffic]:::lab
+        RE_CAPTURE[Capture Verification PCAP & Re-Run Forensic Dissection]:::lab
+
+        NS_SETUP --> NETEM_INJECT
+        NETEM_INJECT --> APPLY_CONFIG
+        APPLY_CONFIG --> TRAFFIC_RUN
+        TRAFFIC_RUN --> RE_CAPTURE
+    end
+
+    subgraph Decision_Gate [Phase 3: Automated Verification Audit]
+        GATE{Verification Audit Passed?<br/>No Weak Transforms & Target Score Confirmed}:::verify
+        PROD_PATCH[Cryptographically Signed Production Remediation Patch]:::passed
+        ROLLBACK[Automated Rollback & Root-Cause Diagnostic Report]:::failed
+    end
+
+    VULN --> CONF_INGEST
+    PATCH_GEN --> NS_SETUP
+    RE_CAPTURE --> GATE
+
+    GATE -->|Confirmed: Score Uplift Met| PROD_PATCH
+    GATE -->|Failed: Negotiation Broken| ROLLBACK
+```
+
+---
+
+### Figure 5: Architectural Epistemic Separation (Deterministic Forensics vs. Calibrated ML)
+
+Explicit division between facts extracted with 100% certainty from packet headers and application categories inferred probabilistically from encrypted side channels.
 
 ```mermaid
 graph LR
-    subgraph DeterministicLayer ["Deterministic Layer (Zero Guesswork)"]
-        D1["IKEv1 / IKEv2 State Machines"]
-        D2["SPI Pairings & Lifetime Tracking"]
-        D3["Cryptographic Ciphers & DH Groups"]
-        D4["NIST SP 800-77 Rev. 1 Policy Audit"]
-        D5["Byte-Level Frame Offsets & Hashes"]
-        DRULE["Principle: Protocol parameters are NEVER predicted.<br/>Extracted strictly from wire header bytes."]
+    classDef det fill:#0f172a,stroke:#38bdf8,stroke-width:1px,color:#f8fafc;
+    classDef prob fill:#1e1e38,stroke:#a78bfa,stroke-width:1px,color:#f8fafc;
+    classDef rule fill:#1e293b,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
+
+    subgraph Deterministic_Forensics [Deterministic Protocol Forensics Layer]
+        D1[IKEv1 / IKEv2 State Machine Tracking]:::det
+        D2[Bidirectional Child SA SPI Pairing]:::det
+        D3[Cryptographic Suite & DH Group Extraction]:::det
+        D4[NIST SP 800-77 Rev. 1 Policy Audit]:::det
+        D5[Byte-Level Frame Offsets & Cryptographic Hashes]:::det
+        DRULE[Epistemic Guarantee:<br/>Protocol parameters are NEVER predicted.<br/>Extracted strictly from wire header bytes.]:::rule
+
         D1 --> D2
         D2 --> D3
         D3 --> D4
@@ -86,13 +312,14 @@ graph LR
         D5 --> DRULE
     end
 
-    subgraph ProbabilisticLayer ["Probabilistic Layer (Calibrated Inference)"]
-        P1["Encrypted Flow Metadata Ingestion"]
-        P2["24 Tabular Features & (3, N) Sequence Tensors"]
-        P3["Dual Ensemble: XGBoost + 1D-CNN"]
-        P4["Platt Temperature Scaling & Entropy OOD Gating"]
-        P5["Application Class Inferred (VoIP, Video, Web, Bulk)"]
-        PRULE["Principle: Payload data is NEVER decrypted.<br/>Inferred strictly from side-channel metadata."]
+    subgraph Probabilistic_ML [Probabilistic Traffic Intelligence Layer]
+        P1[Encrypted ESP Flow Metadata Ingestion]:::prob
+        P2[24 Tabular Metrics & 3x100 Sequence Tensors]:::prob
+        P3[Dual-Ensemble Inference: XGBoost + 1D-CNN]:::prob
+        P4[Platt Temperature Scaling & Entropy OOD Gating]:::prob
+        P5[Inferred Application Category: VoIP, Video, Web]:::prob
+        PRULE[Epistemic Guarantee:<br/>Payload data is NEVER decrypted.<br/>Inferred strictly from side-channel metadata.]:::rule
+
         P1 --> P2
         P2 --> P3
         P3 --> P4
@@ -101,48 +328,25 @@ graph LR
     end
 ```
 
-| Architectural Dimension | Deterministic Layer (Protocol Forensics) | Probabilistic Layer (Traffic Intelligence) |
-| :--- | :--- | :--- |
-| **Operational Target** | IKEv1/IKEv2 negotiations, SA state machine, SPI pairs | Encapsulated application category inside ESP tunnel |
-| **Input Signals** | Raw packet header fields, transform payloads, notification types | Packet lengths, inter-arrival times, burst ratios, sequence numbers |
-| **Core Method** | State machine parser, RFC transform mapping, YAML rules | XGBoost + PyTorch 1D-CNN dual ensemble with Platt scaling |
-| **Standard / Reference** | NIST SP 800-77 Rev. 1, RFC 8221, RFC 7296, RFC 4301 | UNB ISCXVPN2016 methodology, strongSwan native dataset |
-| **Epistemic Rule** | **Zero Prediction:** Cryptographic parameters are never guessed | **Zero Decryption:** Plaintext payloads are never inspected |
+---
+
+## Table of Contents
+
+1. [Core Capabilities & Architectural Pillars](#core-capabilities--architectural-pillars)
+2. [Subsystem Capabilities & Technical Specifications](#subsystem-capabilities--technical-specifications)
+3. [Competitive Matrix & Value Proposition](#competitive-matrix--value-proposition)
+4. [Repository Structure & Specification Suite](#repository-structure--specification-suite)
+5. [Technology Stack](#technology-stack)
+6. [Quickstart & Local-First Deployment](#quickstart--local-first-deployment)
+7. [Golden SIH 2026 Demonstration Flow](#golden-sih-2026-demonstration-flow)
+8. [Regulatory Compliance & RFC Standards Matrix](#regulatory-compliance--rfc-standards-matrix)
+9. [Security, Privacy & Zero-Egress Governance](#security-privacy--zero-egress-governance)
+10. [Problem Statement Attribution](#problem-statement-attribution)
+11. [License & Intellectual Property](#license--intellectual-property)
 
 ---
 
-## Competitive Matrix & Value Proposition
-
-| Evaluation Vector | Traditional Packet Sniffers (Wireshark / tcpdump) | Generic Cloud SIEMs (Splunk / QRadar) | Black-Box AI Anomaly Detectors | TunnelTrace AI (SIH 2026 / NTRO) |
-| :--- | :--- | :--- | :--- | :--- |
-| **IKE/ESP State Reconstruction** | Manual packet dissection; no automated session graph | Log-based only; blind to wire-level protocol state | Opaque embeddings; cannot reconstruct SA states | **Automated, deterministic IKEv1/IKEv2 & ESP state machines** |
-| **Encrypted Flow Visibility** | Blind beyond ESP header (requires private keys) | None; relies on host endpoint agents | Uncalibrated anomaly scores; high false-positive rate | **Dual-ensemble ML (XGBoost + 1D-CNN) with zero decryption** |
-| **Out-of-Distribution Detection** | Not applicable | Rule-based threshold alerts | Fails silently on unseen zero-day traffic | **Shannon entropy gating + Platt temperature scaling** |
-| **Regulatory Compliance** | Manual inspection against printed standards | Generic CIS/ISO compliance templates | No compliance mapping | **Native NIST SP 800-77 Rev. 1 & RFC 8221 Policy-as-Code** |
-| **Evidence Provenance** | Individual frame numbers | Aggregated log indices | None (black-box latent vector) | **Cryptographic Evidence DAG linked to raw byte offsets** |
-| **Remediation Safety** | Manual CLI editing on live routers | Script push without validation | Automated actions risk breaking live tunnels | **What-if Configuration Twin + Closed-Loop Lab Re-test** |
-| **Deployment Model** | Desktop utility | Heavy cloud infrastructure | Proprietary cloud SaaS | **100% Local-First, air-gapped Docker container stack** |
-
----
-
-## Core Architectural Pillars
-
-```mermaid
-graph TD
-    CORE["TunnelTrace AI Core Architectural Pillars"]
-
-    P1["1. Deterministic Protocol Forensics<br/>IKEv1/IKEv2 state machines, cryptographic transform extraction,<br/>bidirectional Child SA pairing, SPI mapping, and NAT-T tracking."]
-    P2["2. Encrypted Traffic Inference (Zero Decryption)<br/>Dual-ensemble classification (XGBoost + 1D-CNN) over 24 tabular features<br/>and (3, N) packet tensors. Platt calibration and Shannon entropy OOD gating."]
-    P3["3. Deterministic Policy-as-Code & Security Score<br/>YAML-driven compliance evaluation against NIST SP 800-77 Rev. 1<br/>and RFC 8221. Transparent, auditable 0–100 Security Score."]
-    P4["4. Configuration Security Twin & Closed-Loop Remediation<br/>What-if simulation of ciphersuite upgrades without touching live links.<br/>Automated patch generation and re-test verification in strongSwan lab."]
-    P5["5. Cryptographic Evidence DAG & Local RAG Assistant<br/>Byte-level provenance tracing findings to packet frame offsets.<br/>Grounded AI Analyst explaining RFC citations without hallucination."]
-
-    CORE --> P1
-    CORE --> P2
-    CORE --> P3
-    CORE --> P4
-    CORE --> P5
-```
+## Core Capabilities & Architectural Pillars
 
 | Pillar | Focus Area | Key Technical Mechanisms | Deliverable Outcome |
 | :--- | :--- | :--- | :--- |
@@ -151,152 +355,6 @@ graph TD
 | **3. Policy-as-Code & Scoring** | Regulatory Compliance | Versioned YAML rules, NIST SP 800-77 Rev. 1, RFC 8221 | Mathematical 0–100 score with exact byte citations |
 | **4. Configuration Security Twin** | Impact Simulation & Remediation | Headless strongSwan model, Linux network namespaces, tc/netem | Validated configuration patch without production risk |
 | **5. Evidence DAG & Local RAG** | Non-Repudiation & Explanation | Merkle-tree rooted DAG, pgvector, local Llama-3 / Mistral-7B | Audit-proof evidence chain & grounded explanation |
-
----
-
-## System Architecture & Execution Topologies
-
-TunnelTrace AI is architected with strict privilege boundary separation, preventing unprivileged web services from accessing raw network interfaces or privileged operating system capabilities.
-
-### High-Level Execution Topology (Class A vs. Class B Isolation)
-
-```mermaid
-graph TD
-    subgraph ClientTier ["Presentation Tier (Web Client)"]
-        UI["Next.js 14 Web Console<br/>(0px Brutalist Design System / React Flow)"]
-    end
-
-    subgraph ClassA ["Execution Class A — Unprivileged Containers"]
-        API["FastAPI Application Server (:8000)<br/>REST /api/v1 + Realtime WebSockets"]
-        CELERY["Celery Asynchronous Task Workers<br/>(Forensic Parsing, ML Inference, Policy Audit)"]
-        REDIS[("Redis 7<br/>Task Queue, Cache & Pub/Sub")]
-        POSTGRES[("PostgreSQL 15 + pgvector<br/>State Store, Evidence DAG & Vectors")]
-        STORAGE[("Local Object Storage<br/>(Raw PCAPs, Trained Weights, PDF Reports)")]
-        LOCAL_LLM["Local LLM Engine (Ollama / vLLM)<br/>(Llama-3-8B / Mistral-7B Offline Inference)"]
-    end
-
-    subgraph ClassB ["Execution Class B — Privileged Host Environment"]
-        AGENT["Privileged Network Agent<br/>(FastAPI Worker via UNIX Domain Socket)"]
-        SWAN["strongSwan 5.9+ IPsec Daemon<br/>(Multi-Namespace Virtual Testbed)"]
-        NETEM["Linux Traffic Control & tc/netem<br/>(Latency, Jitter, Packet Loss Injection)"]
-        SNIFF["Raw Socket Sniffer (libpcap / tcpdump)<br/>(Isolated Live Traffic Capture)"]
-    end
-
-    UI <-->|"HTTP REST / WebSocket (JSON)"| API
-    API <-->|"Job Dispatch / Result Events"| REDIS
-    API <-->|"SQL Queries & Relational State"| POSTGRES
-    API <-->|"Raw Capture & Report Storage"| STORAGE
-    CELERY <-->|"Consume Jobs / Push Events"| REDIS
-    CELERY <-->|"Persist Sessions & Findings"| POSTGRES
-    CELERY <-->|"Read PCAP / Write Artifacts"| STORAGE
-    CELERY <-->|"Offline Grounded RAG Queries"| LOCAL_LLM
-    API <-->|"UNIX Domain Socket RPC (/run/tunneltrace.sock)"| AGENT
-    AGENT <-->|"swanctl / stroke Management"| SWAN
-    AGENT <-->|"qdisc Netlink Commands"| NETEM
-    AGENT <-->|"Promiscuous Packet Ring"| SNIFF
-```
-
----
-
-### End-to-End Forensic Processing Pipeline
-
-```mermaid
-graph TD
-    IN1["Raw Capture File<br/>(.pcap / .pcapng)"] --> INGEST["Capture Ingestion & Validation Engine"]
-    IN2["Live Interface Stream<br/>(Class B Sniffer Agent)"] --> INGEST
-
-    INGEST --> SANITIZE["PCAP Sanitization & Magic Header Verification"]
-    SANITIZE --> TSHARK["TShark / PyShark Protocol Dissector Engine"]
-
-    TSHARK --> IKE_PARSE["IKEv1 / IKEv2 Negotiation Parser"]
-    TSHARK --> ESP_PARSE["ESP Tunnel Frame Parser"]
-
-    IKE_PARSE --> SA_STATE["Security Association State Machine<br/>(IKE SA & Child SA Pairing)"]
-    ESP_PARSE --> SPI_PAIR["Bidirectional SPI Pairing & Volume Tracker"]
-
-    SA_STATE --> POLICY["Policy-as-Code Compliance Engine<br/>(NIST SP 800-77 Rev. 1 / RFC 8221)"]
-    SPI_PAIR --> POLICY
-
-    ESP_PARSE --> FEAT_EXT["Encrypted Traffic Feature Extractor<br/>(24 Tabular Stats + (3, N) Sequence Tensors)"]
-    FEAT_EXT --> ML_ENGINE["Dual-Ensemble ML Classifier<br/>(XGBoost + 1D-CNN)"]
-    ML_ENGINE --> CALIB["Platt Scaling & Shannon Entropy OOD Gate"]
-
-    POLICY --> SCORE_ENG["Deterministic Security Scoring Engine<br/>(0–100 Base Score Calculation)"]
-    CALIB --> SCORE_ENG
-
-    SCORE_ENG --> DAG["Cryptographic Evidence DAG Builder<br/>(Byte-Offset Frame Provenance)"]
-    DAG --> TWIN["Configuration Security Twin<br/>(Virtual strongSwan Patch Simulator)"]
-    TWIN --> LAB["Closed-Loop strongSwan Lab<br/>(Multi-Namespace Re-Test Verification)"]
-    LAB --> REPORT["Cryptographically Signed PDF / JSON Report<br/>+ Grounded AI Analyst (Local RAG)"]
-```
-
----
-
-### Zero-Decryption ML Inference Engine (Dual Ensemble)
-
-```mermaid
-graph TD
-    subgraph InputData ["Encrypted ESP Flow Stream"]
-        RAW_ESP["Encapsulated ESP Packet Sequence<br/>(SPI, Sequence Number, Length, Timestamp)"]
-    end
-
-    subgraph FeatureEngineering ["Feature Engineering Pipeline"]
-        TAB_FEAT["Tabular Feature Extraction (24 Metrics)<br/>- Mean, Std, Skew of Packet Lengths<br/>- Inter-Arrival Time (IAT) Statistics<br/>- Burst Density & Directional Ratios<br/>- TCP Window Scale / Header Variance"]
-        SEQ_FEAT["Sequence Tensor Construction<br/>- Directional Tensor: [-1, +1]<br/>- Length Tensor: Normalized [0, 1500]<br/>- Delta-Time Tensor: Normalized Log-Scale<br/>- Fixed Dimension: (3, 100) Tensor"]
-    end
-
-    subgraph ModelInference ["Dual-Model Inference Subsystem"]
-        XGB["XGBoost Classifier<br/>(500 Trees / Depth 6)<br/>Optimized for Tabular Dynamics"]
-        CNN["PyTorch 1D-CNN Classifier<br/>(3 Conv Blocks + Global Max Pool)<br/>Optimized for Temporal Bursts"]
-    end
-
-    subgraph FusionCalibration ["Late Fusion & Uncertainty Calibration"]
-        FUSION["Weighted Late Fusion Layer<br/>Logits = 0.55 * Logits_XGB + 0.45 * Logits_CNN"]
-        PLATT["Platt Temperature Scaling<br/>Calibrated Probabilities P_c"]
-        OOD["Shannon Entropy Gating<br/>H = -SUM(p * log(p)) > 1.85?"]
-    end
-
-    subgraph OutputClass ["Inferred Encrypted Traffic Class"]
-        KNOWN["Known Application Category<br/>• VoIP (RTP/SRTP)<br/>• Video Conferencing<br/>• Web Browsing (HTTPS)<br/>• Interactive Remote (SSH/RDP)<br/>• File Transfer (SFTP/SMB)<br/>• Bulk Exfiltration / Data Dump<br/>• Encrypted DNS / Telemetry"]
-        UNKNOWN["Flagged as Out-of-Distribution (OOD)<br/>(Unseen Protocol / Anomalous Tunnel Pattern)"]
-    end
-
-    RAW_ESP --> TAB_FEAT
-    RAW_ESP --> SEQ_FEAT
-    TAB_FEAT --> XGB
-    SEQ_FEAT --> CNN
-    XGB --> FUSION
-    CNN --> FUSION
-    FUSION --> PLATT
-    PLATT --> OOD
-    OOD -->|"Entropy <= 1.85 (Confident)"| KNOWN
-    OOD -->|"Entropy > 1.85 (High Uncertainty)"| UNKNOWN
-```
-
----
-
-### Configuration Security Twin & Closed-Loop Remediation Cycle
-
-```mermaid
-graph TD
-    FINDING["Vulnerability Detected<br/>(e.g., 3DES-CBC Ciphersuite / DH Group 2 / Missing PFS)"] --> TWIN_INIT["Initialize Configuration Security Twin"]
-    TWIN_INIT --> PARSE_CONF["Parse Active strongSwan / swanctl Configuration"]
-    
-    PARSE_CONF --> SIMULATE["What-If Impact Simulation<br/>• Peer Compatibility Check (RFC 8221)<br/>• Cryptographic Overhead Calculation<br/>• MTU / Fragmentation Impact Modeling"]
-    
-    SIMULATE --> PROJECTION["Generate Score Uplift Projection<br/>(e.g., Security Score 42/100 -> 94/100)"]
-    PROJECTION --> SYNTHESIZE["Synthesize Remediation Patch<br/>(Unified Diff + Hardened swanctl.conf)"]
-    
-    SYNTHESIZE --> TESTBED_PROVISION["Automate strongSwan Testbed Provisioning<br/>(Linux Network Namespaces: ns-peer-a <-> ns-peer-b)"]
-    TESTBED_PROVISION --> APPLY_PATCH["Apply Synthesized Patch to Testbed Endpoint"]
-    APPLY_PATCH --> RE_EXECUTE["Re-Establish IPsec Tunnel & Run Synthetic Traffic"]
-    
-    RE_EXECUTE --> RE_CAPTURE["Capture Verification PCAP & Re-Run Pipeline"]
-    RE_CAPTURE --> VERIFY{"Verification Passed?<br/>No Weak Ciphers, SAs Healthy, Score Uplift Met"}
-    
-    VERIFY -->|"YES (Validated)"| SIGNED_PATCH["Generate Cryptographically Signed Remediation<br/>Ready for Production Deployment"]
-    VERIFY -->|"NO (Degraded)"| ROLLBACK["Trigger Automatic Rollback & Isolate Root Cause"]
-```
 
 ---
 
@@ -365,6 +423,20 @@ graph TD
 - **100% Offline & Sovereign:** Powered by local open-weight language models (such as Llama-3-8B-Instruct or Mistral-7B via Ollama / vLLM). No data ever leaves the local enclave.
 - **Grounded Retrieval-Augmented Generation:** Queries a vector database (`pgvector`) populated with RFC 7296, RFC 8221, RFC 4301, NIST SP 800-77 Rev. 1, and the current session's Evidence DAG nodes.
 - **Strict Guardrails:** The AI Analyst is constrained by strict system prompts: it cannot invent vulnerabilities, override deterministic scores, or assert findings without citing frame numbers and RFC section numbers.
+
+---
+
+## Competitive Matrix & Value Proposition
+
+| Evaluation Vector | Traditional Packet Sniffers (Wireshark / tcpdump) | Generic Cloud SIEMs (Splunk / QRadar) | Black-Box AI Anomaly Detectors | TunnelTrace AI (SIH 2026 / NTRO) |
+| :--- | :--- | :--- | :--- | :--- |
+| **IKE/ESP State Reconstruction** | Manual packet dissection; no automated session graph | Log-based only; blind to wire-level protocol state | Opaque embeddings; cannot reconstruct SA states | **Automated, deterministic IKEv1/IKEv2 & ESP state machines** |
+| **Encrypted Flow Visibility** | Blind beyond ESP header (requires private keys) | None; relies on host endpoint agents | Uncalibrated anomaly scores; high false-positive rate | **Dual-ensemble ML (XGBoost + 1D-CNN) with zero decryption** |
+| **Out-of-Distribution Detection** | Not applicable | Rule-based threshold alerts | Fails silently on unseen zero-day traffic | **Shannon entropy gating + Platt temperature scaling** |
+| **Regulatory Compliance** | Manual inspection against printed standards | Generic CIS/ISO compliance templates | No compliance mapping | **Native NIST SP 800-77 Rev. 1 & RFC 8221 Policy-as-Code** |
+| **Evidence Provenance** | Individual frame numbers | Aggregated log indices | None (black-box latent vector) | **Cryptographic Evidence DAG linked to raw byte offsets** |
+| **Remediation Safety** | Manual CLI editing on live routers | Script push without validation | Automated actions risk breaking live tunnels | **What-if Configuration Twin + Closed-Loop Lab Re-test** |
+| **Deployment Model** | Desktop utility | Heavy cloud infrastructure | Proprietary cloud SaaS | **100% Local-First, air-gapped Docker container stack** |
 
 ---
 
