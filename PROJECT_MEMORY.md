@@ -14,7 +14,7 @@
 
 | Property | Value |
 | :--- | :--- |
-| **System Name** | **TunnelTrace AI** (formerly referenced as `[PROJECT NAME]`) |
+| **System Name** | **TunnelTrace AI**  |
 | **Problem Statement Reference** | Smart India Hackathon 2026 / PS ID: `26160` (PS 160) |
 | **Official PS Title** | AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework |
 | **Sponsoring Organization** | National Technical Research Organisation (NTRO) |

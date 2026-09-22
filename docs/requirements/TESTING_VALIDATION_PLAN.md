@@ -1,5 +1,5 @@
 # TESTING, VALIDATION & EVALUATION PLAN
-## [PROJECT NAME] — IPsec Security Intelligence Platform
+## TunnelTrace AI — IPsec Security Intelligence Platform
 ### Smart India Hackathon 2026 — Problem Statement ID: 26160 (PS 160)
 #### Sponsoring Organization: National Technical Research Organisation (NTRO) | Theme: Blockchain & Cybersecurity
 
@@ -12,7 +12,7 @@
 | **Document Title** | Testing, Validation & Evaluation Plan |
 | **Document Identifier** | `TT-TEST-2026-V1.0` |
 | **Product Working Descriptor** | IPsec Security Intelligence Platform |
-| **Official Application Baseline** | [PROJECT NAME] (TunnelTrace AI) |
+| **Official Application Baseline** | TunnelTrace AI |
 | **Problem Statement ID** | 26160 (PS 160) |
 | **Sponsoring Agency** | National Technical Research Organisation (NTRO) |
 | **Document Classification** | Technical Specification / Quality Assurance & Verification Baseline |
@@ -37,7 +37,7 @@
 
 ## 3. Purpose
 
-This document establishes the definitive **Testing, Validation & Evaluation Plan** for **[PROJECT NAME]**. It serves as the master contract proving that every capability required by the National Technical Research Organisation (NTRO) under Smart India Hackathon 2026 Problem Statement 26160 is:
+This document establishes the definitive **Testing, Validation & Evaluation Plan** for **TunnelTrace AI**. It serves as the master contract proving that every capability required by the National Technical Research Organisation (NTRO) under Smart India Hackathon 2026 Problem Statement 26160 is:
 1. **Verifiable:** Mapped to deterministic, repeatable test cases with unambiguous expected outcomes.
 2. **Defensible:** Grounded in observable protocol evidence, controlled lab testbeds, and mathematically sound statistical methods.
 3. **Auditable:** Backed by persistent cryptographic evidence artifacts (hashes, logs, PCAPs, manifests).

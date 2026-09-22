@@ -1,11 +1,11 @@
-# [PROJECT NAME] — Data Architecture & Database Design Document
+# TunnelTrace AI — Data Architecture & Database Design Document
 
 **Official Problem Statement ID:** 26160 (PS 160)  
 **Official Problem Statement Title:** AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework  
 **Sponsoring Organization:** National Technical Research Organisation (NTRO)  
 **Theme:** Blockchain & Cybersecurity (Software Category)  
 **Document Type:** Master Data Architecture & Database Design Specification  
-**System Name:** [PROJECT NAME] (Working Baseline: TunnelTrace AI)  
+**System Name:** TunnelTrace AI  
 **Current Release Version:** `v0.1.0-alpha` (SIH 2026 Engineering Prototype)  
 **Document Status:** Approved Architectural Baseline  
 
@@ -15,7 +15,7 @@
 
 | Property | Value |
 | :--- | :--- |
-| **System Title** | [PROJECT NAME] (AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework) |
+| **System Title** | TunnelTrace AI (AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework) |
 | **Problem Statement Reference** | SIH 2026 / PS 160 / NTRO |
 | **Document Classification** | Master Data Architecture & Relational Schema Specification |
 | **Data Architecture Scope** | Relational Schemas, Forensic Provenance DAG, ML Feature Vectors, Object Storage, and RAG Persistence |
@@ -38,7 +38,7 @@
 
 ## 3. Purpose
 
-This **Data Architecture & Database Design Document** establishes the definitive blueprint for how all structured, semi-structured, and binary data is modeled, stored, related, indexed, audited, and protected within **[PROJECT NAME]**.
+This **Data Architecture & Database Design Document** establishes the definitive blueprint for how all structured, semi-structured, and binary data is modeled, stored, related, indexed, audited, and protected within **TunnelTrace AI**.
 
 It bridges the high-level system requirements defined in the PRD/TRD and the physical implementation in PostgreSQL, Redis, and object storage. The design ensures:
 1. **Mathematical Reproducibility:** Historical analysis runs, security scores, and ML classifications can be recomputed or verified years later against immutable capture snapshots.
@@ -188,7 +188,7 @@ graph TD
 
 ## 12. Data Classification
 
-Data within [PROJECT NAME] is classified into five strict sensitivity tiers:
+Data within TunnelTrace AI is classified into five strict sensitivity tiers:
 
 | Classification Level | Definition | Examples | Storage Location | Access Policy |
 | :--- | :--- | :--- | :--- | :--- |

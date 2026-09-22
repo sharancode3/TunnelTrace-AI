@@ -1,5 +1,5 @@
 # API & INTEGRATION SPECIFICATION
-## [PROJECT NAME] — IPsec Security Intelligence Platform
+## TunnelTrace AI — IPsec Security Intelligence Platform
 ### Smart India Hackathon 2026 — Problem Statement ID: 26160 (PS 160)
 #### Sponsoring Organization: National Technical Research Organisation (NTRO) | Theme: Blockchain & Cybersecurity
 
@@ -12,7 +12,7 @@
 | **Document Title** | API & Integration Specification |
 | **Document Identifier** | `TT-API-2026-V1.0` |
 | **Product Working Descriptor** | IPsec Security Intelligence Platform |
-| **Official Application Baseline** | [PROJECT NAME] (TunnelTrace AI) |
+| **Official Application Baseline** | TunnelTrace AI |
 | **Problem Statement ID** | 26160 (PS 160) |
 | **Sponsoring Agency** | National Technical Research Organisation (NTRO) |
 | **Document Classification** | Technical Specification / API Contract Baseline |
@@ -37,7 +37,7 @@
 
 ## 3. Purpose
 
-This document establishes the definitive, contract-first **API & Integration Specification** for **[PROJECT NAME]**. It serves as the authoritative interface agreement governing all communication between:
+This document establishes the definitive, contract-first **API & Integration Specification** for **TunnelTrace AI**. It serves as the authoritative interface agreement governing all communication between:
 - Frontend Client (Next.js 14 / TypeScript / PWA) and Backend API (FastAPI).
 - Backend Application and Asynchronous Task Workers (Redis / Celery).
 - Backend Application and Privileged Network Agent (Linux `netns` / `strongSwan` / `tc` / `tcpdump`).

@@ -1,11 +1,11 @@
-# [PROJECT NAME] — ML & Dataset Engineering Document
+# TunnelTrace AI — ML & Dataset Engineering Document
 
 **Official Problem Statement ID:** 26160 (PS 160)  
 **Official Problem Statement Title:** AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework  
 **Sponsoring Organization:** National Technical Research Organisation (NTRO)  
 **Theme:** Blockchain & Cybersecurity (Software Category)  
 **Document Type:** Master Machine Learning & Dataset Engineering Specification  
-**System Name:** [PROJECT NAME] (Working Baseline: TunnelTrace AI)  
+**System Name:** TunnelTrace AI  
 **Current Release Version:** `v0.1.0-alpha` (SIH 2026 Engineering Prototype)  
 **Document Status:** Approved Machine Learning Baseline  
 
@@ -15,7 +15,7 @@
 
 | Property | Value |
 | :--- | :--- |
-| **System Title** | [PROJECT NAME] (AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework) |
+| **System Title** | TunnelTrace AI (AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework) |
 | **Problem Statement Reference** | SIH 2026 / PS 160 / NTRO |
 | **Document Classification** | Master ML Architecture, Dataset Engineering & Validation Specification |
 | **Machine Learning Scope** | Encrypted ESP Flow Classification, Calibration, OOD Uncertainty Gating, TreeSHAP Attribution, and Behavioral Anomaly Detection |
@@ -38,7 +38,7 @@
 
 ## 3. Purpose
 
-This **ML & Dataset Engineering Document** defines the authoritative theoretical, mathematical, and operational specifications for the machine learning subsystems of **[PROJECT NAME]**.
+This **ML & Dataset Engineering Document** defines the authoritative theoretical, mathematical, and operational specifications for the machine learning subsystems of **TunnelTrace AI**.
 
 It establishes the rigorous experimental methodology required to:
 1. Generate an authentic, native IPsec/ESP traffic dataset across diverse cryptographic configurations and network conditions.
@@ -1163,7 +1163,7 @@ The core prototype delivering the required SIH 2026 functionality includes:
 
 ## 90. High-Value Differentiators
 
-Features elevating [PROJECT NAME] beyond standard hackathon solutions:
+Features elevating TunnelTrace AI beyond standard hackathon solutions:
 - **Session-Level Grouping:** Absolute prevention of train/test data leakage.
 - **Calibrated Uncertainty:** Mathematically defensible confidence scores.
 - **True OOD Rejection:** Robust open-set handling preventing forced misclassifications.

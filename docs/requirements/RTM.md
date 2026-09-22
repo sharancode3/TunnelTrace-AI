@@ -5,7 +5,7 @@
 **Sponsoring Organization:** National Technical Research Organisation (NTRO)  
 **Theme:** Blockchain & Cybersecurity  
 **Document Type:** Master Verification, Validation & Traceability Control Document  
-**System Name:** TunnelTrace AI (formerly referenced as [PROJECT NAME])  
+**System Name:** TunnelTrace AI   
 **Current Release Version:** `v0.1.0-alpha` (SIH 2026 Engineering Prototype)  
 **Document Status:** Approved Traceability Baseline  
 

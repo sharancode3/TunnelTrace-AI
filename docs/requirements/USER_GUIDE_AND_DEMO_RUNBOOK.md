@@ -1,5 +1,5 @@
 # USER / ANALYST GUIDE + DEMO RUNBOOK
-## [PROJECT NAME] — IPsec Security Intelligence Platform
+## TunnelTrace AI — IPsec Security Intelligence Platform
 ### Smart India Hackathon 2026 — Problem Statement ID: 26160 (PS 160)
 #### Sponsoring Agency: National Technical Research Organisation (NTRO) | Theme: Blockchain & Cybersecurity
 
@@ -12,7 +12,7 @@
 | **Document Title** | User / Analyst Guide + SIH Demo Runbook |
 | **Document Identifier** | `TT-DOC-GUIDE-RUNBOOK-V1.0` |
 | **Product Working Descriptor** | IPsec Security Intelligence Platform |
-| **Project Shorthand / System Baseline** | [PROJECT NAME] (TunnelTrace AI) |
+| **Project Shorthand / System Baseline** | TunnelTrace AI |
 | **Problem Statement Reference** | SIH 2026 / Problem Statement ID: `26160` (PS 160) |
 | **Sponsoring Agency** | National Technical Research Organisation (NTRO) |
 | **Security Classification** | Technical / Operational Guidance (Controlled Distribution) |
@@ -35,7 +35,7 @@
 
 ## 3. Purpose
 
-This document provides the definitive operational manual and live execution runbook for **[PROJECT NAME]**. It serves two mutually supporting functions:
+This document provides the definitive operational manual and live execution runbook for **TunnelTrace AI**. It serves two mutually supporting functions:
 1. **Part A (User / Analyst Guide):** Instructs security analysts, network engineers, compliance auditors, and lab operators how to navigate the platform, interpret deterministic protocol extractions, evaluate machine learning inferences without payload decryption, inspect cryptographic evidence chains, simulate configuration hardening in the Configuration Twin, and verify lab remediations.
 2. **Part B (SIH Demo Runbook):** Provides an exact, deterministic, second-by-second presentation and recovery protocol for the Smart India Hackathon 2026 Grand Finale, proving the platform's capabilities before NTRO evaluators under live constraints.
 
@@ -84,7 +84,7 @@ graph TD
 
 ## 7. Product Overview
 
-**[PROJECT NAME]** is an **Explainable IPsec Security Intelligence Platform** designed specifically for defense, intelligence, and critical infrastructure environments. Rather than acting as a generic packet sniffer, the platform reconstructs stateful IKE and ESP sessions, determines cryptographic compliance through deterministic Policy-as-Code, classifies encapsulated application traffic using side-channel timing and size metadata (without breaking encryption), traces every finding to raw wire frames, and proves security hardening through automated lab re-captures.
+**TunnelTrace AI** is an **Explainable IPsec Security Intelligence Platform** designed specifically for defense, intelligence, and critical infrastructure environments. Rather than acting as a generic packet sniffer, the platform reconstructs stateful IKE and ESP sessions, determines cryptographic compliance through deterministic Policy-as-Code, classifies encapsulated application traffic using side-channel timing and size metadata (without breaking encryption), traces every finding to raw wire frames, and proves security hardening through automated lab re-captures.
 
 ---
 
@@ -174,7 +174,7 @@ The platform enforces strict epistemic separation between four distinct classes 
 
 ## 13. START HERE — 5 Minute Orientation
 
-1. **Understand What You Are Looking At:** [PROJECT NAME] does not decrypt IPsec payload data. It extracts cryptographic negotiation parameters and analyzes encrypted traffic side channels (packet sizing, burst directions, timing deltas).
+1. **Understand What You Are Looking At:** TunnelTrace AI does not decrypt IPsec payload data. It extracts cryptographic negotiation parameters and analyzes encrypted traffic side channels (packet sizing, burst directions, timing deltas).
 2. **Where to Start:** Navigate to **Analyze** to submit an offline PCAP/PCAPNG capture file.
 3. **Inspect the Workflow:** Once the job transitions from `INGESTING` to `COMPLETED`, review the **Command Center** summary cards.
 4. **Follow the Evidence:** Never trust a security finding without clicking the **Evidence** button to inspect the exact packet frame and byte offset.
@@ -188,7 +188,7 @@ The console uses a persistent left-hand brutalist navigation rail (fixed width `
 
 ```
 ┌──────────────────────────────────────┐
-│ [PROJECT NAME] // v1.0               │
+│ TunnelTrace AI // v1.0               │
 ├──────────────────────────────────────┤
 │ [CMD]  Command Center                │
 │ [CAP]  Analyze (Upload & Live)       │
@@ -822,7 +822,7 @@ When errors occur, the platform displays structured alerts with actionable guida
 
 ## 54. FAQ
 
-**Q: Does [PROJECT NAME] decrypt ESP packets?**  
+**Q: Does TunnelTrace AI decrypt ESP packets?**  
 *A: No. The platform uses zero payload decryption. Classification is achieved strictly via side-channel analysis of packet lengths, inter-arrival times, and burst directions.*
 
 **Q: What does `UNKNOWN` mean?**  
@@ -849,7 +849,7 @@ When errors occur, the platform displays structured alerts with actionable guida
 
 ## 56. Demo Objectives
 
-The live demonstration proves to NTRO evaluators that [PROJECT NAME] is an explainable, evidence-first IPsec intelligence platform that:
+The live demonstration proves to NTRO evaluators that TunnelTrace AI is an explainable, evidence-first IPsec intelligence platform that:
 1. Ingests genuine wire traffic.
 2. Deterministically reconstructs IKE/ESP state machines.
 3. Classifies encrypted traffic without payload decryption.

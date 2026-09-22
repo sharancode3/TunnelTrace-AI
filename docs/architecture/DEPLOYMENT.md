@@ -5,7 +5,7 @@
 **Sponsoring Organization:** National Technical Research Organisation (NTRO)  
 **Theme:** Blockchain & Cybersecurity  
 **Document Type:** Industry-Grade Deployment, DevOps & Operations Architecture Document  
-**System Name:** TunnelTrace AI (formerly referenced as [PROJECT NAME])  
+**System Name:** TunnelTrace AI   
 **Current Release Version:** `v0.1.0-alpha` (SIH 2026 Engineering Prototype)  
 **Document Status:** Approved Technical Baseline  
 

@@ -1,11 +1,11 @@
-# [PROJECT NAME] — System Architecture & Design Document (SAD)
+# TunnelTrace AI — System Architecture & Design Document (SAD)
 
 **Official Problem Statement ID:** 26160 (PS 160)  
 **Official Problem Statement Title:** AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework  
 **Sponsoring Organization:** National Technical Research Organisation (NTRO)  
 **Theme:** Blockchain & Cybersecurity  
 **Document Type:** Master System Architecture & Design Specification  
-**System Name:** [PROJECT NAME] (Working Baseline: TunnelTrace AI)  
+**System Name:** TunnelTrace AI  
 **Current Release Version:** `v0.1.0-alpha` (SIH 2026 Engineering Prototype)  
 **Document Status:** Approved Architectural Baseline  
 
@@ -15,7 +15,7 @@
 
 | Property | Value |
 | :--- | :--- |
-| **System Title** | [PROJECT NAME] (AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework) |
+| **System Title** | TunnelTrace AI (AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework) |
 | **Problem Statement Reference** | SIH 2026 / PS 160 / NTRO |
 | **Document Classification** | Master System Architecture & Design Specification (SAD) |
 | **Architecture Scope** | End-to-End System Context, Component Responsibilities, Domain Boundaries, and Runtime Topology |
@@ -38,7 +38,7 @@
 
 ## 3. Purpose
 
-This **System Architecture & Design Document (SAD)** provides the authoritative technical blueprint for **[PROJECT NAME]**. It defines:
+This **System Architecture & Design Document (SAD)** provides the authoritative technical blueprint for **TunnelTrace AI**. It defines:
 1. The overarching system structure, subsystem boundaries, and inter-component interfaces.
 2. The rigorous separation between deterministic protocol forensics, probabilistic encrypted-traffic machine learning, versioned policy-as-code auditing, and grounded AI explanation.
 3. The concrete control and data flows that govern offline PCAP dissection, live interface capture, automated strongSwan lab orchestration, and closed-loop remediation verification.
@@ -78,7 +78,7 @@ graph TD
 
 Modern national defense organizations, intelligence entities, and critical infrastructure operators rely heavily on IPsec VPNs to establish secure enclaves over public or contested networks. However, improper cryptographic configuration (e.g., deprecated 3DES/DES ciphers, weak Diffie-Hellman groups, disabled Perfect Forward Secrecy) and traffic metadata exposure (side-channel packet sizing, burst patterns, timing dynamics) expose organizations to passive eavesdropping, traffic correlation, and state-sponsored cyber exploitation.
 
-[PROJECT NAME] addresses Problem Statement 26160 by delivering an autonomous, evidence-first platform that audits IPsec VPN configurations, maps protocol states, infers inner application traffic without payload decryption, evaluates regulatory compliance against NIST SP 800-77 Rev. 1, and verifies remediations in a controlled network testbed.
+TunnelTrace AI addresses Problem Statement 26160 by delivering an autonomous, evidence-first platform that audits IPsec VPN configurations, maps protocol states, infers inner application traffic without payload decryption, evaluates regulatory compliance against NIST SP 800-77 Rev. 1, and verifies remediations in a controlled network testbed.
 
 ---
 
@@ -187,7 +187,7 @@ The architectural design is directly driven by six core technical mandates:
 
 ## 14. System Context
 
-The following diagram illustrates how [PROJECT NAME] interfaces with human operators, network inputs, authoritative regulatory knowledge bases, and local/external AI services:
+The following diagram illustrates how TunnelTrace AI interfaces with human operators, network inputs, authoritative regulatory knowledge bases, and local/external AI services:
 
 ```mermaid
 
@@ -201,8 +201,8 @@ graph TD
         EXT_AI(["Optional Downstream LLM Provider<br/>Local Ollama or External Cloud API"])
     end
 
-    subgraph PROJECT_NAME___System_Boundary ["PROJECT NAME — System Boundary"]
-        PLATFORM["<b>[PROJECT NAME] IPsec Security Intelligence Platform</b><br>-  Protocol Forensics & SA State Reconstruction<br>-  Calibrated Encrypted Flow Classification<br>-  Deterministic Policy-as-Code Engine<br>-  Configuration Twin & Remediation Lab<br>-  Evidence Graph & Report Synthesis"]
+    subgraph PROJECT_NAME___System_Boundary ["TunnelTrace AI — System Boundary"]
+        PLATFORM["<b>TunnelTrace AI IPsec Security Intelligence Platform</b><br>-  Protocol Forensics & SA State Reconstruction<br>-  Calibrated Encrypted Flow Classification<br>-  Deterministic Policy-as-Code Engine<br>-  Configuration Twin & Remediation Lab<br>-  Evidence Graph & Report Synthesis"]
     end
 
     subgraph System_Outputs ["System Outputs"]
@@ -242,7 +242,7 @@ graph TD
 
 ## 16. Three Major Architecture Domains
 
-To avoid architectural fragmentation, the 45 physical subsystems of [PROJECT NAME] are organized into **Three Major Cohesive Domains**:
+To avoid architectural fragmentation, the 45 physical subsystems of TunnelTrace AI are organized into **Three Major Cohesive Domains**:
 
 ```mermaid
 
@@ -352,7 +352,7 @@ graph TD
 
 ## 18. Logical Architecture
 
-The logical tiering of [PROJECT NAME] maintains strict unidirectional dependency:
+The logical tiering of TunnelTrace AI maintains strict unidirectional dependency:
 - **Presentation Tier:** Stateless Next.js 14 web client communicating over REST and WebSockets.
 - **Orchestration Tier:** FastAPI asynchronous server managing job lifecycles and client sessions.
 - **Analytical & Execution Tier:** Celery asynchronous workers hosting TShark dissectors, ML models, and policy rules.
@@ -700,7 +700,7 @@ graph TD
 ---
 
 ## 36. Confidence / Calibration Architecture
-Raw neural and tree model probabilities are inherently overconfident. [PROJECT NAME] passes fused logits through a post-hoc **Platt Temperature Scaling** layer:
+Raw neural and tree model probabilities are inherently overconfident. TunnelTrace AI passes fused logits through a post-hoc **Platt Temperature Scaling** layer:
 
 $$\hat{P}_c = \frac{\exp(z_c / T)}{\sum_{j=1}^K \exp(z_j / T)}$$
 
@@ -1085,7 +1085,7 @@ graph TB
 
 ## 62. Privacy Architecture
 - Evaluated network traces often contain proprietary enterprise communication.
-- [PROJECT NAME] ensures raw packet payloads are never transmitted across the network.
+- TunnelTrace AI ensures raw packet payloads are never transmitted across the network.
 - Dissection extracts only outer header dimensions and metadata transforms.
 - Local RAG models (Ollama) allow 100% offline, air-gapped natural language advisory capabilities.
 
