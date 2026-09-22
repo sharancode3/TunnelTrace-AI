@@ -960,9 +960,7 @@ Requirements are categorized using authoritative operational prefixes:
 | **Trigger** | Analyst clicks on any finding or score deduction in the UI. |
 | **Preconditions** | Analysis pipeline complete; evidence index constructed. |
 | **Inputs** | Finding ID or Risk item identifier. |
-| **System Behavior** | Traverses the evidence graph:  
-$$\text{Capture File} \longrightarrow \text{Packet Index} \longrightarrow \text{Protocol Field / Byte Offset} \longrightarrow \text{Reconstructed SA Property} \longrightarrow \text{Policy Rule} \longrightarrow \text{Authoritative Standard} \longrightarrow \text{Finding} \longrightarrow \text{Remediation}$$  
-Renders an interactive visual evidence tree and raw packet hex view. |
+| **System Behavior** | Traverses the evidence graph: `Capture File` $\rightarrow$ `Packet Index` $\rightarrow$ `Protocol Field / Byte Offset` $\rightarrow$ `Reconstructed SA Property` $\rightarrow$ `Policy Rule` $\rightarrow$ `Authoritative Standard` $\rightarrow$ `Finding` $\rightarrow$ `Remediation`.<br/>Renders an interactive visual evidence tree and raw packet hex view. |
 | **Outputs** | Evidence graph nodes and edges, packet dissection highlight, exact standard text citation. |
 | **Failure / Unknown** | If a finding is derived from session absence (e.g., missing rekeying), links to the temporal timeline and marks evidence as `ABSENCE_OF_EVENT_EVIDENCE`. |
 | **Acceptance Criteria** | 100% of reported security findings resolve to concrete packet numbers or documented absence-of-event timelines; zero "black-box" conclusions. |
@@ -1194,10 +1192,7 @@ Renders an interactive visual evidence tree and raw packet hex view. |
 | **Trigger** | User accesses the application URL on any device. |
 | **Preconditions** | Web browser supporting modern HTML5/ES6 standards. |
 | **Inputs** | Viewport dimensions, device capabilities. |
-| **System Behavior** | Dynamically reorganizes information density based on screen dimensions:  
-* **Desktop ($\ge 1280\text{px}$):** Multi-column SOC command workspace with simultaneous visibility of topology, live packet feed, threat matrix, and evidence graph.  
-* **Tablet ($768\text{px} - 1279\text{px}$):** Adaptive two-column layout with tabbed analytical drawers.  
-* **Mobile ($< 768\text{px}$):** Single-column monitoring and triage workflow prioritizing posture scores, active alerts, executive summaries, and AI Analyst chat. |
+| **System Behavior** | Dynamically reorganizes information density based on screen dimensions:<br/>- **Desktop ($\ge 1280\text{px}$):** Multi-column SOC command workspace with simultaneous visibility of topology, live packet feed, threat matrix, and evidence graph.<br/>- **Tablet ($768\text{px} - 1279\text{px}$):** Adaptive two-column layout with tabbed analytical drawers.<br/>- **Mobile ($< 768\text{px}$):** Single-column monitoring and triage workflow prioritizing posture scores, active alerts, executive summaries, and AI Analyst chat. |
 | **Outputs** | Responsive, fluid application interface. |
 | **Failure / Unknown** | Gracefully adjusts components; avoids horizontal scrolling or truncated cards. |
 | **Acceptance Criteria** | Zero UI layout breakages across standard screen widths (360px mobile up to 4K desktop); strictly one codebase. |
