@@ -62,13 +62,15 @@ This specification governs all data and AI components across the platform lifecy
 ## 5. Relationship to PRD / TRD / SAD / Data Architecture
 
 ```mermaid
+
 graph TD
-    PRD["docs/PRD.md<br>(Functional Mandates & Traffic Classes)"] --> SAD["docs/SYSTEM_ARCHITECTURE.md<br>(Subsystem Boundaries & Domains)"]
-    TRD["docs/TRD.md<br>(Mathematical Formulations & Logic)"] --> MLD["docs/ML_DATASET_ENGINEERING.md<br>(Authoritative ML & Dataset Spec)"]
-    DAD["docs/DATABASE_DESIGN.md<br>(Feature & Model Schemas)"] --> MLD
+    PRD["docs/PRD.md<br/>(Functional Mandates & Traffic Classes)"] --> SAD["docs/SYSTEM_ARCHITECTURE.md<br/>(Subsystem Boundaries & Domains)"]
+    TRD["docs/TRD.md<br/>(Mathematical Formulations & Logic)"] --> MLD["docs/ML_DATASET_ENGINEERING.md<br/>(Authoritative ML & Dataset Spec)"]
+    DAD["docs/DATABASE_DESIGN.md<br/>(Feature & Model Schemas)"] --> MLD
     SAD --> MLD
-    MLD --> CODE_ML["backend/ml/<br>(Training & Inference Pipelines)"]
-    MLD --> LAB_SCRIPTS["lab/scripts/<br>(Dataset Generation Factory)"]
+    MLD --> CODE_ML["backend/ml/<br/>(Training & Inference Pipelines)"]
+    MLD --> LAB_SCRIPTS["lab/scripts/<br/>(Dataset Generation Factory)"]
+
 ```
 
 ---
@@ -168,20 +170,22 @@ Problem Statement 26160 explicitly references WhatsApp. To maintain scientific i
 ## 14. Dataset Strategy
 
 ```mermaid
+
 graph TD
-    subgraph "PRIMARY DATASET (IPsec-Native)"
-        LAB[Multi-Namespace strongSwan Testbed] --> FACTORY[Automated Dataset Factory]
-        FACTORY --> SESS[Controlled Session Captures]
-        SESS --> IPSEC_CORPUS[(IPsecFlowBench: Native IPsec/ESP Corpus)]
+    subgraph PRIMARY_DATASET__IPsec_Native ["PRIMARY DATASET (IPsec-Native)"]
+        LAB["Multi-Namespace strongSwan Testbed"] --> FACTORY["Automated Dataset Factory"]
+        FACTORY --> SESS["Controlled Session Captures"]
+        SESS --> IPSEC_CORPUS[("IPsecFlowBench: Native IPsec/ESP Corpus")]
     end
 
-    subgraph "SUPPORTING BENCHMARK (Public Baseline)"
-        UNB[UNB / CIC ISCXVPN2016] --> OPENVPN_NOTE[Protocol: OpenVPN / SSL-TLS]
-        OPENVPN_NOTE --> BENCH_CORPUS[(ISCXVPN2016 Benchmark)]
+    subgraph SUPPORTING_BENCHMARK__Public_Baseline ["SUPPORTING BENCHMARK (Public Baseline)"]
+        UNB["UNB / CIC ISCXVPN2016"] --> OPENVPN_NOTE["Protocol: OpenVPN / SSL-TLS"]
+        OPENVPN_NOTE --> BENCH_CORPUS[("ISCXVPN2016 Benchmark")]
     end
 
-    IPSEC_CORPUS -->|Primary Supervised Training & Validation| TRAIN_PIPE[Model Training Pipeline]
-    BENCH_CORPUS -.->|Feature Engineering & Pretraining Validation Only| TRAIN_PIPE
+    IPSEC_CORPUS -->|"Primary Supervised Training & Validation"| TRAIN_PIPE["Model Training Pipeline"]
+    BENCH_CORPUS -.->|"Feature Engineering & Pretraining Validation Only"| TRAIN_PIPE
+
 ```
 
 ---
@@ -221,25 +225,27 @@ Under no circumstances is ISCXVPN2016 misrepresented as an IPsec dataset. Domain
 The dataset generation factory operates on a multi-namespace Linux network architecture isolating the traffic generator, strongSwan gateways, and simulated contested WAN:
 
 ```mermaid
+
 graph LR
-    subgraph "ns_initiator (10.0.1.0/24)"
-        GEN[Traffic Workload Generator] --> SWAN_A[strongSwan Gateway A]
-        SWAN_A --> VETH_A[veth_init: 192.168.100.2]
+    subgraph ns_initiator__10_0_1_0_24 ["ns_initiator (10.0.1.0/24)"]
+        GEN["Traffic Workload Generator"] --> SWAN_A["strongSwan Gateway A"]
+        SWAN_A --> VETH_A["veth_init: 192.168.100.2"]
     end
 
-    subgraph "ns_wan (Contested Simulated Transit)"
-        VETH_A <--> WAN_IN[veth_wan_i]
-        WAN_IN --- NETEM[Linux tc/netem: Latency, Jitter, Loss]
-        NETEM --- WAN_OUT[veth_wan_r]
-        TAP[tcpdump Interceptor] -.->|Encrypted ESP Capture| PCAP_OUT[/storage/datasets/raw/]
+    subgraph ns_wan__Contested_Simulated_Transit ["ns_wan (Contested Simulated Transit)"]
+        VETH_A <--> WAN_IN["veth_wan_i"]
+        WAN_IN --- NETEM["Linux tc/netem: Latency, Jitter, Loss"]
+        NETEM --- WAN_OUT["veth_wan_r"]
+        TAP["tcpdump Interceptor"] -.->|"Encrypted ESP Capture"| PCAP_OUT["storage/datasets/raw"]
         WAN_IN -.-> TAP
     end
 
-    subgraph "ns_responder (10.0.2.0/24)"
-        WAN_OUT <--> VETH_B[veth_resp: 192.168.200.2]
-        VETH_B --> SWAN_B[strongSwan Gateway B]
-        SWAN_B --> SINK[Application Target Sink]
+    subgraph ns_responder__10_0_2_0_24 ["ns_responder (10.0.2.0/24)"]
+        WAN_OUT <--> VETH_B["veth_resp: 192.168.200.2"]
+        VETH_B --> SWAN_B["strongSwan Gateway B"]
+        SWAN_B --> SINK["Application Target Sink"]
     end
+
 ```
 
 ---
@@ -249,6 +255,7 @@ graph LR
 The automated dataset factory executes parameter sweeps across configurations, collecting synchronized captures and metadata:
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     participant Orchestrator as Dataset Factory Script
@@ -271,6 +278,7 @@ sequenceDiagram
     Orchestrator->>Reg: Validate session, check ESP packet counts, compute SHA-256
     Reg->>Reg: Register valid session in dataset manifest
     Orchestrator->>Swan: Tear down IPsec SAs and purge XFRM states
+
 ```
 
 ---
@@ -390,20 +398,22 @@ Each dataset release contains a digitally signed `manifest.json`:
 ## 27. Dataset Splitting
 
 ```mermaid
+
 graph TD
-    ALL_SESS[All Verified Dataset Sessions: IPsecFlowBench] --> GROUP_SPLIT{Session-Level GroupKFold Splitter}
+    ALL_SESS["All Verified Dataset Sessions: IPsecFlowBench"] --> GROUP_SPLIT{"Session-Level GroupKFold Splitter"}
     
-    GROUP_SPLIT -->|70% Sessions| TRAIN_SESS[Training Partition Sessions]
-    GROUP_SPLIT -->|15% Sessions| VAL_SESS[Validation Partition Sessions]
-    GROUP_SPLIT -->|15% Sessions| TEST_SESS[Test Partition Sessions]
+    GROUP_SPLIT -->|"70% Sessions"| TRAIN_SESS["Training Partition Sessions"]
+    GROUP_SPLIT -->|"15% Sessions"| VAL_SESS["Validation Partition Sessions"]
+    GROUP_SPLIT -->|"15% Sessions"| TEST_SESS["Test Partition Sessions"]
     
-    TRAIN_SESS --> FLOW_EXT_TR[Flow Reconstruction & Feature Extraction]
-    VAL_SESS --> FLOW_EXT_VAL[Flow Reconstruction & Feature Extraction]
-    TEST_SESS --> FLOW_EXT_TE[Flow Reconstruction & Feature Extraction]
+    TRAIN_SESS --> FLOW_EXT_TR["Flow Reconstruction & Feature Extraction"]
+    VAL_SESS --> FLOW_EXT_VAL["Flow Reconstruction & Feature Extraction"]
+    TEST_SESS --> FLOW_EXT_TE["Flow Reconstruction & Feature Extraction"]
     
-    FLOW_EXT_TR --> TRAIN_SET[(Training Set: X_train, y_train)]
-    FLOW_EXT_VAL --> VAL_SET[(Validation Set: X_val, y_val)]
-    FLOW_EXT_TE --> TEST_SET[(Held-Out Test Set: X_test, y_test)]
+    FLOW_EXT_TR --> TRAIN_SET[("Training Set: X_train, y_train")]
+    FLOW_EXT_VAL --> VAL_SET[("Validation Set: X_val, y_val")]
+    FLOW_EXT_TE --> TEST_SET[("Held-Out Test Set: X_test, y_test")]
+
 ```
 
 ---
@@ -461,19 +471,22 @@ Automated statistical tests check for spurious correlations:
 ## 33. Flow Reconstruction
 
 ```mermaid
+
 graph TD
-    ESP_PKTS[Incoming Encrypted ESP Packets] --> PARSE_HDR[Parse Outer Header: IP Pair + SPI]
-    PARSE_HDR --> MATCH_SA{Match Active Child SA?}
+    ESP_PKTS["Incoming Encrypted ESP Packets"] --> PARSE_HDR["Parse Outer Header: IP Pair + SPI"]
+    PARSE_HDR --> MATCH_SA{"Match Active Child SA?"}
     
-    MATCH_SA -->|Known Inbound/Outbound SPI Pair| BIND_DIR[Resolve Packet Direction: FWD or REV]
-    MATCH_SA -->|Unobserved SA Handshake| BIND_SPI[Group by Raw Outer SPI]
+    MATCH_SA -->|"Known Inbound/Outbound SPI Pair"| BIND_DIR["Resolve Packet Direction: FWD or REV"]
+    MATCH_SA -->|"Unobserved SA Handshake"| BIND_SPI["Group by Raw Outer SPI"]
     
-    BIND_DIR & BIND_SPI --> TEMPORAL_CHK{Inter-Packet Gap > T_idle?}
+    BIND_DIR --> TEMPORAL_CHK{"Inter-Packet Gap > T_idle?"}
+    BIND_SPI --> TEMPORAL_CHK{"Inter-Packet Gap > T_idle?"}
     
-    TEMPORAL_CHK -->|Yes: Gap Exceeded| FLUSH_FLOW[Terminate and Emit Completed Flow]
-    TEMPORAL_CHK -->|No: Active Stream| ACCUMULATE[Append Packet to Flow Buffer]
+    TEMPORAL_CHK -->|"Yes: Gap Exceeded"| FLUSH_FLOW["Terminate and Emit Completed Flow"]
+    TEMPORAL_CHK -->|"No: Active Stream"| ACCUMULATE["Append Packet to Flow Buffer"]
     
-    FLUSH_FLOW --> RECONSTRUCTED_FLOW[Bidirectional ESP Flow Object]
+    FLUSH_FLOW --> RECONSTRUCTED_FLOW["Bidirectional ESP Flow Object"]
+
 ```
 
 ---
@@ -587,23 +600,25 @@ Prior to training, an automated audit script validates feature integrity:
 The lightweight convolutional network captures spatial-temporal patterns across the early packet handshake:
 
 ```mermaid
+
 graph TD
-    INP["Input Sequence Tensor: (Batch, 3, N)"] --> C1[Conv1D: 32 Filters, Kernel=5, Stride=1, Padding=2]
-    C1 --> BN1[BatchNorm1D]
-    BN1 --> ACT1[ReLU]
-    ACT1 --> P1[MaxPool1D: Kernel=2, Stride=2]
+    INP["Input Sequence Tensor: (Batch, 3, N)"] --> C1["Conv1D: 32 Filters, Kernel=5, Stride=1, Padding=2"]
+    C1 --> BN1["BatchNorm1D"]
+    BN1 --> ACT1["ReLU"]
+    ACT1 --> P1["MaxPool1D: Kernel=2, Stride=2"]
     
-    P1 --> C2[Conv1D: 64 Filters, Kernel=3, Stride=1, Padding=1]
-    C2 --> BN2[BatchNorm1D]
-    BN2 --> ACT2[ReLU]
-    ACT2 --> GAP[AdaptiveAvgPool1D: Output Size=1]
+    P1 --> C2["Conv1D: 64 Filters, Kernel=3, Stride=1, Padding=1"]
+    C2 --> BN2["BatchNorm1D"]
+    BN2 --> ACT2["ReLU"]
+    ACT2 --> GAP["AdaptiveAvgPool1D: Output Size=1"]
     
-    GAP --> FLATTEN[Flatten to 64 Dimensions]
-    FLATTEN --> FC1[Linear Layer: 64 -> 64]
-    FC1 --> DROP[Dropout: p=0.3]
-    DROP --> ACT3[ReLU]
-    ACT3 --> HEAD[Linear Classifier Head: 64 -> 7 Classes]
-    HEAD --> LOGITS[Raw Class Logits: z_cnn]
+    GAP --> FLATTEN["Flatten to 64 Dimensions"]
+    FLATTEN --> FC1["Linear Layer: 64 -> 64"]
+    FC1 --> DROP["Dropout: p=0.3"]
+    DROP --> ACT3["ReLU"]
+    ACT3 --> HEAD["Linear Classifier Head: 64 -> 7 Classes"]
+    HEAD --> LOGITS["Raw Class Logits: z_cnn"]
+
 ```
 
 ---
@@ -634,20 +649,23 @@ The parameter $N$ balances early classification speed against asymptotic accurac
 The platform fuses the complementary strengths of tabular distribution statistics (XGBoost) and early sequential dynamics (1D-CNN):
 
 ```mermaid
+
 graph TD
-    FLOW[ESP Flow] --> EXT_TAB[Extract 24 Tabular Features]
-    FLOW --> EXT_SEQ[Extract (3, N) Sequence Tensor]
+    FLOW["ESP Flow"] --> EXT_TAB["Extract 24 Tabular Features"]
+    FLOW --> EXT_SEQ["Extract (3, N) Sequence Tensor"]
     
-    EXT_TAB --> XGB[XGBoost Classifier]
-    EXT_SEQ --> CNN[PyTorch 1D-CNN]
+    EXT_TAB --> XGB["XGBoost Classifier"]
+    EXT_SEQ --> CNN["PyTorch 1D-CNN"]
     
-    XGB --> LOG_XGB[XGBoost Logits / Softmax]
-    CNN --> LOG_CNN[1D-CNN Logits / Softmax]
+    XGB --> LOG_XGB["XGBoost Logits / Softmax"]
+    CNN --> LOG_CNN["1D-CNN Logits / Softmax"]
     
-    LOG_XGB & LOG_CNN --> FUSION_GATE["Ensemble Fusion Gate:<br>P_fused = alpha * P_xgb + (1 - alpha) * P_cnn"]
+    LOG_XGB --> FUSION_GATE["Ensemble Fusion Gate:<br/>P_fused = alpha * P_xgb + (1 - alpha) * P_cnn"]
+    LOG_CNN --> FUSION_GATE["Ensemble Fusion Gate:<br/>P_fused = alpha * P_xgb + (1 - alpha) * P_cnn"]
     
-    FUSION_GATE --> PLATT[Platt Temperature Scaling Gate]
-    PLATT --> CAL_PROB[Calibrated Probabilities]
+    FUSION_GATE --> PLATT["Platt Temperature Scaling Gate"]
+    PLATT --> CAL_PROB["Calibrated Probabilities"]
+
 ```
 
 - **Weight Parameter ($\alpha$):** Continuous coefficient $\alpha \in [0.0, 1.0]$ optimized via grid search on the held-out validation set to minimize cross-entropy loss.
@@ -686,13 +704,15 @@ It reflects the true empirical likelihood that the classification is correct.
 To protect against open-set vulnerability where unmodeled traffic (e.g., Tor, BitTorrent, novel malware) is forced into standard classes:
 
 ```mermaid
+
 graph TD
-    CAL_P[Calibrated Probability Vector: P_cal] --> ENT_CALC["Calculate Predictive Shannon Entropy:<br>H(P) = - SUM( P_c * log2(P_c) )"]
+    CAL_P["Calibrated Probability Vector: P_cal"] --> ENT_CALC["Calculate Predictive Shannon Entropy:<br/>H(P) = - SUM( P_c * log2(P_c) )"]
     
-    ENT_CALC --> OOD_GATE{"H(P) > tau_entropy<br>OR max(P_cal) < C_min?"}
+    ENT_CALC --> OOD_GATE{"H(P) > tau_entropy<br/>OR max(P_cal) < C_min?"}
     
-    OOD_GATE -->|True: High Uncertainty| LBL_UNKNOWN["Output: UNKNOWN / UNSEEN TRAFFIC<br>(Status: Out-of-Distribution)"]
-    OOD_GATE -->|False: High Certainty| LBL_KNOWN["Output: Inferred Class (Web, VoIP, etc.)<br>(Confidence = max(P_cal))"]
+    OOD_GATE -->|"True: High Uncertainty"| LBL_UNKNOWN["Output: UNKNOWN / UNSEEN TRAFFIC<br/>(Status: Out-of-Distribution)"]
+    OOD_GATE -->|"False: High Certainty"| LBL_KNOWN["Output: Inferred Class (Web, VoIP, etc.)<br/>(Confidence = max(P_cal))"]
+
 ```
 
 - **Threshold Tuning:** The entropy threshold $\tau_{\text{entropy}}$ is tuned on a holdout validation set containing controlled OOD traffic to achieve $\ge 90\%$ OOD detection while maintaining $\le 5\%$ false rejection of known classes (`Requires empirical validation`).
@@ -738,23 +758,26 @@ Problem Statement 26160 requires assessing traffic metadata exposure. The platfo
 ## 53. ML Training Pipeline
 
 ```mermaid
+
 graph TD
-    CORPUS[(IPsecFlowBench Corpus)] --> VAL_SESS[Session Validation & Quality Gate]
-    VAL_SESS --> SPLIT[Session-Level GroupKFold Split]
+    CORPUS[("IPsecFlowBench Corpus")] --> VAL_SESS["Session Validation & Quality Gate"]
+    VAL_SESS --> SPLIT["Session-Level GroupKFold Split"]
     
-    SPLIT --> RECON_TR[Flow Reconstruction & Feature Extraction]
-    RECON_TR --> PREP[Fit Scalers on Train Set Only]
+    SPLIT --> RECON_TR["Flow Reconstruction & Feature Extraction"]
+    RECON_TR --> PREP["Fit Scalers on Train Set Only"]
     
-    PREP --> T_XGB[Train XGBoost Model]
-    PREP --> T_CNN[Train 1D-CNN Model]
+    PREP --> T_XGB["Train XGBoost Model"]
+    PREP --> T_CNN["Train 1D-CNN Model"]
     
-    T_XGB & T_CNN --> T_VAL[Evaluate on Validation Set]
-    T_VAL --> T_FUSE[Optimize Fusion Weight alpha]
-    T_FUSE --> T_CAL[Fit Platt Temperature Parameter T]
-    T_CAL --> T_OOD[Tune OOD Entropy Threshold]
+    T_XGB --> T_VAL["Evaluate on Validation Set"]
+    T_CNN --> T_VAL["Evaluate on Validation Set"]
+    T_VAL --> T_FUSE["Optimize Fusion Weight alpha"]
+    T_FUSE --> T_CAL["Fit Platt Temperature Parameter T"]
+    T_CAL --> T_OOD["Tune OOD Entropy Threshold"]
     
-    T_OOD --> EVAL_TEST[Evaluate on Held-Out Test Set]
-    EVAL_TEST --> BUNDLE[Package Model Bundle Manifest]
+    T_OOD --> EVAL_TEST["Evaluate on Held-Out Test Set"]
+    EVAL_TEST --> BUNDLE["Package Model Bundle Manifest"]
+
 ```
 
 ---
@@ -991,31 +1014,34 @@ If production monitoring flags severe performance degradation:
 ## 77. Runtime Inference Pipeline
 
 ```mermaid
+
 graph TD
-    FLOW[Reconstructed ESP Flow] --> EXT[Feature Extractor Service]
+    FLOW["Reconstructed ESP Flow"] --> EXT["Feature Extractor Service"]
     
-    EXT --> VEC_TAB[24 Tabular Features]
-    EXT --> TENS_SEQ[(3, N) Sequence Tensor]
+    EXT --> VEC_TAB["24 Tabular Features"]
+    EXT --> TENS_SEQ["(3, N) Sequence Tensor"]
     
-    VEC_TAB --> PRE_TAB[Apply Stored Preprocessing Scalers]
-    TENS_SEQ --> PRE_SEQ[Apply MinMax Scaling & Padding]
+    VEC_TAB --> PRE_TAB["Apply Stored Preprocessing Scalers"]
+    TENS_SEQ --> PRE_SEQ["Apply MinMax Scaling & Padding"]
     
-    PRE_TAB --> XGB[XGBoost Predictor]
-    PRE_SEQ --> CNN[PyTorch CPU Predictor]
+    PRE_TAB --> XGB["XGBoost Predictor"]
+    PRE_SEQ --> CNN["PyTorch CPU Predictor"]
     
-    XGB --> P_XGB[Softmax Probabilities: P_xgb]
-    CNN --> P_CNN[Softmax Probabilities: P_cnn]
+    XGB --> P_XGB["Softmax Probabilities: P_xgb"]
+    CNN --> P_CNN["Softmax Probabilities: P_cnn"]
     
-    P_XGB & P_CNN --> FUSE[Weighted Linear Fusion: alpha=0.6]
-    FUSE --> CALIB[Platt Scaling: Temperature T=1.25]
+    P_XGB --> FUSE["Weighted Linear Fusion: alpha=0.6"]
+    P_CNN --> FUSE["Weighted Linear Fusion: alpha=0.6"]
+    FUSE --> CALIB["Platt Scaling: Temperature T=1.25"]
     
-    CALIB --> GATE{Entropy > Threshold?}
+    CALIB --> GATE{"Entropy > Threshold?"}
     
-    GATE -->|Yes| OUT_UNK[Class: UNKNOWN / UNSEEN]
-    GATE -->|No| OUT_KNOWN[Class: Argmax Class]
+    GATE -->|"Yes"| OUT_UNK["Class: UNKNOWN / UNSEEN"]
+    GATE -->|"No"| OUT_KNOWN["Class: Argmax Class"]
     
-    OUT_KNOWN --> SHAP_EXP[Execute TreeSHAP for Top 5 Attributions]
-    SHAP_EXP --> PERSIST[(Save to Database & Push WebSocket)]
+    OUT_KNOWN --> SHAP_EXP["Execute TreeSHAP for Top 5 Attributions"]
+    SHAP_EXP --> PERSIST[("Save to Database & Push WebSocket")]
+
 ```
 
 ---
@@ -1082,13 +1108,15 @@ Every inference record committed to PostgreSQL stores complete provenance refere
 ## 84. Dataset $\rightarrow$ Model Lineage
 
 ```mermaid
+
 graph LR
-    DS_SESS[dataset_sessions] --> DS_SPLIT[dataset_splits]
-    DS_SPLIT --> TRAIN_JOB[Training Execution Run]
-    TRAIN_JOB --> ARTIFACTS[Model Binary Artifacts]
-    ARTIFACTS --> REGISTRY[model_bundles DB Record]
-    REGISTRY --> INFERENCE[Runtime Prediction Engine]
-    INFERENCE --> RESULTS[traffic_predictions DB Record]
+    DS_SESS["dataset_sessions"] --> DS_SPLIT["dataset_splits"]
+    DS_SPLIT --> TRAIN_JOB["Training Execution Run"]
+    TRAIN_JOB --> ARTIFACTS["Model Binary Artifacts"]
+    ARTIFACTS --> REGISTRY["model_bundles DB Record"]
+    REGISTRY --> INFERENCE["Runtime Prediction Engine"]
+    INFERENCE --> RESULTS["traffic_predictions DB Record"]
+
 ```
 
 ---
@@ -1170,6 +1198,7 @@ Long-term research avenues reserved for post-hackathon development:
 ## 93. SIH Demo ML Flow
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     actor Evaluator as SIH Evaluator / Judge
@@ -1190,6 +1219,7 @@ sequenceDiagram
     ML-->>UI: Emits Result: "VoIP" | Confidence: 94.2% | Status: Calibrated
     UI-->>Evaluator: Displays Sunburst chart, Confidence badge, and SHAP Waterfall
     Note over Evaluator, UI: Evaluator inspects SHAP: Low IAT variance proves VoIP isochrony
+
 ```
 
 ---

@@ -111,33 +111,35 @@ $$\text{DETECT} \longrightarrow \text{RECONSTRUCT} \longrightarrow \text{INFER} 
 ## 8. Information Architecture
 
 ```mermaid
+
 graph TD
-    ROOT[TunnelTrace AI Application Shell] --> OVERVIEW[1. OVERVIEW]
-    ROOT --> ANALYSIS[2. ANALYSIS]
-    ROOT --> SECURITY[3. SECURITY]
-    ROOT --> REMEDIATION[4. REMEDIATION]
-    ROOT --> OUTPUT[5. OUTPUT]
-    ROOT --> LAB[6. LAB]
+    ROOT["TunnelTrace AI Application Shell"] --> OVERVIEW["1. OVERVIEW"]
+    ROOT --> ANALYSIS["2. ANALYSIS"]
+    ROOT --> SECURITY["3. SECURITY"]
+    ROOT --> REMEDIATION["4. REMEDIATION"]
+    ROOT --> OUTPUT["5. OUTPUT"]
+    ROOT --> LAB["6. LAB"]
 
-    OVERVIEW --> MOD_CC[Command Center]
-    OVERVIEW --> MOD_ANA[Analyze / Ingest]
+    OVERVIEW --> MOD_CC["Command Center"]
+    OVERVIEW --> MOD_ANA["Analyze / Ingest"]
 
-    ANALYSIS --> MOD_PROTO[Protocol Intelligence]
-    ANALYSIS --> MOD_SA[Security Association Explorer]
-    ANALYSIS --> MOD_TRAF[Traffic Intelligence]
+    ANALYSIS --> MOD_PROTO["Protocol Intelligence"]
+    ANALYSIS --> MOD_SA["Security Association Explorer"]
+    ANALYSIS --> MOD_TRAF["Traffic Intelligence"]
 
-    SECURITY --> MOD_SEC[Security Assessment]
-    SECURITY --> MOD_COMP[Compliance Scorecard]
-    SECURITY --> MOD_THREAT[Threat Matrix]
-    SECURITY --> MOD_EVID[Evidence Explorer]
+    SECURITY --> MOD_SEC["Security Assessment"]
+    SECURITY --> MOD_COMP["Compliance Scorecard"]
+    SECURITY --> MOD_THREAT["Threat Matrix"]
+    SECURITY --> MOD_EVID["Evidence Explorer"]
 
-    REMEDIATION --> MOD_TWIN[Configuration Security Twin]
-    REMEDIATION --> MOD_VERIF[Remediation Verification]
+    REMEDIATION --> MOD_TWIN["Configuration Security Twin"]
+    REMEDIATION --> MOD_VERIF["Remediation Verification"]
 
-    OUTPUT --> MOD_RPT[Executive & Technical Reports]
-    OUTPUT --> MOD_AI[AI Analyst Console]
+    OUTPUT --> MOD_RPT["Executive & Technical Reports"]
+    OUTPUT --> MOD_AI["AI Analyst Console"]
 
-    LAB --> MOD_LAB[Testbed Orchestrator]
+    LAB --> MOD_LAB["Testbed Orchestrator"]
+
 ```
 
 ---

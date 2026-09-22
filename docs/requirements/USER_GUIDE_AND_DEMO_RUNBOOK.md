@@ -65,13 +65,15 @@ This document covers all user-facing interactions across the platform lifecycle:
 ## 6. Relationship to Other Documents
 
 ```mermaid
+
 graph TD
-    PRD[PRD: Functional Requirements] --> TVP[Testing & Validation Plan]
-    TRD[TRD: Technical Architecture] --> TVP
-    SAD[SAD: System Architecture] --> RUN[This Document: User Guide + Demo Runbook]
-    API[API & Integration Spec] --> RUN
-    UI[UI/UX Design System] --> RUN
-    MEM[Project Memory: Living Reality] --> RUN
+    PRD["PRD: Functional Requirements"] --> TVP["Testing & Validation Plan"]
+    TRD["TRD: Technical Architecture"] --> TVP
+    SAD["SAD: System Architecture"] --> RUN["This Document: User Guide + Demo Runbook"]
+    API["API & Integration Spec"] --> RUN
+    UI["UI/UX Design System"] --> RUN
+    MEM["Project Memory: Living Reality"] --> RUN
+
 ```
 
 - **[PRD.md](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/PRD.md):** Defines functional mandates (`LAB-`, `CAP-`, `PROTO-`, `ML-`, `SEC-`, `REM-`).
@@ -89,14 +91,16 @@ graph TD
 ## 8. Core Workflow
 
 ```mermaid
+
 graph LR
-    A[1. DETECT] --> B[2. RECONSTRUCT]
-    B --> C[3. INFER]
-    C --> D[4. ASSESS]
-    D --> E[5. EXPLAIN]
-    E --> F[6. REMEDIATE]
-    F --> G[7. RE-TEST]
-    G --> H[8. VERIFY]
+    A["1. DETECT"] --> B["2. RECONSTRUCT"]
+    B --> C["3. INFER"]
+    C --> D["4. ASSESS"]
+    D --> E["5. EXPLAIN"]
+    E --> F["6. REMEDIATE"]
+    F --> G["7. RE-TEST"]
+    G --> H["8. VERIFY"]
+
 ```
 
 1. **DETECT:** Ingest PCAP/PCAPNG or live wire traffic; verify presence of ISAKMP (UDP 500/4500), ESP (IP proto 50), or AH (IP proto 51).
@@ -237,14 +241,16 @@ Provides a consolidated operational dashboard showing overall system posture, re
 The primary ingestion hub supporting offline file upload, live interface capture, and testbed session ingestion.
 
 ```mermaid
+
 graph TD
-    A[Capture Source Selection] -->|Offline PCAP/PCAPNG| B[Client-Side File Validation]
-    A -->|Live Wire Stream| C[Authorized Interface Sniffer]
-    A -->|Lab Generation| D[strongSwan Testbed Execution]
-    B --> E[SHA-256 Registration & Ingestion]
+    A["Capture Source Selection"] -->|"Offline PCAP/PCAPNG"| B["Client-Side File Validation"]
+    A -->|"Live Wire Stream"| C["Authorized Interface Sniffer"]
+    A -->|"Lab Generation"| D["strongSwan Testbed Execution"]
+    B --> E["SHA-256 Registration & Ingestion"]
     C --> E
     D --> E
-    E --> F[Asynchronous Celery Pipeline]
+    E --> F["Asynchronous Celery Pipeline"]
+
 ```
 
 ---
@@ -641,16 +647,18 @@ Converts validated Configuration Twin proposals into structured, human-readable 
 ## 40. Remediation Verification
 
 ```mermaid
+
 graph TD
-    A[Pre-Remediation Capture & Analysis] --> B[Generate Hardened Configuration]
-    B --> C[Apply Patch to strongSwan Lab]
-    C --> D[Re-establish IPsec Tunnel]
-    D --> E[Re-run Controlled Workload]
-    E --> F[Capture Post-Remediation Traffic]
-    F --> G[Re-analyze New Capture]
-    G --> H{Compare Before & After Findings}
-    H -->|Finding Absent| I[Status: VERIFIED_RESOLVED]
-    H -->|Finding Persists| J[Status: VERIFIED_NOT_RESOLVED]
+    A["Pre-Remediation Capture & Analysis"] --> B["Generate Hardened Configuration"]
+    B --> C["Apply Patch to strongSwan Lab"]
+    C --> D["Re-establish IPsec Tunnel"]
+    D --> E["Re-run Controlled Workload"]
+    E --> F["Capture Post-Remediation Traffic"]
+    F --> G["Re-analyze New Capture"]
+    G --> H{"Compare Before & After Findings"}
+    H -->|"Finding Absent"| I["Status: VERIFIED_RESOLVED"]
+    H -->|"Finding Persists"| J["Status: VERIFIED_NOT_RESOLVED"]
+
 ```
 
 ### Verification States
@@ -856,16 +864,18 @@ The live demonstration proves to NTRO evaluators that [PROJECT NAME] is an expla
 ## 57. Demo Architecture / Environment
 
 ```mermaid
+
 graph TD
     subgraph Host["Local Demo Host (Ubuntu 22.04 LTS / Laptop)"]
-        UI[Next.js 14 Console :3000]
-        API[FastAPI Backend :8000]
-        DB[(PostgreSQL 15 + pgvector)]
-        LAB[Privileged strongSwan Lab]
+        UI["Next.js 14 Console :3000"]
+        API["FastAPI Backend :8000"]
+        DB[("PostgreSQL 15 + pgvector")]
+        LAB["Privileged strongSwan Lab"]
     end
     UI <--> API
     API <--> DB
     API <--> LAB
+
 ```
 
 ---
@@ -950,17 +960,19 @@ Ensure the following pre-validated files reside locally on the demo laptop:
 ## 66. Golden Demo Flow
 
 ```mermaid
+
 graph TD
-    S1[1. Ingest Real Capture] --> S2[2. Protocol Extraction]
-    S2 --> S3[3. SA Graph Visualizer]
-    S3 --> S4[4. ML Traffic Inference]
-    S4 --> S5[5. TreeSHAP Explanation]
-    S5 --> S6[6. Security Audit Findings]
-    S6 --> S7[7. Wire Evidence Drill-Down]
-    S7 --> S8[8. Config Twin Simulation]
-    S8 --> S9[9. Apply Lab Remediation]
-    S9 --> S10[10. Recapture & Verify]
-    S10 --> S11[11. Reports & Grounded AI]
+    S1["1. Ingest Real Capture"] --> S2["2. Protocol Extraction"]
+    S2 --> S3["3. SA Graph Visualizer"]
+    S3 --> S4["4. ML Traffic Inference"]
+    S4 --> S5["5. TreeSHAP Explanation"]
+    S5 --> S6["6. Security Audit Findings"]
+    S6 --> S7["7. Wire Evidence Drill-Down"]
+    S7 --> S8["8. Config Twin Simulation"]
+    S8 --> S9["9. Apply Lab Remediation"]
+    S9 --> S10["10. Recapture & Verify"]
+    S10 --> S11["11. Reports & Grounded AI"]
+
 ```
 
 ---
@@ -1018,13 +1030,15 @@ During the demonstration, explicitly point out to the judges:
 ## 72. Fallback Level 1 / 2 / 3
 
 ```mermaid
+
 graph TD
-    A[Start Live Demo] --> B{strongSwan Testbed Responsive?}
-    B -->|Yes| C[Level 1: Live Interactive Testbed Demo]
-    B -->|No| D[Level 2: Switch to Pre-captured Testbed PCAP]
-    D --> E{Worker Pipeline Responsive?}
-    E -->|Yes| F[Execute Fresh Analysis of Pre-captured PCAP]
-    E -->|No| G[Level 3: Open Cached Pre-analyzed Golden Session]
+    A["Start Live Demo"] --> B{"strongSwan Testbed Responsive?"}
+    B -->|"Yes"| C["Level 1: Live Interactive Testbed Demo"]
+    B -->|"No"| D["Level 2: Switch to Pre-captured Testbed PCAP"]
+    D --> E{"Worker Pipeline Responsive?"}
+    E -->|"Yes"| F["Execute Fresh Analysis of Pre-captured PCAP"]
+    E -->|"No"| G["Level 3: Open Cached Pre-analyzed Golden Session"]
+
 ```
 
 - **Level 1 (Primary):** Live strongSwan network namespace execution on local host.
@@ -1108,16 +1122,18 @@ If browser tab crashes:
 ## 82. Demo Failure Decision Tree
 
 ```mermaid
+
 graph TD
-    A[Failure Detected During Demo] --> B{What Component Failed?}
-    B -->|Lab Testbed| C[Switch to Pre-Captured PCAP File]
-    B -->|Pipeline Worker| D[Load Pre-Analyzed Cached Session]
-    B -->|Local LLM| E[Skip AI Analyst; Highlight Evidence Explorer]
-    B -->|Browser Freeze| F[Restart Browser to localhost:3000]
-    C --> G[Continue Story Seamlessly]
+    A["Failure Detected During Demo"] --> B{"What Component Failed?"}
+    B -->|"Lab Testbed"| C["Switch to Pre-Captured PCAP File"]
+    B -->|"Pipeline Worker"| D["Load Pre-Analyzed Cached Session"]
+    B -->|"Local LLM"| E["Skip AI Analyst; Highlight Evidence Explorer"]
+    B -->|"Browser Freeze"| F["Restart Browser to localhost:3000"]
+    C --> G["Continue Story Seamlessly"]
     D --> G
     E --> G
     F --> G
+
 ```
 
 ---

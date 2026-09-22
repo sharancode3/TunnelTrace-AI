@@ -300,8 +300,9 @@ The following master matrix tracks every official requirement across the 25 requ
 ## 13. VPN Testbed Traceability
 
 ```mermaid
+
 graph TD
-    subgraph "Testbed Profiles (strongSwan swanctl.conf)"
+    subgraph Testbed_Profiles__strongSwan_swanctl_conf ["Testbed Profiles (strongSwan swanctl.conf)"]
         P1["Profile 1: IKEv2 / AES-256-GCM / DH-19 / PFS-ON (Modern Standard)"]
         P2["Profile 2: IKEv2 / AES-128-CBC + HMAC-SHA256 / DH-14 (Enterprise Legacy)"]
         P3["Profile 3: IKEv1 / 3DES-CBC + MD5 / DH-2 (Vulnerable Legacy)"]
@@ -309,7 +310,7 @@ graph TD
         P5["Profile 5: IKEv2 / PFS-OFF / Aggressive Rekey"]
     end
 
-    subgraph "Traffic Simulation Injection"
+    subgraph Traffic_Simulation_Injection ["Traffic Simulation Injection"]
         T_WEB["Web (HTTP/2 Spider)"]
         T_VID["Video (HLS Video Chunks)"]
         T_VOIP["VoIP (Isochronous RTP)"]
@@ -318,10 +319,20 @@ graph TD
         T_ICMP["ICMP (Diagnostic Echo)"]
     end
 
-    P1 & P2 & P3 & P4 & P5 --> TESTBED["Linux Network Namespaces (ns_init / ns_wan / ns_resp)"]
-    T_WEB & T_VID & T_VOIP & T_CHAT & T_MAIL & T_ICMP --> TESTBED
+    P1 --> TESTBED["Linux Network Namespaces (ns_init / ns_wan / ns_resp)"]
+    P2 --> TESTBED["Linux Network Namespaces (ns_init / ns_wan / ns_resp)"]
+    P3 --> TESTBED["Linux Network Namespaces (ns_init / ns_wan / ns_resp)"]
+    P4 --> TESTBED["Linux Network Namespaces (ns_init / ns_wan / ns_resp)"]
+    P5 --> TESTBED["Linux Network Namespaces (ns_init / ns_wan / ns_resp)"]
+    T_WEB --> TESTBED
+    T_VID --> TESTBED
+    T_VOIP --> TESTBED
+    T_CHAT --> TESTBED
+    T_MAIL --> TESTBED
+    T_ICMP --> TESTBED
     TESTBED --> CAPTURE["tcpdump Interceptor (Raw .pcap)"]
     CAPTURE --> PIPELINE["TunnelTrace AI Ingestion & Analysis Pipeline"]
+
 ```
 
 ---
@@ -344,19 +355,21 @@ A critical architectural principle of TunnelTrace AI is enforcing strict process
 - **Machine Learning Inference (XGBoost + 1D-CNN):** Strictly reserved for classifying the **inner encrypted traffic type** inside ESP payloads without decrypting packets.
 
 ```mermaid
+
 graph LR
-    PACKET[Ingested Network Packet] --> PARSE{Protocol Dissector}
+    PACKET["Ingested Network Packet"] --> PARSE{"Protocol Dissector"}
     
-    PARSE -->|IKE UDP 500/4500| DET_IKE[Deterministic Parser:<br>IKE Version, Ciphers, DH, SAs]
-    PARSE -->|Outer ESP Header| DET_ESP[Deterministic Parser:<br>SPI, Sequence Number]
+    PARSE -->|"IKE UDP 500/4500"| DET_IKE["Deterministic Parser:<br/>IKE Version, Ciphers, DH, SAs"]
+    PARSE -->|"Outer ESP Header"| DET_ESP["Deterministic Parser:<br/>SPI, Sequence Number"]
     
-    PARSE -->|ESP Packet Stream Dimensions| ML_PIPE[Feature Extractor:<br>Sizes, Timing, Direction]
-    ML_PIPE --> MODEL[Dual ML Ensemble:<br>XGBoost + 1D-CNN]
-    MODEL --> PRED[Inferred Traffic Class:<br>Web, Video, VoIP, etc.]
+    PARSE -->|"ESP Packet Stream Dimensions"| ML_PIPE["Feature Extractor:<br/>Sizes, Timing, Direction"]
+    ML_PIPE --> MODEL["Dual ML Ensemble:<br/>XGBoost + 1D-CNN"]
+    MODEL --> PRED["Inferred Traffic Class:<br/>Web, Video, VoIP, etc."]
     
-    DET_IKE --> AUDIT[YAML Policy Engine]
+    DET_IKE --> AUDIT["YAML Policy Engine"]
     DET_ESP --> AUDIT
-    AUDIT --> SCORE[Security Score & Findings]
+    AUDIT --> SCORE["Security Score & Findings"]
+
 ```
 
 ---
@@ -377,18 +390,20 @@ graph LR
 ## 17. Output Traceability
 
 ```mermaid
+
 graph TD
-    DB[(PostgreSQL 15 Analysis Records)] --> GEN_SCORE[Scoring Engine: 0-100 Score]
-    DB --> GEN_THREAT[Threat Engine: STRIDE Matrix]
-    DB --> GEN_EVID[Evidence Engine: Interactive Graph]
-    DB --> GEN_RPT[Report Engine: WeasyPrint PDF]
-    DB --> GEN_TWIN[Twin Engine: Hardened swanctl.conf]
+    DB[("PostgreSQL 15 Analysis Records")] --> GEN_SCORE["Scoring Engine: 0-100 Score"]
+    DB --> GEN_THREAT["Threat Engine: STRIDE Matrix"]
+    DB --> GEN_EVID["Evidence Engine: Interactive Graph"]
+    DB --> GEN_RPT["Report Engine: WeasyPrint PDF"]
+    DB --> GEN_TWIN["Twin Engine: Hardened swanctl.conf"]
     
-    GEN_SCORE --> UI_DASH[Command Center UI]
-    GEN_THREAT --> UI_THREAT[Threat Matrix UI]
-    GEN_EVID --> UI_EVID[Evidence Explorer UI]
-    GEN_RPT --> UI_RPT[Reports Download UI]
-    GEN_TWIN --> UI_TWIN[Configuration Twin UI]
+    GEN_SCORE --> UI_DASH["Command Center UI"]
+    GEN_THREAT --> UI_THREAT["Threat Matrix UI"]
+    GEN_EVID --> UI_EVID["Evidence Explorer UI"]
+    GEN_RPT --> UI_RPT["Reports Download UI"]
+    GEN_TWIN --> UI_TWIN["Configuration Twin UI"]
+
 ```
 
 ---
@@ -625,29 +640,37 @@ The following capabilities represent high-value innovations built on top of the 
 ## 29. Requirement Dependency Matrix
 
 ```mermaid
+
 graph TD
-    LAB[PS-LAB: Testbed Generation] --> CAP[PS-CAP: Traffic Capture]
-    CAP --> PROTO[PS-PROTO: Protocol Identification]
+    LAB["PS-LAB: Testbed Generation"] --> CAP["PS-CAP: Traffic Capture"]
+    CAP --> PROTO["PS-PROTO: Protocol Identification"]
     
-    PROTO --> SA[PS-PROTO-008: SA State Reconstruction]
-    PROTO --> FLOW[Flow Extraction: ESP Packets]
+    PROTO --> SA["PS-PROTO-008: SA State Reconstruction"]
+    PROTO --> FLOW["Flow Extraction: ESP Packets"]
     
-    FLOW --> ML[PS-PROTO-009: Encrypted Traffic ML]
-    ML --> XAI[DRV-004: SHAP Explainability]
-    ML --> OOD[DRV-003: OOD / Unknown Detection]
+    FLOW --> ML["PS-PROTO-009: Encrypted Traffic ML"]
+    ML --> XAI["DRV-004: SHAP Explainability"]
+    ML --> OOD["DRV-003: OOD / Unknown Detection"]
     
-    PROTO --> SEC[PS-SEC: Security Assessment]
+    PROTO --> SEC["PS-SEC: Security Assessment"]
     SA --> SEC
     
-    SEC --> SCORE[PS-OUT-001: Security Score Engine]
-    SEC --> THREAT[PS-OUT-007: Threat Matrix]
-    SEC --> TWIN[PDI-008: Configuration Security Twin]
+    SEC --> SCORE["PS-OUT-001: Security Score Engine"]
+    SEC --> THREAT["PS-OUT-007: Threat Matrix"]
+    SEC --> TWIN["PDI-008: Configuration Security Twin"]
     
-    TWIN --> REM[PDI-009: Closed-Loop Remediation]
-    REM -.->|Triggers Re-Test| LAB
+    TWIN --> REM["PDI-009: Closed-Loop Remediation"]
+    REM -.->|"Triggers Re-Test"| LAB
     
-    SCORE & ML & SEC & THREAT --> RPT[PS-OUT-004/005: Reports Engine]
-    SCORE & ML & SEC & THREAT --> DASH[PS-DEL-003: Interactive Dashboard]
+    SCORE --> RPT["PS-OUT-004/005: Reports Engine"]
+    ML --> RPT["PS-OUT-004/005: Reports Engine"]
+    SEC --> RPT["PS-OUT-004/005: Reports Engine"]
+    THREAT --> RPT["PS-OUT-004/005: Reports Engine"]
+    SCORE --> DASH["PS-DEL-003: Interactive Dashboard"]
+    ML --> DASH["PS-DEL-003: Interactive Dashboard"]
+    SEC --> DASH["PS-DEL-003: Interactive Dashboard"]
+    THREAT --> DASH["PS-DEL-003: Interactive Dashboard"]
+
 ```
 
 ---

@@ -219,24 +219,25 @@ $$\text{DETECT} \longrightarrow \text{RECONSTRUCT} \longrightarrow \text{INFER} 
 ## 10. Current Architecture Summary
 
 ```mermaid
+
 graph TD
-    subgraph "Execution Class A: Unprivileged Web Services (UID 10001)"
-        UI["Next.js 14 Frontend PWA<br>(Port 3000)"]
-        API["FastAPI ASGI Backend<br>(Port 8000)"]
-        WORKER["Celery Worker<br>(TShark + ML Inference)"]
-        DB[(PostgreSQL 15 + pgvector<br>Port 5432)]
-        REDIS[(Redis 7 Task Broker<br>Port 6379)]
-        STORAGE[/Local File Volume: /storage/]
+    subgraph Execution_Class_A__Unprivileged_Web_Services__UID_10001 ["Execution Class A: Unprivileged Web Services (UID 10001)"]
+        UI["Next.js 14 Frontend PWA<br/>(Port 3000)"]
+        API["FastAPI ASGI Backend<br/>(Port 8000)"]
+        WORKER["Celery Worker<br/>(TShark + ML Inference)"]
+        DB[("PostgreSQL 15 + pgvector<br/>Port 5432")]
+        REDIS[("Redis 7 Task Broker<br/>Port 6379")]
+        STORAGE["Local File Volume: /storage"]
     end
 
-    subgraph "Execution Class B: Privileged Network Operations (Host / Root)"
-        AGENT["Privileged Network Agent<br>(UNIX Socket: /run/agent.sock)"]
+    subgraph Execution_Class_B__Privileged_Network_Operations__Host___Root ["Execution Class B: Privileged Network Operations (Host / Root)"]
+        AGENT["Privileged Network Agent<br/>(UNIX Socket: /run/agent.sock)"]
         SWAN["strongSwan 5.9+ (charon)"]
         NETNS["Linux Namespaces (ns_init / ns_wan / ns_resp)"]
         SNIFF["tcpdump Promiscuous Sniffer"]
     end
 
-    UI -->|HTTP / WebSocket| API
+    UI -->|"HTTP / WebSocket"| API
     API --> DB
     API --> REDIS
     REDIS --> WORKER
@@ -244,11 +245,12 @@ graph TD
     WORKER --> STORAGE
     API --> STORAGE
     
-    API -.->|Restricted Local UNIX Socket| AGENT
+    API -.->|"Restricted Local UNIX Socket"| AGENT
     AGENT --> SWAN
     AGENT --> NETNS
     AGENT --> SNIFF
-    SNIFF -.->|Write Raw PCAP| STORAGE
+    SNIFF -.->|"Write Raw PCAP"| STORAGE
+
 ```
 
 ---

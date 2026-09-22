@@ -62,13 +62,15 @@ This specification governs all data entities across the 22 logical platform doma
 ## 5. Relationship to Other Documents
 
 ```mermaid
+
 graph TD
-    PRD["docs/PRD.md<br>(Functional Requirements)"] --> SAD["docs/SYSTEM_ARCHITECTURE.md<br>(Subsystem Boundaries)"]
-    TRD["docs/TRD.md<br>(Technical Specifications)"] --> DAD["docs/DATABASE_DESIGN.md<br>(Authoritative Data Architecture)"]
+    PRD["docs/PRD.md<br/>(Functional Requirements)"] --> SAD["docs/SYSTEM_ARCHITECTURE.md<br/>(Subsystem Boundaries)"]
+    TRD["docs/TRD.md<br/>(Technical Specifications)"] --> DAD["docs/DATABASE_DESIGN.md<br/>(Authoritative Data Architecture)"]
     SAD --> DAD
-    DAD --> CODE_MIGRATIONS["backend/db/migrations/<br>(Alembic DDL Scripts)"]
-    DAD --> CODE_MODELS["backend/db/models/<br>(SQLAlchemy / SQLModel Schemas)"]
-    DAD --> WORK["docs/WORKFLOW.md<br>(Data Pipelines & Lifecycles)"]
+    DAD --> CODE_MIGRATIONS["backend/db/migrations/<br/>(Alembic DDL Scripts)"]
+    DAD --> CODE_MODELS["backend/db/models/<br/>(SQLAlchemy / SQLModel Schemas)"]
+    DAD --> WORK["docs/WORKFLOW.md<br/>(Data Pipelines & Lifecycles)"]
+
 ```
 
 ---
@@ -127,39 +129,40 @@ graph TD
 The data model is partitioned into **22 Logical Data Domains**:
 
 ```mermaid
+
 graph TD
-    subgraph "Capture & Protocol Intelligence"
-        DOM_CAP[3. Capture Domain]
-        DOM_ANL[4. Analysis Domain]
-        DOM_PROTO[5. Protocol Forensics]
-        DOM_SA[6. Security Associations]
-        DOM_FLOW[7. Flow Intelligence]
-        DOM_FEAT[8. Feature Domain]
+    subgraph Capture___Protocol_Intelligence ["Capture & Protocol Intelligence"]
+        DOM_CAP["3. Capture Domain"]
+        DOM_ANL["4. Analysis Domain"]
+        DOM_PROTO["5. Protocol Forensics"]
+        DOM_SA["6. Security Associations"]
+        DOM_FLOW["7. Flow Intelligence"]
+        DOM_FEAT["8. Feature Domain"]
     end
 
-    subgraph "AI & ML Intelligence"
-        DOM_ML[9. ML Prediction Domain]
-        DOM_CONF[10. Confidence & OOD]
-        DOM_XAI[11. Explainability Domain]
-        DOM_ANOM[12. Behavioral Anomaly]
-        DOM_REG_M[18. Model Registry]
-        DOM_REG_D[17. Dataset Registry]
+    subgraph AI___ML_Intelligence ["AI & ML Intelligence"]
+        DOM_ML["9. ML Prediction Domain"]
+        DOM_CONF["10. Confidence & OOD"]
+        DOM_XAI["11. Explainability Domain"]
+        DOM_ANOM["12. Behavioral Anomaly"]
+        DOM_REG_M["18. Model Registry"]
+        DOM_REG_D["17. Dataset Registry"]
     end
 
-    subgraph "Security, Policy & Evidence"
-        DOM_POL[13. Policy & Compliance]
-        DOM_FIND[14. Security Findings]
-        DOM_SCORE[15. Security Scoring & Risk]
-        DOM_META[16. Metadata Exposure]
-        DOM_EVID[12. Evidence & Provenance]
+    subgraph Security__Policy___Evidence ["Security, Policy & Evidence"]
+        DOM_POL["13. Policy & Compliance"]
+        DOM_FIND["14. Security Findings"]
+        DOM_SCORE["15. Security Scoring & Risk"]
+        DOM_META["16. Metadata Exposure"]
+        DOM_EVID["12. Evidence & Provenance"]
     end
 
-    subgraph "Platform, Operations & Twin"
-        DOM_TWIN[19. Configuration Twin]
-        DOM_REM[20. Remediation & Verification]
-        DOM_RPT[21. Reporting Domain]
-        DOM_RAG[22. RAG & Knowledge]
-        DOM_AUDIT[23. Audit & Operations]
+    subgraph Platform__Operations___Twin ["Platform, Operations & Twin"]
+        DOM_TWIN["19. Configuration Twin"]
+        DOM_REM["20. Remediation & Verification"]
+        DOM_RPT["21. Reporting Domain"]
+        DOM_RAG["22. RAG & Knowledge"]
+        DOM_AUDIT["23. Audit & Operations"]
     end
 
     DOM_CAP --> DOM_ANL
@@ -178,6 +181,7 @@ graph TD
     DOM_TWIN --> DOM_REM
     DOM_ANL --> DOM_RPT
     DOM_POL --> DOM_RAG
+
 ```
 
 ---
@@ -213,14 +217,15 @@ Data within [PROJECT NAME] is classified into five strict sensitivity tiers:
 ## 14. Source of Truth Model
 
 ```mermaid
+
 graph LR
-    subgraph "External Ground Truth"
+    subgraph External_Ground_Truth ["External Ground Truth"]
         RAW_WIRE["Wire Packets / Capture File"]
         YAML_REPO["Versioned Policy Git Repository"]
         NIST_DOCS["Authoritative NIST & RFC Publications"]
     end
 
-    subgraph "Authoritative System Entities"
+    subgraph Authoritative_System_Entities ["Authoritative System Entities"]
         DB_CAP["captures (SHA-256 + Path)"]
         DB_OBS["protocol_observations (Dissected Facts)"]
         DB_POL["policy_rules (Active Rule Snapshots)"]
@@ -228,21 +233,25 @@ graph LR
         DB_VEC["standards_embeddings (pgvector Chunks)"]
     end
 
-    subgraph "Derived / Downstream Artifacts"
+    subgraph Derived___Downstream_Artifacts ["Derived / Downstream Artifacts"]
         OUT_SCORE["Security Posture Score (0-100)"]
         OUT_PDF["Generated Audit PDF Reports"]
         OUT_LLM["Grounded AI Advisory Responses"]
     end
 
-    RAW_WIRE -->|Ingestion & Hash| DB_CAP
-    RAW_WIRE -->|Deterministic Dissection| DB_OBS
-    YAML_REPO -->|Sync & Version| DB_POL
-    NIST_DOCS -->|Text Chunking & Embedding| DB_VEC
+    RAW_WIRE -->|"Ingestion & Hash"| DB_CAP
+    RAW_WIRE -->|"Deterministic Dissection"| DB_OBS
+    YAML_REPO -->|"Sync & Version"| DB_POL
+    NIST_DOCS -->|"Text Chunking & Embedding"| DB_VEC
     
-    DB_OBS & DB_POL --> DB_FIND
+    DB_OBS --> DB_FIND
+    DB_POL --> DB_FIND
     DB_FIND --> OUT_SCORE
-    DB_FIND & DB_CAP --> OUT_PDF
-    DB_FIND & DB_VEC --> OUT_LLM
+    DB_FIND --> OUT_PDF
+    DB_CAP --> OUT_PDF
+    DB_FIND --> OUT_LLM
+    DB_VEC --> OUT_LLM
+
 ```
 
 ---
@@ -250,8 +259,9 @@ graph LR
 ## 15. Structured vs Unstructured Storage
 
 ```mermaid
+
 graph TD
-    subgraph "PostgreSQL 15 Relational Core"
+    subgraph PostgreSQL_15_Relational_Core ["PostgreSQL 15 Relational Core"]
         direction TB
         T1["captures (Metadata, Hash, Size)"]
         T2["analysis_runs (Status, Timestamp, Version)"]
@@ -263,19 +273,20 @@ graph TD
         T8["standards_embeddings (pgvector)"]
     end
 
-    subgraph "Object & File Storage System"
+    subgraph Object___File_Storage_System ["Object & File Storage System"]
         direction TB
-        B1["/storage/captures/{id}/source.pcap"]
-        B2["/storage/live/{session_id}.pcap"]
-        B3["/storage/reports/{id}/technical_audit.pdf"]
-        B4["/storage/models/{version}/xgboost.json"]
-        B5["/storage/models/{version}/cnn_weights.pt"]
+        B1["/storage/captures/id/source.pcap"]
+        B2["/storage/live/session_id.pcap"]
+        B3["/storage/reports/id/technical_audit.pdf"]
+        B4["/storage/models/version/xgboost.json"]
+        B5["/storage/models/version/cnn_weights.pt"]
     end
 
-    T1 -.->|File Path Reference| B1
-    T1 -.->|Live Capture Reference| B2
-    T2 -.->|Generated Report Path| B3
-    T2 -.->|Active Model Weights| B4 & B5
+    T1 -.->|"File Path Reference"| B1
+    T1 -.->|"Live Capture Reference"| B2
+    T2 -.->|"Generated Report Path"| B3
+    T2 -.->|"Active Model Weights"| B4 & B5
+
 ```
 
 ---
@@ -343,6 +354,7 @@ Storage paths follow a strict deterministic hierarchy preventing name collisions
 ## 20. Core Entity Model
 
 ```mermaid
+
 erDiagram
     captures ||--o{ analysis_runs : "analyzed by"
     analysis_runs ||--o{ protocol_observations : "dissects"
@@ -358,6 +370,7 @@ erDiagram
     configuration_twins ||--o{ remediation_runs : "executed in"
     remediation_runs ||--o{ remediation_verifications : "verified by"
     analysis_runs ||--o{ report_artifacts : "exports"
+
 ```
 
 ---
@@ -1213,6 +1226,7 @@ All binary assets (PCAPs, PDFs, model files) conform to an immutable metadata re
 ### 57.1 Capture $\rightarrow$ Analysis $\rightarrow$ Finding ER View
 
 ```mermaid
+
 erDiagram
     captures ||--o{ analysis_runs : "1 to Many"
     analysis_runs ||--o{ policy_evaluations : "1 to Many"
@@ -1221,11 +1235,13 @@ erDiagram
     security_findings ||--o{ threat_matrix_entries : "1 to Many"
     analysis_runs ||--o{ security_score_breakdowns : "1 to 1"
     analysis_runs ||--o{ compliance_scorecards : "1 to Many"
+
 ```
 
 ### 57.2 Protocol / IKE / SA ER View
 
 ```mermaid
+
 erDiagram
     analysis_runs ||--o{ protocol_observations : "Dissects"
     analysis_runs ||--o{ ike_sessions : "Identifies"
@@ -1233,28 +1249,33 @@ erDiagram
     ike_security_associations ||--o{ child_security_associations : "Creates"
     child_security_associations ||--o{ traffic_selectors : "Contains"
     child_security_associations ||--o{ esp_flows : "Protects"
+
 ```
 
 ### 57.3 Flow / ML ER View
 
 ```mermaid
+
 erDiagram
     esp_flows ||--|| flow_feature_sets : "1 to 1"
     esp_flows ||--o{ traffic_predictions : "Classified"
     traffic_predictions ||--o{ prediction_explanations : "Explains"
     esp_flows ||--o{ flow_anomaly_results : "Monitored"
     model_bundles ||--o{ traffic_predictions : "Executes"
+
 ```
 
 ### 57.4 Twin & Remediation ER View
 
 ```mermaid
+
 erDiagram
     analysis_runs ||--o{ configuration_twins : "Projects"
     configuration_snapshots ||--o{ configuration_twins : "Baseline / Hardened"
     configuration_twins ||--o{ remediation_runs : "Applies"
     remediation_runs ||--|| remediation_verifications : "Validates"
     analysis_runs ||--o{ remediation_verifications : "Re-analyzes"
+
 ```
 
 ---
@@ -1262,31 +1283,34 @@ erDiagram
 ## 58. Data Lineage
 
 ```mermaid
+
 graph TD
-    subgraph "Dataset to Model Lineage"
-        DS_V[dataset_versions] --> SESS[dataset_sessions]
-        SESS --> SPLIT[dataset_splits]
-        SPLIT --> TRAIN[Model Training Pipeline]
-        TRAIN --> BUNDLE[model_bundles]
-        TRAIN --> EVAL[model_evaluations]
+    subgraph Dataset_to_Model_Lineage ["Dataset to Model Lineage"]
+        DS_V["dataset_versions"] --> SESS["dataset_sessions"]
+        SESS --> SPLIT["dataset_splits"]
+        SPLIT --> TRAIN["Model Training Pipeline"]
+        TRAIN --> BUNDLE["model_bundles"]
+        TRAIN --> EVAL["model_evaluations"]
     end
 
-    subgraph "Capture to Finding Lineage"
-        CAP[captures: raw.pcap] --> RUN[analysis_runs]
-        RUN --> OBS[protocol_observations]
-        OBS --> SA[security_associations]
-        SA & OBS --> EVAL_POL[policy_evaluations]
-        EVAL_POL --> FIND[security_findings]
-        FIND --> DAG[evidence_nodes & edges]
+    subgraph Capture_to_Finding_Lineage ["Capture to Finding Lineage"]
+        CAP["captures: raw.pcap"] --> RUN["analysis_runs"]
+        RUN --> OBS["protocol_observations"]
+        OBS --> SA["security_associations"]
+        SA --> EVAL_POL["policy_evaluations"]
+        OBS --> EVAL_POL["policy_evaluations"]
+        EVAL_POL --> FIND["security_findings"]
+        FIND --> DAG["evidence_nodes & edges"]
     end
 
-    subgraph "Finding to Verification Lineage"
-        FIND --> TWIN[configuration_twins]
-        TWIN --> REM_RUN[remediation_runs]
-        REM_RUN --> VER_CAP[Verification Capture: raw_v.pcap]
-        VER_CAP --> VER_RUN[analysis_runs: Post-Fix]
-        VER_RUN --> VER_RES[remediation_verifications: VERIFIED_RESOLVED]
+    subgraph Finding_to_Verification_Lineage ["Finding to Verification Lineage"]
+        FIND --> TWIN["configuration_twins"]
+        TWIN --> REM_RUN["remediation_runs"]
+        REM_RUN --> VER_CAP["Verification Capture: raw_v.pcap"]
+        VER_CAP --> VER_RUN["analysis_runs: Post-Fix"]
+        VER_RUN --> VER_RES["remediation_verifications: VERIFIED_RESOLVED"]
     end
+
 ```
 
 ---
@@ -1483,6 +1507,7 @@ LIMIT 5;
 ## 69. Data Lifecycle
 
 ```mermaid
+
 stateDiagram-v2
     [*] --> Ingested: Upload / Sniff Complete
     Ingested --> Queued: Registered in captures
@@ -1493,6 +1518,7 @@ stateDiagram-v2
     Completed --> Archived: Optional Retention Window
     Archived --> Purged: Retention Policy Triggered
     Purged --> [*]
+
 ```
 
 ---

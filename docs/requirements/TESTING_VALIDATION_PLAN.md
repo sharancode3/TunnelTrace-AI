@@ -62,13 +62,15 @@ This plan governs testing across all functional, architectural, and operational 
 ## 5. Relationship to PRD / RTM / TRD / SAD
 
 ```mermaid
+
 graph TD
-    PRD[PRD: Functional Requirements] --> RTM[RTM: Requirements Traceability Matrix]
-    TRD[TRD: Technical Architecture] --> RTM
-    SAD[SAD: System Architecture] --> RTM
-    RTM --> TVP[This Document: Testing, Validation & Evaluation Plan]
-    TVP --> TC[Executable Test Suites: UT, CT, INT, SYS, LAB, ML, SEC]
-    TC --> EV[Cryptographic Test Evidence: Logs, Hashes, PCAPs, Reports]
+    PRD["PRD: Functional Requirements"] --> RTM["RTM: Requirements Traceability Matrix"]
+    TRD["TRD: Technical Architecture"] --> RTM
+    SAD["SAD: System Architecture"] --> RTM
+    RTM --> TVP["This Document: Testing, Validation & Evaluation Plan"]
+    TVP --> TC["Executable Test Suites: UT, CT, INT, SYS, LAB, ML, SEC"]
+    TC --> EV["Cryptographic Test Evidence: Logs, Hashes, PCAPs, Reports"]
+
 ```
 
 - **[PRD.md](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/PRD.md):** Defines functional mandates (`LAB-`, `CAP-`, `PROTO-`, `ML-`, `SEC-`, etc.).
@@ -160,16 +162,18 @@ Every test case in this plan exists in one of the following official lifecycle s
 ## 13. Test Levels
 
 ```mermaid
+
 graph TD
-    L1[Level 1: Unit Testing - Pure Python & TS Functions] --> L2[Level 2: Component Testing - Subsystems in Isolation]
-    L2 --> L3[Level 3: API & Contract Testing - Pydantic & OpenAPI Schemas]
-    L3 --> L4[Level 4: Integration Testing - Cross-Subsystem IPC & DB]
-    L4 --> L5[Level 5: System Testing - Full End-to-End Workflows]
-    L5 --> L6[Level 6: Security & Robustness - Fuzzing, STRIDE, Injection]
-    L6 --> L7[Level 7: ML & Evaluation - Session Splits, Calibration, OOD]
-    L7 --> L8[Level 8: Performance & Resource - Latency, Concurrency, Limits]
-    L8 --> L9[Level 9: Resilience & Recovery - Chaos, Degradation, Rollback]
-    L9 --> L10[Level 10: SIH Acceptance - 33-Step Golden Master Workflow]
+    L1["Level 1: Unit Testing - Pure Python & TS Functions"] --> L2["Level 2: Component Testing - Subsystems in Isolation"]
+    L2 --> L3["Level 3: API & Contract Testing - Pydantic & OpenAPI Schemas"]
+    L3 --> L4["Level 4: Integration Testing - Cross-Subsystem IPC & DB"]
+    L4 --> L5["Level 5: System Testing - Full End-to-End Workflows"]
+    L5 --> L6["Level 6: Security & Robustness - Fuzzing, STRIDE, Injection"]
+    L6 --> L7["Level 7: ML & Evaluation - Session Splits, Calibration, OOD"]
+    L7 --> L8["Level 8: Performance & Resource - Latency, Concurrency, Limits"]
+    L8 --> L9["Level 9: Resilience & Recovery - Chaos, Degradation, Rollback"]
+    L9 --> L10["Level 10: SIH Acceptance - 33-Step Golden Master Workflow"]
+
 ```
 
 ---
@@ -271,6 +275,7 @@ An automated CI check (`scripts/verify_rtm_coverage.py`) validates that no PRD r
 ## 24. Testbed Validation
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     participant TestRunner as PyTest Runner
@@ -290,6 +295,7 @@ sequenceDiagram
     TestRunner->>Sniffer: Stop Capture -> Save pcap
     TestRunner->>TestRunner: Assert Capture contains IKE + ESP
     Agent->>Agent: Teardown NetNS & Restore
+
 ```
 
 ---
@@ -365,14 +371,16 @@ Pre-training validation of `IPsecFlowBench`:
 ## 33. Dataset Leakage Prevention
 
 ```mermaid
+
 graph TD
-    A[Raw Capture Sessions] -->|Extract Session IDs| B[Session Partitioning]
-    B -->|GroupKFold on session_id| C[Train Split]
-    B -->|GroupKFold on session_id| D[Validation Split]
-    B -->|GroupKFold on session_id| E[Held-Out Test Split]
-    C -.->|ASSERT ZERO INTERSECTION| D
-    D -.->|ASSERT ZERO INTERSECTION| E
-    C -.->|ASSERT ZERO INTERSECTION| E
+    A["Raw Capture Sessions"] -->|"Extract Session IDs"| B["Session Partitioning"]
+    B -->|"GroupKFold on session_id"| C["Train Split"]
+    B -->|"GroupKFold on session_id"| D["Validation Split"]
+    B -->|"GroupKFold on session_id"| E["Held-Out Test Split"]
+    C -.->|"ASSERT ZERO INTERSECTION"| D
+    D -.->|"ASSERT ZERO INTERSECTION"| E
+    C -.->|"ASSERT ZERO INTERSECTION"| E
+
 ```
 
 *Automated Gate:* CI script `tests/ml/test_split_leakage.py` asserts:
@@ -531,11 +539,13 @@ Asserts that 100% of generated threat matrix rows trace to structured findings, 
 ## 55. Evidence / Provenance Validation
 
 ```mermaid
+
 graph LR
-    Finding[Finding ID: find_001] --> Rule[Policy Rule: POL-NIST-004]
-    Rule --> Fact[Observed Fact: DH Group 2]
-    Fact --> Frame[Frame #14 Byte Offset: 0x01A4]
-    Frame --> PCAP[Capture SHA-256: e3b0c442...]
+    Finding["Finding ID: find_001"] --> Rule["Policy Rule: POL-NIST-004"]
+    Rule --> Fact["Observed Fact: DH Group 2"]
+    Fact --> Frame["Frame #14 Byte Offset: 0x01A4"]
+    Frame --> PCAP["Capture SHA-256: e3b0c442..."]
+
 ```
 
 Automated test `test_evidence_provenance_chain` traverses this graph from UI finding back to raw capture bytes.

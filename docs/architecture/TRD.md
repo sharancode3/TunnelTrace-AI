@@ -83,14 +83,16 @@ It provides concrete implementation-level blueprints for software engineers, pro
 ## 5. Relationship to PRD / Architecture / Other Docs
 
 ```mermaid
+
 graph TD
-    PRD[Product Requirements Document\nPRD-SIH2026-PS160-CORE-V1] --> TRD[Technical Requirements Document\nTRD-SIH2026-PS160-ENG-V1]
-    TRD --> ARCH[System Architecture Document]
-    TRD --> DB[Database Design & Schema Spec]
-    TRD --> API[REST & WebSocket API Specification]
-    TRD --> ML_DOC[ML & Dataset Pipeline Specification]
-    TRD --> SEC_DOC[Security & Threat Model Document]
-    TRD --> TEST[System Verification & Test Plan]
+    PRD["Product Requirements Document\nPRD-SIH2026-PS160-CORE-V1"] --> TRD["Technical Requirements Document\nTRD-SIH2026-PS160-ENG-V1"]
+    TRD --> ARCH["System Architecture Document"]
+    TRD --> DB["Database Design & Schema Spec"]
+    TRD --> API["REST & WebSocket API Specification"]
+    TRD --> ML_DOC["ML & Dataset Pipeline Specification"]
+    TRD --> SEC_DOC["Security & Threat Model Document"]
+    TRD --> TEST["System Verification & Test Plan"]
+
 ```
 
 This TRD directly implements the requirements established in `PRD-SIH2026-PS160-CORE-V1`. In any conflict regarding technical architecture, component boundaries, or pipeline specifications, this TRD serves as the authoritative implementation baseline.
@@ -141,46 +143,47 @@ This TRD directly implements the requirements established in `PRD-SIH2026-PS160-
 ## 10. Agreed Technology Stack
 
 ```mermaid
+
 graph TD
     subgraph FRONTEND["Frontend Presentation Layer"]
-        UI1[Next.js 14 App Router]
-        UI2[TypeScript + Tailwind CSS]
-        UI3[Apache ECharts Visualizations]
-        UI4[React Flow Evidence Graph]
-        UI5[PWA Service Worker + Manifest]
+        UI1["Next.js 14 App Router"]
+        UI2["TypeScript + Tailwind CSS"]
+        UI3["Apache ECharts Visualizations"]
+        UI4["React Flow Evidence Graph"]
+        UI5["PWA Service Worker + Manifest"]
     end
 
     subgraph BACKEND["Backend Application Layer"]
-        API1[FastAPI REST & WebSocket Server]
-        API2[Pydantic v2 Schema Validation]
-        API3[Redis Queue + Celery Workers]
+        API1["FastAPI REST & WebSocket Server"]
+        API2["Pydantic v2 Schema Validation"]
+        API3["Redis Queue + Celery Workers"]
     end
 
     subgraph PROTOCOL["Protocol & Ingestion Layer"]
-        PR1[libpcap / tcpdump]
-        PR2[Wireshark / TShark 4.0+]
-        PR3[PyShark / Python Dissectors]
-        PR4[Scapy Custom Packet Processor]
+        PR1["libpcap / tcpdump"]
+        PR2["Wireshark / TShark 4.0+"]
+        PR3["PyShark / Python Dissectors"]
+        PR4["Scapy Custom Packet Processor"]
     end
 
     subgraph ML_STACK["Applied ML & Analytics Layer"]
-        ML1[XGBoost Gradient Boosted Trees]
-        ML2[PyTorch 1D-CNN Sequence Model]
-        ML3[Scikit-learn + Isolation Forest]
-        ML4[SHAP Explainability Engine]
-        ML5[NumPy / Pandas / SciPy]
+        ML1["XGBoost Gradient Boosted Trees"]
+        ML2["PyTorch 1D-CNN Sequence Model"]
+        ML3["Scikit-learn + Isolation Forest"]
+        ML4["SHAP Explainability Engine"]
+        ML5["NumPy / Pandas / SciPy"]
     end
 
     subgraph STORAGE["Data & State Persistence Layer"]
-        DB1[(PostgreSQL 15)]
-        DB2[(pgvector Vector Store)]
-        DB3[Local / S3-Compatible Object Store]
+        DB1[("PostgreSQL 15")]
+        DB2[("pgvector Vector Store")]
+        DB3["Local / S3-Compatible Object Store"]
     end
 
     subgraph LAB["Controlled IPsec Testbed"]
-        LB1[Linux Network Namespaces]
-        LB2[strongSwan 5.9+ IPsec Daemon]
-        LB3[tc / netem Impairment Injector]
+        LB1["Linux Network Namespaces"]
+        LB2["strongSwan 5.9+ IPsec Daemon"]
+        LB3["tc / netem Impairment Injector"]
     end
 
     FRONTEND <--> BACKEND
@@ -188,6 +191,7 @@ graph TD
     BACKEND <--> ML_STACK
     BACKEND <--> STORAGE
     BACKEND <--> LAB
+
 ```
 
 * **Frontend:** Next.js 14 (App Router), TypeScript, Tailwind CSS, custom UI components, Apache ECharts, React Flow, Web App Manifest + Service Worker.
@@ -205,25 +209,29 @@ graph TD
 ## 11. System Context
 
 ```mermaid
+
 flowchart TD
-    EXT_PCAP[Analyst / Operator PCAP File] -->|Upload via Web UI / REST| INGEST[Ingestion & Capture Subsystem]
-    EXT_NET[Live Monitored Network Interface] -->|Streaming Raw Frames| INGEST
+    EXT_PCAP["Analyst / Operator PCAP File"] -->|"Upload via Web UI / REST"| INGEST["Ingestion & Capture Subsystem"]
+    EXT_NET["Live Monitored Network Interface"] -->|"Streaming Raw Frames"| INGEST
     
-    INGEST --> CORE[Core Processing & Analytics Pipeline]
+    INGEST --> CORE["Core Processing & Analytics Pipeline"]
     
-    subgraph TunnelTrace AI System Boundary
-        CORE --> PROTO[Protocol Forensics & SA Tracker]
-        CORE --> ML[Encrypted Traffic ML Engine]
-        CORE --> SEC[Policy-as-Code Security Engine]
-        CORE --> RAG[Local AI Analyst Knowledge Base]
-        CORE --> TWIN[Configuration Security Twin]
+    subgraph TunnelTrace_AI_System_Boundary ["TunnelTrace AI System Boundary"]
+        CORE --> PROTO["Protocol Forensics & SA Tracker"]
+        CORE --> ML["Encrypted Traffic ML Engine"]
+        CORE --> SEC["Policy-as-Code Security Engine"]
+        CORE --> RAG["Local AI Analyst Knowledge Base"]
+        CORE --> TWIN["Configuration Security Twin"]
     end
     
-    TWIN <-->|Automated Test & Verification| LAB_ENV[Controlled strongSwan Testbed]
+    TWIN <-->|"Automated Test & Verification"| LAB_ENV["Controlled strongSwan Testbed"]
     
-    PROTO & ML & SEC --> REP[Dual-Tier Report Exporter]
-    REP -->|PDF / HTML| ANALYST[Analyst / Executive Consumer]
-    CORE <-->|Interactive Dashboard / WebSockets| FRONTEND[Next.js Analyst Workspace]
+    PROTO --> REP["Dual-Tier Report Exporter"]
+    ML --> REP["Dual-Tier Report Exporter"]
+    SEC --> REP["Dual-Tier Report Exporter"]
+    REP -->|"PDF / HTML"| ANALYST["Analyst / Executive Consumer"]
+    CORE <-->|"Interactive Dashboard / WebSockets"| FRONTEND["Next.js Analyst Workspace"]
+
 ```
 
 ---
@@ -258,6 +266,7 @@ The system is organized into modular functional components within a clean backen
 ## 13. End-to-End Processing Pipeline
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     actor Analyst as Analyst / UI
@@ -293,6 +302,7 @@ sequenceDiagram
     Analyst->>API: Query Session Results
     API->>DB: Fetch Aggregated Graph & Metrics
     API-->>Analyst: Render Dashboard, Evidence Graph, & Reports
+
 ```
 
 ---
@@ -369,13 +379,15 @@ To prevent arbitrary code execution or Denial-of-Service via weaponized capture 
 ## 16. Live Capture Design
 
 ```mermaid
+
 flowchart LR
-    IFACE[Host Network Interface\neth0 / veth] -->|Raw Frame Stream| TCPDUMP[tcpdump Subprocess\nCAP_NET_RAW]
-    TCPDUMP -->|FIFO Pipe / Standard Output| DISPATCH[Live Ingestion Worker]
-    DISPATCH -->|Micro-batches\n100ms / 50 pkts| FLOW_BUF[Flow Aggregation Ring Buffer]
-    DISPATCH -->|IKE Control Frames| IKE_BUF[IKE State Tracker]
-    FLOW_BUF --> WS_HUB[WebSocket Streaming Hub]
-    WS_HUB -->|Live Telemetry Events| CLIENT[Analyst Web Dashboard]
+    IFACE["Host Network Interface\neth0 / veth"] -->|"Raw Frame Stream"| TCPDUMP["tcpdump Subprocess\nCAP_NET_RAW"]
+    TCPDUMP -->|"FIFO Pipe / Standard Output"| DISPATCH["Live Ingestion Worker"]
+    DISPATCH -->|"Micro-batches\n100ms / 50 pkts"| FLOW_BUF["Flow Aggregation Ring Buffer"]
+    DISPATCH -->|"IKE Control Frames"| IKE_BUF["IKE State Tracker"]
+    FLOW_BUF --> WS_HUB["WebSocket Streaming Hub"]
+    WS_HUB -->|"Live Telemetry Events"| CLIENT["Analyst Web Dashboard"]
+
 ```
 
 * **Interface Verification:** Verifies interface existence in `/sys/class/net/` and operational state (`up`).
@@ -493,6 +505,7 @@ The engine implements a hierarchical determination algorithm:
 ## 21. SA Reconstruction Design
 
 ```mermaid
+
 classDiagram
     class IKESession {
         +String session_id
@@ -523,6 +536,7 @@ classDiagram
     }
     IKESession "1" *-- "many" ChildSA : negotiates
     ChildSA "1" *-- "2" ESPFlow : bi-directional data
+
 ```
 
 ### 21.1 Stateful SA Reconstruction Pseudocode
@@ -577,11 +591,13 @@ def reconstruct_security_associations(ike_sessions: list, frames: list) -> SAGra
 Every reconstructed parameter, finding, and score deduction must carry an immutable `EvidenceState`:
 
 ```mermaid
+
 stateDiagram-v2
     [*] --> VERIFIED : Observable in cleartext headers (IKE SA/TS)
     [*] --> INFERRED : Derived from contextual wire behavior (timing/addressing)
     [*] --> UNKNOWN : Evidence absent from capture
     [*] --> MISCONFIGURATION_OBSERVED : Protocol violation / syntax error detected
+
 ```
 
 * `VERIFIED`: Directly observed in unencrypted wire packets with complete syntax validity.
@@ -606,13 +622,15 @@ stateDiagram-v2
 The feature extraction engine consumes raw ESP frames and extracts two distinct feature representations:
 
 ```mermaid
+
 flowchart TD
-    ESP_FRAMES[Raw Reconstructed ESP Flow] --> FORK{Feature Extractor}
-    FORK -->|Flow-Level Statistics| FEAT_A[Model A Feature Vector\n1D Tabular Array]
-    FORK -->|Early Packet Sequence| FEAT_B[Model B Sequence Tensor\n3 x N Matrix]
+    ESP_FRAMES["Raw Reconstructed ESP Flow"] --> FORK{"Feature Extractor"}
+    FORK -->|"Flow-Level Statistics"| FEAT_A["Model A Feature Vector\n1D Tabular Array"]
+    FORK -->|"Early Packet Sequence"| FEAT_B["Model B Sequence Tensor\n3 x N Matrix"]
     
-    FEAT_A --> XGB[XGBoost Classifier]
-    FEAT_B --> CNN[1D-CNN Temporal Model]
+    FEAT_A --> XGB["XGBoost Classifier"]
+    FEAT_B --> CNN["1D-CNN Temporal Model"]
+
 ```
 
 ### 24.2 Feature Extraction Pseudocode
@@ -675,38 +693,41 @@ def extract_sequence_tensor(flow: ESPFlow, target_len: int = 64) -> torch.Tensor
 ## 25. Dataset Generation Architecture
 
 ```mermaid
+
 flowchart TD
-    subgraph Testbed Host (Linux)
+    subgraph Testbed_Host__Linux ["Testbed Host (Linux)"]
         subgraph NS_CLIENT["Namespace: Client (Workload Generator)"]
-            APP[Synthetic Traffic Injectors\nsip-bench, curl, iperf3, hping3]
+            APP["Synthetic Traffic Injectors\nsip-bench, curl, iperf3, hping3"]
         end
         
         subgraph NS_GW_A["Namespace: Gateway A (strongSwan)"]
-            SW_A[strongSwan Instance A\nswanctl / vici]
-            PCAP_PLAIN[Plaintext Capture: tcpdump]
+            SW_A["strongSwan Instance A\nswanctl / vici"]
+            PCAP_PLAIN["Plaintext Capture: tcpdump"]
         end
         
         subgraph NS_WAN["Namespace: WAN Network Simulator"]
-            TC[Traffic Control: tc / netem\nLatency, Jitter, Loss, Throttling]
-            PCAP_ENC[Encrypted Capture: tcpdump\nESP / IKE Traces]
+            TC["Traffic Control: tc / netem\nLatency, Jitter, Loss, Throttling"]
+            PCAP_ENC["Encrypted Capture: tcpdump\nESP / IKE Traces"]
         end
         
         subgraph NS_GW_B["Namespace: Gateway B (strongSwan)"]
-            SW_B[strongSwan Instance B]
+            SW_B["strongSwan Instance B"]
         end
         
         subgraph NS_SERVER["Namespace: Server (Destination Workload Sink)"]
-            SINK[Traffic Sinks & Echo Daemons]
+            SINK["Traffic Sinks & Echo Daemons"]
         end
     end
     
-    APP -->|Plain Traffic| SW_A
-    SW_A -->|Encrypted ESP| TC
-    TC -->|Impaired ESP| SW_B
-    SW_B -->|Plain Traffic| SINK
+    APP -->|"Plain Traffic"| SW_A
+    SW_A -->|"Encrypted ESP"| TC
+    TC -->|"Impaired ESP"| SW_B
+    SW_B -->|"Plain Traffic"| SINK
     
-    PCAP_PLAIN & PCAP_ENC --> DS_SYNC[Dataset Synchronizer & Metadata Binder]
-    DS_SYNC --> REPO[(IPsec-Native Ground-Truth Dataset)]
+    PCAP_PLAIN --> DS_SYNC["Dataset Synchronizer & Metadata Binder"]
+    PCAP_ENC --> DS_SYNC["Dataset Synchronizer & Metadata Binder"]
+    DS_SYNC --> REPO[("IPsec-Native Ground-Truth Dataset")]
+
 ```
 
 ---
@@ -750,20 +771,23 @@ To ensure true generalizability and prevent artificial score inflation:
 ## 28. ML Training Pipeline
 
 ```mermaid
+
 flowchart TD
-    D1[Dataset Registry: Ground Truth Sessions] --> D2[Session-Level Group Split\nGroupKFold by session_id]
-    D2 --> D3[Training Split] & D4[Validation Split] & D5[Holdout Test Split]
+    D1["Dataset Registry: Ground Truth Sessions"] --> D2["Session-Level Group Split\nGroupKFold by session_id"]
+    D2 --> D3["Training Split"] & D4["Validation Split"] & D5["Holdout Test Split"]
     
-    D3 --> FEAT[Feature Extraction Pipeline]
-    FEAT --> FIT_NORM[Fit Preprocessor Scalers\nTraining Data Only]
+    D3 --> FEAT["Feature Extraction Pipeline"]
+    FEAT --> FIT_NORM["Fit Preprocessor Scalers\nTraining Data Only"]
     
-    FIT_NORM --> TRAIN_XGB[Train Model A: XGBoost]
-    FIT_NORM --> TRAIN_CNN[Train Model B: 1D-CNN]
+    FIT_NORM --> TRAIN_XGB["Train Model A: XGBoost"]
+    FIT_NORM --> TRAIN_CNN["Train Model B: 1D-CNN"]
     
-    TRAIN_XGB & TRAIN_CNN --> VAL_CALIB[Validation & Calibration\nTemperature Scaling / Isotonic]
-    VAL_CALIB --> FUSION_TUNE[Evaluate Ensemble Fusion & Entropy]
-    FUSION_TUNE --> TEST_EVAL[Holdout Test Evaluation\nECE, Macro-F1, Confusion Matrix]
-    TEST_EVAL --> ARTIFACT[Export Model Checkpoints & Metadata Hashing]
+    TRAIN_XGB --> VAL_CALIB["Validation & Calibration\nTemperature Scaling / Isotonic"]
+    TRAIN_CNN --> VAL_CALIB["Validation & Calibration\nTemperature Scaling / Isotonic"]
+    VAL_CALIB --> FUSION_TUNE["Evaluate Ensemble Fusion & Entropy"]
+    FUSION_TUNE --> TEST_EVAL["Holdout Test Evaluation\nECE, Macro-F1, Confusion Matrix"]
+    TEST_EVAL --> ARTIFACT["Export Model Checkpoints & Metadata Hashing"]
+
 ```
 
 ---
@@ -921,12 +945,14 @@ models/
 The security assessment engine is strictly deterministic, employing a Python-based rule engine that evaluates versioned YAML Policy-as-Code definitions against verified configuration evidence.
 
 ```mermaid
+
 flowchart LR
-    EVID[Extracted Protocol & SA Evidence] --> ENGINE[Policy-as-Code Engine]
-    YAML[Versioned YAML Policy Profiles\nNIST SP 800-77 / RFC 8221] --> ENGINE
-    ENGINE --> FINDINGS[Structured Findings List]
-    FINDINGS --> SCORE[Security Scoring Engine]
-    FINDINGS --> THREAT[Threat Matrix Engine]
+    EVID["Extracted Protocol & SA Evidence"] --> ENGINE["Policy-as-Code Engine"]
+    YAML["Versioned YAML Policy Profiles\nNIST SP 800-77 / RFC 8221"] --> ENGINE
+    ENGINE --> FINDINGS["Structured Findings List"]
+    FINDINGS --> SCORE["Security Scoring Engine"]
+    FINDINGS --> THREAT["Threat Matrix Engine"]
+
 ```
 
 ---
@@ -1071,14 +1097,16 @@ Constructs an itemized Threat Matrix table from verified findings:
 ## 46. Evidence/Provenance Architecture
 
 ```mermaid
+
 graph TD
-    CAP[Capture File: SHA-256] --> PKT[Packet #14: IKE_AUTH Response]
-    PKT --> FLD[Payload Field: Transform Type 1 = ENCR_3DES]
-    FLD --> SA[Child SA: SPI 0x4a2b3c4d]
-    SA --> RULE[Policy Rule: IPSEC-CRYPTO-001]
-    RULE --> STD[Standard: NIST SP 800-77 Rev. 1 Sec 4.1.1]
-    STD --> FIND[Finding: Deprecated 3DES Negotiated]
-    FIND --> REM[Remediation: Upgrade to AES-256-GCM]
+    CAP["Capture File: SHA-256"] --> PKT["Packet #14: IKE_AUTH Response"]
+    PKT --> FLD["Payload Field: Transform Type 1 = ENCR_3DES"]
+    FLD --> SA["Child SA: SPI 0x4a2b3c4d"]
+    SA --> RULE["Policy Rule: IPSEC-CRYPTO-001"]
+    RULE --> STD["Standard: NIST SP 800-77 Rev. 1 Sec 4.1.1"]
+    STD --> FIND["Finding: Deprecated 3DES Negotiated"]
+    FIND --> REM["Remediation: Upgrade to AES-256-GCM"]
+
 ```
 
 Every database finding object retains a foreign key pointer to an `EvidenceNode` record referencing:
@@ -1115,6 +1143,7 @@ Every database finding object retains a foreign key pointer to an `EvidenceNode`
 ## 49. Remediation Verification / Rollback
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     participant UI as Analyst UI
@@ -1142,6 +1171,7 @@ sequenceDiagram
         ANA-->>REM: Return New Findings & Scores
         REM-->>UI: Display Before vs After Verification Card (VERIFIED_RESOLVED)
     end
+
 ```
 
 ---
@@ -1158,21 +1188,26 @@ sequenceDiagram
 ## 51. AI Analyst / RAG Design
 
 ```mermaid
+
 flowchart TD
-    QUERY[Analyst Natural Language Query] --> EMBED[Local Embedding Model]
-    EMBED --> VEC_SEARCH[Vector Similarity Query\nPostgreSQL pgvector]
+    QUERY["Analyst Natural Language Query"] --> EMBED["Local Embedding Model"]
+    EMBED --> VEC_SEARCH["Vector Similarity Query\nPostgreSQL pgvector"]
     
-    subgraph Local Vector Store
-        KB_STANDARDS[(NIST / RFC Standards Excerpts)]
-        KB_FINDINGS[(Current Analysis Findings & Evidence)]
-        KB_CONFIG[(Reconstructed SA & Transform Metadata)]
+    subgraph Local_Vector_Store ["Local Vector Store"]
+        KB_STANDARDS[("NIST / RFC Standards Excerpts")]
+        KB_FINDINGS[("Current Analysis Findings & Evidence")]
+        KB_CONFIG[("Reconstructed SA & Transform Metadata")]
     end
     
-    KB_STANDARDS & KB_FINDINGS & KB_CONFIG -->|Cosine Distance Search| RETRIEVAL[Retrieved Context Chunks]
+    KB_STANDARDS --> |"Cosine Distance Search"| RETRIEVAL["Retrieved Context Chunks"]
+    KB_FINDINGS --> |"Cosine Distance Search"| RETRIEVAL["Retrieved Context Chunks"]
+    KB_CONFIG --> |"Cosine Distance Search"| RETRIEVAL["Retrieved Context Chunks"]
     
-    QUERY & RETRIEVAL --> PROMPT_BUILDER[Sanitized Prompt Assembly]
-    PROMPT_BUILDER --> LOCAL_LLM[Local / Private LLM Endpoint]
-    LOCAL_LLM --> RESPONSE[Factual Grounded Answer with Evidence Citations]
+    QUERY --> PROMPT_BUILDER["Sanitized Prompt Assembly"]
+    RETRIEVAL --> PROMPT_BUILDER["Sanitized Prompt Assembly"]
+    PROMPT_BUILDER --> LOCAL_LLM["Local / Private LLM Endpoint"]
+    LOCAL_LLM --> RESPONSE["Factual Grounded Answer with Evidence Citations"]
+
 ```
 
 ### 51.1 Strict Groundedness Guardrails
@@ -1202,6 +1237,7 @@ flowchart TD
 ## 54. Persistence Boundaries
 
 ```mermaid
+
 erDiagram
     ANALYSIS_SESSION ||--o{ PROTOCOL_OBSERVATION : contains
     ANALYSIS_SESSION ||--o{ SECURITY_ASSOCIATION : contains
@@ -1245,6 +1281,7 @@ erDiagram
         int packet_number
         string field_name
     }
+
 ```
 
 ---
@@ -1372,20 +1409,22 @@ The system architecture guarantees partial operational utility during component 
 ## 64. Privilege Separation
 
 ```mermaid
+
 flowchart TD
-    subgraph Host OS Environment
-        CAP_SVC[Live Capture Service\nRuns as root or CAP_NET_RAW]
-        LAB_SVC[strongSwan Lab Controller\nRuns with network namespace privileges]
+    subgraph Host_OS_Environment ["Host OS Environment"]
+        CAP_SVC["Live Capture Service\nRuns as root or CAP_NET_RAW"]
+        LAB_SVC["strongSwan Lab Controller\nRuns with network namespace privileges"]
     end
     
-    subgraph Docker Container Sandbox
-        API_SVC[FastAPI Backend\nRuns as unprivileged user: uid 10001]
-        CELERY_SVC[Celery Dissection & ML Workers\nRuns as unprivileged user: uid 10001]
-        NEXT_SVC[Next.js Frontend Node Server\nRuns as unprivileged user: uid 10001]
+    subgraph Docker_Container_Sandbox ["Docker Container Sandbox"]
+        API_SVC["FastAPI Backend\nRuns as unprivileged user: uid 10001"]
+        CELERY_SVC["Celery Dissection & ML Workers\nRuns as unprivileged user: uid 10001"]
+        NEXT_SVC["Next.js Frontend Node Server\nRuns as unprivileged user: uid 10001"]
     end
     
-    CAP_SVC -->|Unix Domain Socket / IPC| API_SVC
-    LAB_SVC -->|Controlled vici Socket| CELERY_SVC
+    CAP_SVC -->|"Unix Domain Socket / IPC"| API_SVC
+    LAB_SVC -->|"Controlled vici Socket"| CELERY_SVC
+
 ```
 
 ---
@@ -1528,6 +1567,7 @@ Comprehensive test hierarchy:
 ## 80. SIH Prototype Implementation Order
 
 ```mermaid
+
 gantt
     title SIH Prototype Implementation Priority
     dateFormat  X
@@ -1554,6 +1594,7 @@ gantt
     P14: Configuration Security Twin    :p14, after p13, 1
     P15: Closed-Loop Lab Remediation    :p15, after p14, 1
     P16: AI Analyst / RAG Interface     :p16, after p15, 1
+
 ```
 
 ---

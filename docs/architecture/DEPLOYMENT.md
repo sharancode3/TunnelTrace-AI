@@ -70,13 +70,15 @@ TunnelTrace AI operational architecture directly implements the system requireme
 - **Traceability to WORKFLOW:** Implements the exact state machine triggers, background task queues, and failure propagation paths defined in Level 1 and Level 2 data flow specifications.
 
 ```mermaid
+
 graph TD
-    PRD["PRD.md<br>(Functional Requirements & SLOs)"] --> DEPLOY["DEPLOYMENT.md<br>(Infrastructure & Operations)"]
-    TRD["TRD.md<br>(Subsystems & Engine Specs)"] --> DEPLOY
-    WORKFLOW["WORKFLOW.md<br>(Pipelines & State Transitions)"] --> DEPLOY
+    PRD["PRD.md<br/>(Functional Requirements & SLOs)"] --> DEPLOY["DEPLOYMENT.md<br/>(Infrastructure & Operations)"]
+    TRD["TRD.md<br/>(Subsystems & Engine Specs)"] --> DEPLOY
+    WORKFLOW["WORKFLOW.md<br/>(Pipelines & State Transitions)"] --> DEPLOY
     DEPLOY --> RUN_LOCAL["Local Docker Stack"]
     DEPLOY --> RUN_LAB["Privileged Network Agent"]
     DEPLOY --> RUN_CLOUD["Future Cloud Staging"]
+
 ```
 
 ---
@@ -168,34 +170,36 @@ The deployment philosophy of TunnelTrace AI is anchored upon six uncompromising 
 To guarantee operational security and platform portability, TunnelTrace AI enforces a binary execution classification:
 
 ```mermaid
+
 graph TB
-    subgraph "EXECUTION CLASS A: Standard Application Services (Unprivileged)"
-        FE["Next.js Frontend<br>(Non-Root, Node 20)"]
-        API["FastAPI Backend<br>(Non-Root, Python 3.11)"]
-        WRK["Celery Worker<br>(Non-Root, Python 3.11)"]
-        DB["PostgreSQL 15 + pgvector<br>(Database User)"]
-        REDIS["Redis 7 Broker<br>(Isolated Cache)"]
+    subgraph EXECUTION_CLASS_A__Standard_Application_Services__Unprivileged ["EXECUTION CLASS A: Standard Application Services (Unprivileged)"]
+        FE["Next.js Frontend<br/>(Non-Root, Node 20)"]
+        API["FastAPI Backend<br/>(Non-Root, Python 3.11)"]
+        WRK["Celery Worker<br/>(Non-Root, Python 3.11)"]
+        DB["PostgreSQL 15 + pgvector<br/>(Database User)"]
+        REDIS["Redis 7 Broker<br/>(Isolated Cache)"]
     end
 
-    subgraph "EXECUTION CLASS B: Privileged Network / Lab Operations (Elevated Linux)"
-        AGENT["Privileged Network Agent<br>(Host / Root Daemon)"]
-        SWAN["strongSwan 5.9+<br>(charon daemon)"]
-        NETNS["Linux Namespaces<br>(ip netns / veth)"]
-        DUMP["tcpdump / libpcap<br>(CAP_NET_RAW)"]
-        TC["tc / netem<br>(CAP_NET_ADMIN)"]
+    subgraph EXECUTION_CLASS_B__Privileged_Network___Lab_Operations__Elevated_Linux ["EXECUTION CLASS B: Privileged Network / Lab Operations (Elevated Linux)"]
+        AGENT["Privileged Network Agent<br/>(Host / Root Daemon)"]
+        SWAN["strongSwan 5.9+<br/>(charon daemon)"]
+        NETNS["Linux Namespaces<br/>(ip netns / veth)"]
+        DUMP["tcpdump / libpcap<br/>(CAP_NET_RAW)"]
+        TC["tc / netem<br/>(CAP_NET_ADMIN)"]
     end
 
-    FE -->|HTTP / WS| API
-    API -->|Enqueue Task| REDIS
-    REDIS -->|Consume Task| WRK
-    API -->|SQL Queries| DB
-    WRK -->|Persist Results| DB
+    FE -->|"HTTP / WS"| API
+    API -->|"Enqueue Task"| REDIS
+    REDIS -->|"Consume Task"| WRK
+    API -->|"SQL Queries"| DB
+    WRK -->|"Persist Results"| DB
     
-    API -.->|Strict Loopback UNIX Socket / REST API<br>Param-Validated Commands Only| AGENT
+    API -.->|"Strict Loopback UNIX Socket / REST API<br/>Param-Validated Commands Only"| AGENT
     AGENT --> SWAN
     AGENT --> NETNS
     AGENT --> DUMP
     AGENT --> TC
+
 ```
 
 ### Execution Class A — Standard Application Services
@@ -239,29 +243,31 @@ graph TB
 ## 12. Logical Runtime Topology
 
 ```mermaid
+
 graph TD
-    User([Security Analyst / Operator]) -->|HTTPS / Port 3000| FE[Next.js PWA Client]
-    FE -->|REST API / Port 8000| API[FastAPI Core Server]
-    FE -->|WebSocket / Port 8000/ws| API
+    User(["Security Analyst / Operator"]) -->|"HTTPS / Port 3000"| FE["Next.js PWA Client"]
+    FE -->|"REST API / Port 8000"| API["FastAPI Core Server"]
+    FE -->|"WebSocket / Port 8000/ws"| API
     
-    API -->|Read / Write| PG[(PostgreSQL 15 + pgvector)]
-    API -->|Enqueue Work| RD[(Redis 7 Task Broker)]
-    API -->|Store / Retrieve Files| VOL[/Storage Volume: /var/lib/tunneltrace/]
+    API -->|"Read / Write"| PG[("PostgreSQL 15 + pgvector")]
+    API -->|"Enqueue Work"| RD[("Redis 7 Task Broker")]
+    API -->|"Store / Retrieve Files"| VOL["Storage Volume: /var/lib/tunneltrace"]
     
-    WRK[Celery Analysis Worker] -->|Fetch Jobs| RD
-    WRK -->|Read PCAP| VOL
-    WRK -->|Spawn Sandboxed Subprocess| TSHARK[TShark 4.x Dissector]
-    WRK -->|Execute Inference| ML[ML Inference Engine<br>XGBoost + PyTorch CNN]
-    WRK -->|Evaluate Rules| POL[YAML Policy Engine]
-    WRK -->|Write Findings| PG
-    WRK -->|Compile PDF/HTML| RPT[Report Compiler]
-    RPT -->|Save Output| VOL
+    WRK["Celery Analysis Worker"] -->|"Fetch Jobs"| RD
+    WRK -->|"Read PCAP"| VOL
+    WRK -->|"Spawn Sandboxed Subprocess"| TSHARK["TShark 4.x Dissector"]
+    WRK -->|"Execute Inference"| ML["ML Inference Engine<br/>XGBoost + PyTorch CNN"]
+    WRK -->|"Evaluate Rules"| POL["YAML Policy Engine"]
+    WRK -->|"Write Findings"| PG
+    WRK -->|"Compile PDF/HTML"| RPT["Report Compiler"]
+    RPT -->|"Save Output"| VOL
     
-    API -->|Loopback IPC Command| AGENT[Privileged Network Agent]
-    AGENT -->|Manage Tunnels| SWAN[strongSwan VPN]
-    AGENT -->|Promiscuous Sniffing| PCAP[tcpdump Engine]
-    AGENT -->|Impairment Injection| NETEM[Linux tc/netem]
-    PCAP -->|Dump Live Stream| VOL
+    API -->|"Loopback IPC Command"| AGENT["Privileged Network Agent"]
+    AGENT -->|"Manage Tunnels"| SWAN["strongSwan VPN"]
+    AGENT -->|"Promiscuous Sniffing"| PCAP["tcpdump Engine"]
+    AGENT -->|"Impairment Injection"| NETEM["Linux tc/netem"]
+    PCAP -->|"Dump Live Stream"| VOL
+
 ```
 
 ---
@@ -438,30 +444,32 @@ The IPsec live testbed (Execution Class B) requires direct Linux kernel interact
 
 ### Testbed Architecture (Linux Namespaces)
 ```mermaid
+
 graph LR
-    subgraph "Host Kernel Network Subsystem"
-        subgraph "Namespace: ns_initiator"
-            I_SWAN["strongSwan (swanctl)<br>10.0.1.2"]
-            I_VETH["veth_init<br>192.168.100.2/24"]
+    subgraph Host_Kernel_Network_Subsystem ["Host Kernel Network Subsystem"]
+        subgraph Namespace__ns_initiator ["Namespace: ns_initiator"]
+            I_SWAN["strongSwan (swanctl)<br/>10.0.1.2"]
+            I_VETH["veth_init<br/>192.168.100.2/24"]
         end
 
-        subgraph "Namespace: ns_wan (Simulated Internet / tc netem)"
-            W_INIT["veth_wan_i<br>192.168.100.1/24"]
-            W_RESP["veth_wan_r<br>192.168.200.1/24"]
-            NETEM["tc netem qdisc<br>Jitter / Loss / Latency"]
-            SNIFF["tcpdump sniffer<br>(Captures ESP / IKE)"]
+        subgraph Namespace__ns_wan__Simulated_Internet___tc_netem ["Namespace: ns_wan (Simulated Internet / tc netem)"]
+            W_INIT["veth_wan_i<br/>192.168.100.1/24"]
+            W_RESP["veth_wan_r<br/>192.168.200.1/24"]
+            NETEM["tc netem qdisc<br/>Jitter / Loss / Latency"]
+            SNIFF["tcpdump sniffer<br/>(Captures ESP / IKE)"]
         end
 
-        subgraph "Namespace: ns_responder"
-            R_SWAN["strongSwan (swanctl)<br>10.0.2.2"]
-            R_VETH["veth_resp<br>192.168.200.2/24"]
+        subgraph Namespace__ns_responder ["Namespace: ns_responder"]
+            R_SWAN["strongSwan (swanctl)<br/>10.0.2.2"]
+            R_VETH["veth_resp<br/>192.168.200.2/24"]
         end
 
-        I_VETH <-->|veth link| W_INIT
+        I_VETH <-->|"veth link"| W_INIT
         W_INIT --- NETEM --- W_RESP
-        W_RESP <-->|veth link| R_VETH
-        SNIFF -.->|Writes raw pcap| OUT[/var/lib/tunneltrace/storage/live/]
+        W_RESP <-->|"veth link"| R_VETH
+        SNIFF -.->|"Writes raw pcap"| OUT["var/lib/tunneltrace/storage/live"]
     end
+
 ```
 
 ### Windows/macOS Developer Notice
@@ -485,11 +493,12 @@ To ensure zero risk of internet failure or latency during live judging at Smart 
 - Privileged testbed scripts verified and calibrated with 5 pre-staged misconfigured test profiles.
 
 ```mermaid
+
 graph TB
-    subgraph "SIH Demo Laptop (Single Ubuntu 22.04 LTS Machine)"
-        BR["Chromium Browser (PWA UI)<br>http://localhost:3000"]
+    subgraph SIH_Demo_Laptop__Single_Ubuntu_22_04_LTS_Machine ["SIH Demo Laptop (Single Ubuntu 22.04 LTS Machine)"]
+        BR["Chromium Browser (PWA UI)<br/>http://localhost:3000"]
         
-        subgraph "Docker Compose Subsystem (Class A)"
+        subgraph Docker_Compose_Subsystem__Class_A ["Docker Compose Subsystem (Class A)"]
             FE_C["Frontend (Node 20)"]
             API_C["API (FastAPI)"]
             WRK_C["Worker (Celery/TShark)"]
@@ -497,7 +506,7 @@ graph TB
             RD_C["Redis 7 Broker"]
         end
         
-        subgraph "Native Linux Host Execution (Class B)"
+        subgraph Native_Linux_Host_Execution__Class_B ["Native Linux Host Execution (Class B)"]
             AGENT_H["Privileged Network Agent"]
             TESTBED["Namespaces: ns_init / ns_wan / ns_resp"]
             SWAN_H["strongSwan 5.9.8 Daemons"]
@@ -510,11 +519,12 @@ graph TB
         API_C --> RD_C
         RD_C --> WRK_C
         WRK_C --> DB_C
-        API_C -->|Local UNIX Socket| AGENT_H
+        API_C -->|"Local UNIX Socket"| AGENT_H
         AGENT_H --> TESTBED
         TESTBED --> SWAN_H
         TESTBED --> DUMP_H
     end
+
 ```
 
 ---
@@ -548,15 +558,16 @@ For post-hackathon commercialization and staging operations, the platform maps t
 The Hybrid Architecture accommodates enterprises requiring central management with on-premise packet sniffing:
 
 ```mermaid
+
 graph TD
-    subgraph "Public / Managed Cloud (Render / Supabase / Vercel)"
+    subgraph Public___Managed_Cloud__Render___Supabase___Vercel ["Public / Managed Cloud (Render / Supabase / Vercel)"]
         V_FE["Next.js Web UI"]
         R_API["FastAPI Orchestrator"]
-        S_DB[(Supabase PostgreSQL + pgvector)]
-        S_OBJ[(Supabase S3 Object Storage)]
+        S_DB[("Supabase PostgreSQL + pgvector")]
+        S_OBJ[("Supabase S3 Object Storage")]
     end
 
-    subgraph "Enterprise On-Premises Datacenter"
+    subgraph Enterprise_On_Premises_Datacenter ["Enterprise On-Premises Datacenter"]
         ONPREM_GW["Secure Gateway / Reverse Proxy"]
         AGENT_DAEMON["TunnelTrace Privileged Agent Daemon"]
         SWAN_PROD["Production IPsec Gateways"]
@@ -564,14 +575,15 @@ graph TD
         DUMP_PROBE["tcpdump / eBPF Probe Worker"]
     end
 
-    V_FE -->|HTTPS| R_API
+    V_FE -->|"HTTPS"| R_API
     R_API --> S_DB
     R_API --> S_OBJ
     
-    AGENT_DAEMON -->|mTLS Outbound WebSocket / Polling| R_API
+    AGENT_DAEMON -->|"mTLS Outbound WebSocket / Polling"| R_API
     SPAN_PORT --> DUMP_PROBE
-    DUMP_PROBE -->|Encrypted Streaming Upload| S_OBJ
+    DUMP_PROBE -->|"Encrypted Streaming Upload"| S_OBJ
     AGENT_DAEMON --> SWAN_PROD
+
 ```
 
 ---
@@ -653,6 +665,7 @@ TunnelTrace AI maintains its version-controlled codebase on GitHub:
 ## 26. Branch / Release Strategy
 
 ```mermaid
+
 gitGraph
     commit id: "v0.1.0"
     branch develop
@@ -666,6 +679,7 @@ gitGraph
     merge feature/sa-graph id: "merge PR #12"
     checkout main
     merge develop id: "Release v0.2.0-alpha" tag: "v0.2.0-alpha"
+
 ```
 
 1. **Feature Branches (`feature/*`):** Created from `develop` for specific subsystem features.
@@ -680,29 +694,50 @@ gitGraph
 The continuous integration pipeline is executed via GitHub Actions on every Pull Request and merge to `develop` and `main`.
 
 ```mermaid
+
 graph TD
-    A[Code Push / PR Created] --> B[Workflow: lint-and-test]
+    A["Code Push / PR Created"] --> B["Workflow: lint-and-test"]
     
-    subgraph "Parallel Stage 1: Static Analysis & Linting"
-        B --> C1[Frontend: ESLint + Prettier]
-        B --> C2[Backend: Ruff + Black]
-        B --> C3[Type Check: TypeScript tsc]
-        B --> C4[Type Check: Python mypy]
+    subgraph Parallel_Stage_1__Static_Analysis___Linting ["Parallel Stage 1: Static Analysis & Linting"]
+        B --> C1["Frontend: ESLint + Prettier"]
+        B --> C2["Backend: Ruff + Black"]
+        B --> C3["Type Check: TypeScript tsc"]
+        B --> C4["Type Check: Python mypy"]
     end
     
-    subgraph "Parallel Stage 2: Unit & Policy Tests"
-        C1 & C2 & C3 & C4 --> D1[Frontend Jest / Component Tests]
-        C1 & C2 & C3 & C4 --> D2[Backend Pytest Unit Tests]
-        C1 & C2 & C3 & C4 --> D3[YAML Policy-as-Code Schema Validation]
-        C1 & C2 & C3 & C4 --> D4[Model Artifact Checksum & Metadata Check]
+    subgraph Parallel_Stage_2__Unit___Policy_Tests ["Parallel Stage 2: Unit & Policy Tests"]
+        C1 --> D1["Frontend Jest / Component Tests"]
+        C2 --> D1["Frontend Jest / Component Tests"]
+        C3 --> D1["Frontend Jest / Component Tests"]
+        C4 --> D1["Frontend Jest / Component Tests"]
+        C1 --> D2["Backend Pytest Unit Tests"]
+        C2 --> D2["Backend Pytest Unit Tests"]
+        C3 --> D2["Backend Pytest Unit Tests"]
+        C4 --> D2["Backend Pytest Unit Tests"]
+        C1 --> D3["YAML Policy-as-Code Schema Validation"]
+        C2 --> D3["YAML Policy-as-Code Schema Validation"]
+        C3 --> D3["YAML Policy-as-Code Schema Validation"]
+        C4 --> D3["YAML Policy-as-Code Schema Validation"]
+        C1 --> D4["Model Artifact Checksum & Metadata Check"]
+        C2 --> D4["Model Artifact Checksum & Metadata Check"]
+        C3 --> D4["Model Artifact Checksum & Metadata Check"]
+        C4 --> D4["Model Artifact Checksum & Metadata Check"]
     end
     
-    subgraph "Stage 3: Build Verification"
-        D1 & D2 & D3 & D4 --> E1[Next.js Production Build]
-        D1 & D2 & D3 & D4 --> E2[FastAPI Docker Image Build Test]
+    subgraph Stage_3__Build_Verification ["Stage 3: Build Verification"]
+        D1 --> E1["Next.js Production Build"]
+        D2 --> E1["Next.js Production Build"]
+        D3 --> E1["Next.js Production Build"]
+        D4 --> E1["Next.js Production Build"]
+        D1 --> E2["FastAPI Docker Image Build Test"]
+        D2 --> E2["FastAPI Docker Image Build Test"]
+        D3 --> E2["FastAPI Docker Image Build Test"]
+        D4 --> E2["FastAPI Docker Image Build Test"]
     end
     
-    E1 & E2 --> F[All Checks Passed / Ready for Merge]
+    E1 --> F["All Checks Passed / Ready for Merge"]
+    E2 --> F["All Checks Passed / Ready for Merge"]
+
 ```
 
 ---
@@ -720,15 +755,17 @@ Ordinary GitHub Actions runners lack raw socket privileges and kernel network na
 *(Label: FUTURE / PRODUCT HARDENING for Production; Controlled Manual Release for SIH)*
 
 ```mermaid
+
 graph LR
-    TAG[Create Git Tag: v1.0.0] --> BUILD[Build Multi-Arch Docker Images]
-    BUILD --> SCAN[Container Vulnerability Scan: Trivy]
-    SCAN --> REG[Push Images to Private Container Registry]
-    REG --> STAGE[Deploy to Staging Environment]
-    STAGE --> SMOKE[Run Automated Smoke Test Suite]
-    SMOKE --> APPROV{Manual Release Approval}
-    APPROV -->|Approved| PROD[Deploy to Target Demo / Production]
-    APPROV -->|Rejected| ABORT[Halt Release & Notify Team]
+    TAG["Create Git Tag: v1.0.0"] --> BUILD["Build Multi-Arch Docker Images"]
+    BUILD --> SCAN["Container Vulnerability Scan: Trivy"]
+    SCAN --> REG["Push Images to Private Container Registry"]
+    REG --> STAGE["Deploy to Staging Environment"]
+    STAGE --> SMOKE["Run Automated Smoke Test Suite"]
+    SMOKE --> APPROV{"Manual Release Approval"}
+    APPROV -->|"Approved"| PROD["Deploy to Target Demo / Production"]
+    APPROV -->|"Rejected"| ABORT["Halt Release & Notify Team"]
+
 ```
 
 ---
@@ -884,15 +921,17 @@ When an authorized user requests capture deletion via UI/API:
 ## 44. Backup Strategy
 
 ```mermaid
+
 graph TD
-    CRON[Automated Backup Scheduler] --> SNAP_DB[pg_dump: PostgreSQL Database Snapshot]
-    CRON --> SNAP_STOR[Volume Sync: Encrypted Storage Tarball]
+    CRON["Automated Backup Scheduler"] --> SNAP_DB["pg_dump: PostgreSQL Database Snapshot"]
+    CRON --> SNAP_STOR["Volume Sync: Encrypted Storage Tarball"]
     
-    SNAP_DB --> ENCR[GPG Symmetric Encryption]
+    SNAP_DB --> ENCR["GPG Symmetric Encryption"]
     SNAP_STOR --> ENCR
     
-    ENCR --> DEST_LOCAL[/Local Cold Storage / Safe Volume/]
-    ENCR --> DEST_REMOTE[/Future Remote Encrypted S3 Bucket/]
+    ENCR --> DEST_LOCAL["Local Cold Storage / Safe Volume"]
+    ENCR --> DEST_REMOTE["Future Remote Encrypted S3 Bucket"]
+
 ```
 
 ---
@@ -926,19 +965,21 @@ graph TD
 Every service exposes standard health check endpoints partitioned by intent:
 
 ```mermaid
+
 graph TD
-    MON[Monitoring System / Load Balancer] -->|HTTP GET /health/liveness| LIVE{Process Alive?}
-    MON -->|HTTP GET /health/readiness| READ{Dependencies Ready?}
+    MON["Monitoring System / Load Balancer"] -->|"HTTP GET /health/liveness"| LIVE{"Process Alive?"}
+    MON -->|"HTTP GET /health/readiness"| READ{"Dependencies Ready?"}
     
-    READ --> CHK_DB[Check PostgreSQL Connection]
-    READ --> CHK_RD[Check Redis Connection]
-    READ --> CHK_STOR[Check Storage Writable]
-    READ --> CHK_MDL[Check Model Binary Checksums]
-    READ --> CHK_POL[Check Policy Engine Loaded]
+    READ --> CHK_DB["Check PostgreSQL Connection"]
+    READ --> CHK_RD["Check Redis Connection"]
+    READ --> CHK_STOR["Check Storage Writable"]
+    READ --> CHK_MDL["Check Model Binary Checksums"]
+    READ --> CHK_POL["Check Policy Engine Loaded"]
     
-    LIVE -->|200 OK| OK_L[Service Healthy]
-    READ -->|200 OK| OK_R[Accept Ingress Traffic]
-    READ -->|503 Degraded| DEG[Route to Degraded Fallback]
+    LIVE -->|"200 OK"| OK_L["Service Healthy"]
+    READ -->|"200 OK"| OK_R["Accept Ingress Traffic"]
+    READ -->|"503 Degraded"| DEG["Route to Degraded Fallback"]
+
 ```
 
 ---
@@ -955,11 +996,13 @@ graph TD
 Long-running and resource-intensive analytical operations are dispatched asynchronously to Celery workers via Redis.
 
 ```mermaid
+
 graph LR
-    API[FastAPI Server] -->|Task Message| QUEUE[Redis: celery_tasks]
-    QUEUE --> W1[Celery Worker 1: PCAP Dissection & Parsing]
-    QUEUE --> W2[Celery Worker 2: ML Flow Feature Extraction]
-    QUEUE --> W3[Celery Worker 3: Policy Audit & Report PDF]
+    API["FastAPI Server"] -->|"Task Message"| QUEUE["Redis: celery_tasks"]
+    QUEUE --> W1["Celery Worker 1: PCAP Dissection & Parsing"]
+    QUEUE --> W2["Celery Worker 2: ML Flow Feature Extraction"]
+    QUEUE --> W3["Celery Worker 3: Policy Audit & Report PDF"]
+
 ```
 
 ---
@@ -1038,27 +1081,29 @@ When an operator reviews an identified misconfiguration and approves remediation
 ## 57. Privilege Separation
 
 ```mermaid
+
 graph TD
-    subgraph "Unprivileged Userspace (Class A Services)"
+    subgraph Unprivileged_Userspace__Class_A_Services ["Unprivileged Userspace (Class A Services)"]
         U_NODE["node (UID 10001)"]
         U_PY["python3 (UID 10001)"]
         U_PG["postgres (UID 999)"]
         U_RD["redis (UID 999)"]
     end
 
-    subgraph "Privileged Boundary (Linux Capabilities)"
+    subgraph Privileged_Boundary__Linux_Capabilities ["Privileged Boundary (Linux Capabilities)"]
         K_ADMIN["CAP_NET_ADMIN (Routes, netns, tc)"]
         K_RAW["CAP_NET_RAW (Promiscuous Sniffing)"]
     end
 
-    subgraph "Isolated Privileged Daemon"
+    subgraph Isolated_Privileged_Daemon ["Isolated Privileged Daemon"]
         ROOT_AGENT["Privileged Network Agent (Root)"]
     end
 
-    U_NODE -.->|No Kernel Caps| K_ADMIN
-    U_PY -.->|No Kernel Caps| K_RAW
+    U_NODE -.->|"No Kernel Caps"| K_ADMIN
+    U_PY -.->|"No Kernel Caps"| K_RAW
     ROOT_AGENT --> K_ADMIN
     ROOT_AGENT --> K_RAW
+
 ```
 
 ---
@@ -1215,11 +1260,13 @@ Operational metrics collected by application services include:
 TunnelTrace AI is engineered to degrade gracefully when secondary components fail:
 
 ```mermaid
+
 graph TD
-    F_LLM[LLM / AI Analyst Unreachable] --> D_LLM[System fully operational; deterministic policy, scorecards, and reports unaffected]
-    F_ML[ML Subsystem / GPU Unavailable] --> D_ML[Core protocol forensics, SA graphs, and compliance engine operational; ML flow cards show 'Unavailable']
-    F_LAB[Privileged Lab Agent Unreachable] --> D_LAB[Offline PCAP analysis remains 100% operational; Live capture & lab disabled in UI]
-    F_RD[Redis Task Broker Crashes] --> D_RD[Asynchronous queue unavailable; API returns 503 on new analysis requests]
+    F_LLM["LLM / AI Analyst Unreachable"] --> D_LLM["System fully operational; deterministic policy, scorecards, and reports unaffected"]
+    F_ML["ML Subsystem / GPU Unavailable"] --> D_ML["Core protocol forensics, SA graphs, and compliance engine operational; ML flow cards show 'Unavailable"]
+    F_LAB["Privileged Lab Agent Unreachable"] --> D_LAB["Offline PCAP analysis remains 100% operational; Live capture & lab disabled in UI"]
+    F_RD["Redis Task Broker Crashes"] --> D_RD["Asynchronous queue unavailable; API returns 503 on new analysis requests"]
+
 ```
 
 ---
@@ -1592,32 +1639,33 @@ docker compose restart api
 *(Label: OPTIONAL / NOT FROZEN — Architectural Blueprint Only)*
 
 ```mermaid
+
 graph TB
-    subgraph "Edge & Content Delivery"
-        CF["Cloudflare / Edge DNS<br>(DDoS Protection, WAF, SSL Termination)"]
-        VERCEL["Vercel Edge Network<br>(Hosts Next.js 14 Frontend PWA)"]
+    subgraph Edge___Content_Delivery ["Edge & Content Delivery"]
+        CF["Cloudflare / Edge DNS<br/>(DDoS Protection, WAF, SSL Termination)"]
+        VERCEL["Vercel Edge Network<br/>(Hosts Next.js 14 Frontend PWA)"]
     end
 
-    subgraph "Managed Compute Layer (Render)"
-        R_API["Render Web Service: FastAPI API<br>(Python 3.11, Autoscaling ASGI)"]
-        R_WRK["Render Background Worker: Celery<br>(Attached SSD, TShark Dissection)"]
-        R_REDIS["Render Redis Instance<br>(Task Broker & Cache)"]
+    subgraph Managed_Compute_Layer__Render ["Managed Compute Layer (Render)"]
+        R_API["Render Web Service: FastAPI API<br/>(Python 3.11, Autoscaling ASGI)"]
+        R_WRK["Render Background Worker: Celery<br/>(Attached SSD, TShark Dissection)"]
+        R_REDIS["Render Redis Instance<br/>(Task Broker & Cache)"]
     end
 
-    subgraph "Managed Data Layer (Supabase)"
-        S_PG["Supabase PostgreSQL 15<br>(Relational Data + pgvector)"]
-        S_AUTH["Supabase Auth Engine<br>(JWT Tokens, OAuth, RBAC)"]
-        S_S3["Supabase Storage<br>(S3-compatible bucket for PCAP blobs)"]
+    subgraph Managed_Data_Layer__Supabase ["Managed Data Layer (Supabase)"]
+        S_PG["Supabase PostgreSQL 15<br/>(Relational Data + pgvector)"]
+        S_AUTH["Supabase Auth Engine<br/>(JWT Tokens, OAuth, RBAC)"]
+        S_S3["Supabase Storage<br/>(S3-compatible bucket for PCAP blobs)"]
     end
 
-    subgraph "Dedicated On-Prem / Self-Hosted Linux Node (Class B)"
-        NODE["Dedicated Linux VM / Bare-Metal Host<br>(Ubuntu 22.04 LTS)"]
-        AGENT["Privileged Network Agent Daemon<br>(Root / CAP_NET_ADMIN)"]
+    subgraph Dedicated_On_Prem___Self_Hosted_Linux_Node__Class_B ["Dedicated On-Prem / Self-Hosted Linux Node (Class B)"]
+        NODE["Dedicated Linux VM / Bare-Metal Host<br/>(Ubuntu 22.04 LTS)"]
+        AGENT["Privileged Network Agent Daemon<br/>(Root / CAP_NET_ADMIN)"]
         SWAN["strongSwan 5.9+ / Linux Namespaces"]
     end
 
     CF --> VERCEL
-    VERCEL -->|HTTPS REST / WSS| R_API
+    VERCEL -->|"HTTPS REST / WSS"| R_API
     R_API --> R_REDIS
     R_REDIS --> R_WRK
     R_API --> S_PG
@@ -1626,8 +1674,9 @@ graph TB
     R_WRK --> S_PG
     R_WRK --> S_S3
     
-    R_API -.->|mTLS Authenticated Command Channel| AGENT
+    R_API -.->|"mTLS Authenticated Command Channel"| AGENT
     AGENT --> SWAN
+
 ```
 
 ---

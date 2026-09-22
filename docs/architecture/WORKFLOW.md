@@ -73,13 +73,15 @@ It details:
 ## 5. Relationship to PRD / TRD / Architecture
 
 ```mermaid
+
 graph TD
-    PRD[Product Requirements Document\nPRD-SIH2026-PS160-CORE-V1] --> WDF[Workflow & Data Flow Document\nWDF-SIH2026-PS160-CORE-V1]
-    TRD[Technical Requirements Document\nTRD-SIH2026-PS160-ENG-V1] --> WDF
-    WDF --> ARCH[System Architecture Specification]
-    WDF --> DB[Database Design & Schema Models]
-    WDF --> API[REST & WebSocket API Contracts]
-    WDF --> ML_ENG[ML Pipeline & Dataset Specification]
+    PRD["Product Requirements Document\nPRD-SIH2026-PS160-CORE-V1"] --> WDF["Workflow & Data Flow Document\nWDF-SIH2026-PS160-CORE-V1"]
+    TRD["Technical Requirements Document\nTRD-SIH2026-PS160-ENG-V1"] --> WDF
+    WDF --> ARCH["System Architecture Specification"]
+    WDF --> DB["Database Design & Schema Models"]
+    WDF --> API["REST & WebSocket API Contracts"]
+    WDF --> ML_ENG["ML Pipeline & Dataset Specification"]
+
 ```
 
 This document operationalizes the requirements of the PRD and TRD into concrete, step-by-step data transformations, component contracts, and state transitions.
@@ -155,61 +157,69 @@ This document operationalizes the requirements of the PRD and TRD into concrete,
 ## 11. Master End-to-End Workflow
 
 ```mermaid
+
 flowchart TD
     subgraph INGESTION["1. Ingestion & Validation"]
-        SRC[PCAP Upload OR Live Sniffer] --> VAL{Validate Headers & Magic Bytes}
-        VAL -->|Invalid| REJ[Emit ERR_CAPTURE_CORRUPT & Terminate]
-        VAL -->|Valid| HASH[Compute SHA-256 Checksum]
-        HASH --> SPOOL[Spool Binary to Object Storage]
-        SPOOL --> REG[Register Analysis Session: QUEUED]
+        SRC["PCAP Upload OR Live Sniffer"] --> VAL{"Validate Headers & Magic Bytes"}
+        VAL -->|"Invalid"| REJ["Emit ERR_CAPTURE_CORRUPT & Terminate"]
+        VAL -->|"Valid"| HASH["Compute SHA-256 Checksum"]
+        HASH --> SPOOL["Spool Binary to Object Storage"]
+        SPOOL --> REG["Register Analysis Session: QUEUED"]
     end
 
     subgraph PROTOCOL["2. Protocol Forensics & State Reconstruction"]
-        REG --> TSHARK[TShark Dissection Pipeline]
-        TSHARK --> SPLIT{Identify IPsec Protocols}
-        SPLIT -->|IKE Frames| IKE_PROC[IKE Exchange & Transform Parser]
-        SPLIT -->|ESP Frames| ESP_PROC[ESP Header & SPI Parser]
-        SPLIT -->|AH Frames| AH_PROC[AH Header Parser]
-        IKE_PROC & ESP_PROC --> SA_ENG[Stateful SA Reconstruction Engine]
-        SA_ENG --> SA_GRAPH[Compile Security Association Graph]
+        REG --> TSHARK["TShark Dissection Pipeline"]
+        TSHARK --> SPLIT{"Identify IPsec Protocols"}
+        SPLIT -->|"IKE Frames"| IKE_PROC["IKE Exchange & Transform Parser"]
+        SPLIT -->|"ESP Frames"| ESP_PROC["ESP Header & SPI Parser"]
+        SPLIT -->|"AH Frames"| AH_PROC["AH Header Parser"]
+        IKE_PROC --> SA_ENG["Stateful SA Reconstruction Engine"]
+        ESP_PROC --> SA_ENG["Stateful SA Reconstruction Engine"]
+        SA_ENG --> SA_GRAPH["Compile Security Association Graph"]
     end
 
     subgraph ML_PIPELINE["3. Encrypted Traffic Intelligence"]
-        ESP_PROC --> FLOW_ENG[Bidirectional ESP Flow Reconstruction]
-        FLOW_ENG --> FEAT_EXT[Feature Extraction Pipeline]
-        FEAT_EXT --> FEAT_TAB[Tabular Feature Vector]
-        FEAT_EXT --> FEAT_SEQ[Temporal Sequence Tensor]
-        FEAT_TAB --> XGB[Model A: XGBoost]
-        FEAT_SEQ --> CNN[Model B: 1D-CNN]
-        XGB & CNN --> FUSION[Model Ensemble Fusion]
-        FUSION --> CALIB[Temperature Scaling Calibration]
-        CALIB --> OOD{Evaluate Predictive Entropy}
-        OOD -->|Entropy High / Conf Low| OUT_OOD[Label: Unknown / Unseen Traffic]
-        OOD -->|Confident| OUT_KNOWN[Label: Predicted Traffic Class]
-        XGB --> SHAP_ENG[SHAP Feature Attribution]
-        FLOW_ENG --> ANOM[Isolation Forest Anomaly Check]
+        ESP_PROC --> FLOW_ENG["Bidirectional ESP Flow Reconstruction"]
+        FLOW_ENG --> FEAT_EXT["Feature Extraction Pipeline"]
+        FEAT_EXT --> FEAT_TAB["Tabular Feature Vector"]
+        FEAT_EXT --> FEAT_SEQ["Temporal Sequence Tensor"]
+        FEAT_TAB --> XGB["Model A: XGBoost"]
+        FEAT_SEQ --> CNN["Model B: 1D-CNN"]
+        XGB --> FUSION["Model Ensemble Fusion"]
+        CNN --> FUSION["Model Ensemble Fusion"]
+        FUSION --> CALIB["Temperature Scaling Calibration"]
+        CALIB --> OOD{"Evaluate Predictive Entropy"}
+        OOD -->|"Entropy High / Conf Low"| OUT_OOD["Label: Unknown / Unseen Traffic"]
+        OOD -->|"Confident"| OUT_KNOWN["Label: Predicted Traffic Class"]
+        XGB --> SHAP_ENG["SHAP Feature Attribution"]
+        FLOW_ENG --> ANOM["Isolation Forest Anomaly Check"]
     end
 
     subgraph SECURITY["4. Policy Assessment & Scoring"]
-        SA_GRAPH --> POL_ENG[Policy-as-Code Engine]
-        YML[Versioned YAML Policy Profiles] --> POL_ENG
-        POL_ENG --> FINDINGS[Generate Itemized Findings]
-        FINDINGS --> SCORE_ENG[Calculate 0-100 Security Score]
-        FINDINGS --> THREAT_ENG[Generate Threat Matrix]
-        FLOW_ENG & OUT_KNOWN --> META_ENG[Compute Metadata Fingerprintability Index]
-        FINDINGS & SA_GRAPH --> EVID_ENG[Compile Forensic Evidence Graph]
+        SA_GRAPH --> POL_ENG["Policy-as-Code Engine"]
+        YML["Versioned YAML Policy Profiles"] --> POL_ENG
+        POL_ENG --> FINDINGS["Generate Itemized Findings"]
+        FINDINGS --> SCORE_ENG["Calculate 0-100 Security Score"]
+        FINDINGS --> THREAT_ENG["Generate Threat Matrix"]
+        FLOW_ENG --> META_ENG["Compute Metadata Fingerprintability Index"]
+        OUT_KNOWN --> META_ENG["Compute Metadata Fingerprintability Index"]
+        FINDINGS --> EVID_ENG["Compile Forensic Evidence Graph"]
+        SA_GRAPH --> EVID_ENG["Compile Forensic Evidence Graph"]
     end
 
     subgraph INTERFACE["5. Consumption, Twin, & Verification"]
-        SCORE_ENG & THREAT_ENG & EVID_ENG --> DB[(Persist to PostgreSQL)]
-        DB --> WS[Broadcast via WebSockets]
-        WS --> DASH[Analyst Dashboard Rendered]
-        DASH --> RPT[Export Executive & Technical Reports]
-        DASH --> RAG_UI[Local AI Analyst Grounded Q&A]
-        DASH --> TWIN_UI[Configuration Security Twin]
-        TWIN_UI --> LAB_REM[Closed-Loop Lab Remediation]
-        LAB_REM -->|Recapture & Re-analyze| INGESTION
+        SCORE_ENG --> DB[("Persist to PostgreSQL")]
+        THREAT_ENG --> DB[("Persist to PostgreSQL")]
+        EVID_ENG --> DB[("Persist to PostgreSQL")]
+        DB --> WS["Broadcast via WebSockets"]
+        WS --> DASH["Analyst Dashboard Rendered"]
+        DASH --> RPT["Export Executive & Technical Reports"]
+        DASH --> RAG_UI["Local AI Analyst Grounded Q&A"]
+        DASH --> TWIN_UI["Configuration Security Twin"]
+        TWIN_UI --> LAB_REM["Closed-Loop Lab Remediation"]
+        LAB_REM -->|"Recapture & Re-analyze"| INGESTION
     end
+
 ```
 
 ---
@@ -259,17 +269,19 @@ The data transformation pipeline formally traces data structures from binary pac
 ## 13. Level 0 DFD (Context Diagram)
 
 ```mermaid
-flowchart TD
-    ANALYST[Security Analyst / Engineer] -->|1. Upload PCAP / Start Live Capture| SYSTEM((TunnelTrace AI\nPlatform))
-    LIVE_SRC[Monitored Gateway Interface] -->|2. Live Network Packet Stream| SYSTEM
-    LAB_OP[Testbed Operator] -->|3. Provision Lab / Inject Workloads| SYSTEM
-    STD_SRC[NIST / RFC Standards Authority] -->|4. Versioned Policy Rules| SYSTEM
 
-    SYSTEM -->|5. Security Posture Score & Dashboard| ANALYST
-    SYSTEM -->|6. Executive & Technical Reports| ANALYST
-    SYSTEM -->|7. Grounded AI Explanations| ANALYST
-    SYSTEM -->|8. Lab Remediation & Re-test Results| LAB_OP
-    SYSTEM -->|9. Curated IPsec Datasets| LAB_OP
+flowchart TD
+    ANALYST["Security Analyst / Engineer"] -->|"1. Upload PCAP / Start Live Capture"| SYSTEM((TunnelTrace AI\nPlatform))
+    LIVE_SRC["Monitored Gateway Interface"] -->|"2. Live Network Packet Stream"| SYSTEM
+    LAB_OP["Testbed Operator"] -->|"3. Provision Lab / Inject Workloads"| SYSTEM
+    STD_SRC["NIST / RFC Standards Authority"] -->|"4. Versioned Policy Rules"| SYSTEM
+
+    SYSTEM -->|"5. Security Posture Score & Dashboard"| ANALYST
+    SYSTEM -->|"6. Executive & Technical Reports"| ANALYST
+    SYSTEM -->|"7. Grounded AI Explanations"| ANALYST
+    SYSTEM -->|"8. Lab Remediation & Re-test Results"| LAB_OP
+    SYSTEM -->|"9. Curated IPsec Datasets"| LAB_OP
+
 ```
 
 ---
@@ -277,30 +289,39 @@ flowchart TD
 ## 14. Level 1 DFD (Subsystem Breakdown)
 
 ```mermaid
+
 flowchart TD
-    RAW[Raw Capture Stream] --> P1[1.0 Ingestion & Hashing]
-    P1 --> D1[(Raw Capture Store)]
-    D1 --> P2[2.0 Protocol Forensics Engine]
+    RAW["Raw Capture Stream"] --> P1["1.0 Ingestion & Hashing"]
+    P1 --> D1[("Raw Capture Store")]
+    D1 --> P2["2.0 Protocol Forensics Engine"]
     
-    P2 --> D2[(Protocol State Store)]
-    D2 --> P3[3.0 SA Graph Reconstruction]
-    P2 --> P4[4.0 ESP Flow Reconstruction]
+    P2 --> D2[("Protocol State Store")]
+    D2 --> P3["3.0 SA Graph Reconstruction"]
+    P2 --> P4["4.0 ESP Flow Reconstruction"]
     
-    P4 --> D3[(Flow Store)]
-    D3 --> P5[5.0 ML Feature Extraction]
-    P5 --> P6[6.0 ML Inference & Calibration]
-    P6 --> D4[(ML Prediction Store)]
+    P4 --> D3[("Flow Store")]
+    D3 --> P5["5.0 ML Feature Extraction"]
+    P5 --> P6["6.0 ML Inference & Calibration"]
+    P6 --> D4[("ML Prediction Store")]
     
-    P3 & D2 --> P7[7.0 Policy-as-Code Security Engine]
-    RULES[(YAML Policy Catalog)] --> P7
-    P7 --> D5[(Findings & Compliance Store)]
+    P3 --> P7["7.0 Policy-as-Code Security Engine"]
+    D2 --> P7["7.0 Policy-as-Code Security Engine"]
+    RULES[("YAML Policy Catalog")] --> P7
+    P7 --> D5[("Findings & Compliance Store")]
     
-    D4 & D5 --> P8[8.0 Scoring, Risk, & Threat Engine]
-    P8 --> D6[(Scoring & Threat Store)]
+    D4 --> P8["8.0 Scoring, Risk, & Threat Engine"]
+    D5 --> P8["8.0 Scoring, Risk, & Threat Engine"]
+    P8 --> D6[("Scoring & Threat Store")]
     
-    D2 & D3 & D5 --> P9[9.0 Evidence Graph Builder]
-    D6 & D5 & P9 --> P10[10.0 Reporting & UI Displayer]
-    D5 & D6 --> P11[11.0 Local RAG AI Analyst]
+    D2 --> P9["9.0 Evidence Graph Builder"]
+    D3 --> P9["9.0 Evidence Graph Builder"]
+    D5 --> P9["9.0 Evidence Graph Builder"]
+    D6 --> P10["10.0 Reporting & UI Displayer"]
+    D5 --> P10["10.0 Reporting & UI Displayer"]
+    P9 --> P10["10.0 Reporting & UI Displayer"]
+    D5 --> P11["11.0 Local RAG AI Analyst"]
+    D6 --> P11["11.0 Local RAG AI Analyst"]
+
 ```
 
 ---
@@ -310,97 +331,110 @@ flowchart TD
 ### 15.1 Level 2 DFD: Protocol & SA Reconstruction Pipeline
 
 ```mermaid
+
 flowchart LR
-    D1[(Raw Capture)] --> TSHARK[TShark Dissector]
-    TSHARK --> JSON[Dissection JSON]
+    D1[("Raw Capture")] --> TSHARK["TShark Dissector"]
+    TSHARK --> JSON["Dissection JSON"]
     
-    JSON --> ISAKMP_P[ISAKMP Parser]
-    JSON --> ESP_P[ESP / AH Parser]
+    JSON --> ISAKMP_P["ISAKMP Parser"]
+    JSON --> ESP_P["ESP / AH Parser"]
     
-    ISAKMP_P --> IKE_SESS[IKE Session Aggregator]
-    IKE_SESS --> TRANS_MAP[IANA Transform Mapper]
-    TRANS_MAP --> IKE_SA[Reconstructed IKE SA]
+    ISAKMP_P --> IKE_SESS["IKE Session Aggregator"]
+    IKE_SESS --> TRANS_MAP["IANA Transform Mapper"]
+    TRANS_MAP --> IKE_SA["Reconstructed IKE SA"]
     
-    ESP_P --> SPI_DEMUX[SPI Demultiplexer]
-    ISAKMP_P --> TS_PARSER[Traffic Selector Parser]
+    ESP_P --> SPI_DEMUX["SPI Demultiplexer"]
+    ISAKMP_P --> TS_PARSER["Traffic Selector Parser"]
     
-    IKE_SA & TS_PARSER & SPI_DEMUX --> SA_BUILDER[Child SA Builder]
-    SA_BUILDER --> SA_GRAPH[(Stateful SA Graph)]
+    IKE_SA --> SA_BUILDER["Child SA Builder"]
+    TS_PARSER --> SA_BUILDER["Child SA Builder"]
+    SPI_DEMUX --> SA_BUILDER["Child SA Builder"]
+    SA_BUILDER --> SA_GRAPH[("Stateful SA Graph")]
+
 ```
 
 ### 15.2 Level 2 DFD: Encrypted Traffic ML Pipeline
 
 ```mermaid
+
 flowchart LR
-    ESP_FLOW[(Reconstructed ESP Flow)] --> SPLIT_FEAT{Feature Dispatcher}
+    ESP_FLOW[("Reconstructed ESP Flow")] --> SPLIT_FEAT{"Feature Dispatcher"}
     
-    SPLIT_FEAT -->|Packet Lengths & IAT| STAT_ENG[Statistical Profiler]
-    SPLIT_FEAT -->|Early Packets| SEQ_ENG[Sequence Formatter]
+    SPLIT_FEAT -->|"Packet Lengths & IAT"| STAT_ENG["Statistical Profiler"]
+    SPLIT_FEAT -->|"Early Packets"| SEQ_ENG["Sequence Formatter"]
     
-    STAT_ENG --> TAB_VEC[Tabular Feature Vector]
-    SEQ_ENG --> SEQ_TENS[Sequence Tensor 3xN]
+    STAT_ENG --> TAB_VEC["Tabular Feature Vector"]
+    SEQ_ENG --> SEQ_TENS["Sequence Tensor 3xN"]
     
-    TAB_VEC --> XGB[XGBoost Predictor]
-    SEQ_TENS --> CNN[1D-CNN Predictor]
+    TAB_VEC --> XGB["XGBoost Predictor"]
+    SEQ_TENS --> CNN["1D-CNN Predictor"]
     
-    XGB --> PROB_A[Class Probabilities A]
-    CNN --> PROB_B[Class Probabilities B]
+    XGB --> PROB_A["Class Probabilities A"]
+    CNN --> PROB_B["Class Probabilities B"]
     
-    PROB_A & PROB_B --> FUSION[Ensemble Fusion Engine]
-    FUSION --> CALIB[Temperature Scaler]
-    CALIB --> ENTROPY[Entropy & Confidence Evaluator]
+    PROB_A --> FUSION["Ensemble Fusion Engine"]
+    PROB_B --> FUSION["Ensemble Fusion Engine"]
+    FUSION --> CALIB["Temperature Scaler"]
+    CALIB --> ENTROPY["Entropy & Confidence Evaluator"]
     
-    ENTROPY -->|Threshold Met| KNOWN_OUT[Traffic Class Label]
-    ENTROPY -->|Uncertain| OOD_OUT[Unknown / Unseen Traffic]
+    ENTROPY -->|"Threshold Met"| KNOWN_OUT["Traffic Class Label"]
+    ENTROPY -->|"Uncertain"| OOD_OUT["Unknown / Unseen Traffic"]
     
-    XGB & TAB_VEC --> SHAP_CALC[TreeExplainer SHAP]
-    SHAP_CALC --> XAI_OUT[Feature Attributions]
+    XGB --> SHAP_CALC["TreeExplainer SHAP"]
+    TAB_VEC --> SHAP_CALC["TreeExplainer SHAP"]
+    SHAP_CALC --> XAI_OUT["Feature Attributions"]
+
 ```
 
 ### 15.3 Level 2 DFD: Policy Assessment & Scoring Pipeline
 
 ```mermaid
+
 flowchart LR
-    SA_DATA[(Reconstructed SAs)] --> RULE_EVAL[Policy-as-Code Evaluator]
-    YAML_DB[(YAML Policy Rules)] --> RULE_EVAL
+    SA_DATA[("Reconstructed SAs")] --> RULE_EVAL["Policy-as-Code Evaluator"]
+    YAML_DB[("YAML Policy Rules")] --> RULE_EVAL
     
-    RULE_EVAL --> ASSERT_RUN[Evaluate Assertion Logic]
-    ASSERT_RUN --> FIND_GEN[Generate Security Finding Objects]
+    RULE_EVAL --> ASSERT_RUN["Evaluate Assertion Logic"]
+    ASSERT_RUN --> FIND_GEN["Generate Security Finding Objects"]
     
-    FIND_GEN --> DED_CALC[Score Deduction Calculator]
-    DED_CALC --> POSTURE[0-100 Security Posture Score]
+    FIND_GEN --> DED_CALC["Score Deduction Calculator"]
+    DED_CALC --> POSTURE["0-100 Security Posture Score"]
     
-    FIND_GEN --> THREAT_MAP[Threat Scenario Correlator]
-    THREAT_MAP --> THREAT_MAT[Itemized Threat Matrix]
+    FIND_GEN --> THREAT_MAP["Threat Scenario Correlator"]
+    THREAT_MAP --> THREAT_MAT["Itemized Threat Matrix"]
     
-    FIND_GEN & SA_DATA --> EVID_BIND[Evidence Node Binder]
-    EVID_BIND --> EVID_GRAPH[(Forensic Evidence Graph)]
+    FIND_GEN --> EVID_BIND["Evidence Node Binder"]
+    SA_DATA --> EVID_BIND["Evidence Node Binder"]
+    EVID_BIND --> EVID_GRAPH[("Forensic Evidence Graph")]
+
 ```
 
 ### 15.4 Level 2 DFD: Closed-Loop Remediation Pipeline
 
 ```mermaid
+
 flowchart LR
-    FIND[(Security Findings)] --> REM_SYNTH[Remediation Synthesizer]
-    REM_SYNTH --> SNIPPET[Hardened strongSwan Config]
+    FIND[("Security Findings")] --> REM_SYNTH["Remediation Synthesizer"]
+    REM_SYNTH --> SNIPPET["Hardened strongSwan Config"]
     
-    SNIPPET --> TWIN_SIM[Configuration Twin Simulation]
-    TWIN_SIM --> PROJ_SCORE[Projected Score Delta]
+    SNIPPET --> TWIN_SIM["Configuration Twin Simulation"]
+    TWIN_SIM --> PROJ_SCORE["Projected Score Delta"]
     
-    PROJ_SCORE --> AUTH_APPLY{Operator Authorizes Apply?}
-    AUTH_APPLY -->|No| CANCEL[Halt Remediation]
-    AUTH_APPLY -->|Yes| BACKUP[Backup Active Lab Config]
+    PROJ_SCORE --> AUTH_APPLY{"Operator Authorizes Apply?"}
+    AUTH_APPLY -->|"No"| CANCEL["Halt Remediation"]
+    AUTH_APPLY -->|"Yes"| BACKUP["Backup Active Lab Config"]
     
-    BACKUP --> DEPLOY[Deploy Config via swanctl / vici]
-    DEPLOY --> RESTART[Reload & Initiate Tunnel]
+    BACKUP --> DEPLOY["Deploy Config via swanctl / vici"]
+    DEPLOY --> RESTART["Reload & Initiate Tunnel"]
     
-    RESTART --> HEALTH{Tunnel Established?}
-    HEALTH -->|No| ROLLBACK[Rollback to Backup Config]
-    HEALTH -->|Yes| INJECT[Inject Verification Traffic]
+    RESTART --> HEALTH{"Tunnel Established?"}
+    HEALTH -->|"No"| ROLLBACK["Rollback to Backup Config"]
+    HEALTH -->|"Yes"| INJECT["Inject Verification Traffic"]
     
-    INJECT --> RECAP[Capture Verification PCAP]
-    RECAP --> REANA[Trigger Re-analysis Pipeline]
-    REANA --> COMP_RES[Compare Before / After Findings]
+    INJECT --> RECAP["Capture Verification PCAP"]
+    RECAP --> REANA["Trigger Re-analysis Pipeline"]
+    REANA --> COMP_RES["Compare Before / After Findings"]
+
 ```
 
 ---
@@ -429,6 +463,7 @@ flowchart LR
 ## 17. Live Capture Workflow
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     actor Analyst as Analyst / UI
@@ -462,6 +497,7 @@ sequenceDiagram
     CAP->>API: Finalize Spooled PCAP
     API->>WRK: Trigger Final Session Analysis
     WRK-->>Analyst: Session Status COMPLETED (Full Report Available)
+
 ```
 
 ---
@@ -469,23 +505,25 @@ sequenceDiagram
 ## 18. Capture Validation Workflow
 
 ```mermaid
+
 flowchart TD
-    IN[Uploaded File / Live Stream] --> CHK_SZ{File Size <= Max Limit?}
-    CHK_SZ -->|No| ERR_SZ[Emit ERR_FILE_TOO_LARGE & Reject]
-    CHK_SZ -->|Yes| CHK_MAGIC{Magic Bytes Match PCAP / PCAPNG?}
+    IN["Uploaded File / Live Stream"] --> CHK_SZ{"File Size <= Max Limit?"}
+    CHK_SZ -->|"No"| ERR_SZ["Emit ERR_FILE_TOO_LARGE & Reject"]
+    CHK_SZ -->|"Yes"| CHK_MAGIC{"Magic Bytes Match PCAP / PCAPNG?"}
     
-    CHK_MAGIC -->|No| ERR_MAGIC[Emit ERR_CAPTURE_CORRUPT & Reject]
-    CHK_MAGIC -->|Yes| SCAN_HDR[Scan Initial 1,000 Frames]
+    CHK_MAGIC -->|"No"| ERR_MAGIC["Emit ERR_CAPTURE_CORRUPT & Reject"]
+    CHK_MAGIC -->|"Yes"| SCAN_HDR["Scan Initial 1,000 Frames"]
     
-    SCAN_HDR --> CHK_IPSEC{Contains UDP 500/4500 OR IP 50/51?}
-    CHK_IPSEC -->|No| WARN_NO_IPSEC[Status: NO_IPSEC_TRAFFIC & Safe Halt]
-    CHK_IPSEC -->|Yes| CHK_IKE{Contains IKE Handshake?}
+    SCAN_HDR --> CHK_IPSEC{"Contains UDP 500/4500 OR IP 50/51?"}
+    CHK_IPSEC -->|"No"| WARN_NO_IPSEC["Status: NO_IPSEC_TRAFFIC & Safe Halt"]
+    CHK_IPSEC -->|"Yes"| CHK_IKE{"Contains IKE Handshake?"}
     
-    CHK_IKE -->|Yes| PASS_FULL[Status: FULL_ANALYSIS_ENABLED]
-    CHK_IKE -->|No| CHK_ESP{Contains ESP Traffic?}
+    CHK_IKE -->|"Yes"| PASS_FULL["Status: FULL_ANALYSIS_ENABLED"]
+    CHK_IKE -->|"No"| CHK_ESP{"Contains ESP Traffic?"}
     
-    CHK_ESP -->|Yes| PASS_ORPHAN[Status: ORPHAN_ESP_ANALYSIS_ONLY\nCrypto Findings: UNKNOWN\nTraffic ML: ENABLED]
-    CHK_ESP -->|No| WARN_EMPTY[Status: INSUFFICIENT_IPSEC_DATA & Halt]
+    CHK_ESP -->|"Yes"| PASS_ORPHAN["Status: ORPHAN_ESP_ANALYSIS_ONLY\nCrypto Findings: UNKNOWN\nTraffic ML: ENABLED"]
+    CHK_ESP -->|"No"| WARN_EMPTY["Status: INSUFFICIENT_IPSEC_DATA & Halt"]
+
 ```
 
 ---
@@ -493,19 +531,22 @@ flowchart TD
 ## 19. Protocol Analysis Workflow
 
 ```mermaid
+
 flowchart LR
-    FRAME[Raw Ingested Frame] --> ETH[Dissect Link Layer]
-    ETH --> IP_CHK{Check Network Layer}
+    FRAME["Raw Ingested Frame"] --> ETH["Dissect Link Layer"]
+    ETH --> IP_CHK{"Check Network Layer"}
     
-    IP_CHK -->|IPv4| IP4[Extract IPv4 Headers\nVerify Protocol Field]
-    IP_CHK -->|IPv6| IP6[Extract IPv6 Headers\nTraverse Next Header Chain]
+    IP_CHK -->|"IPv4"| IP4["Extract IPv4 Headers\nVerify Protocol Field"]
+    IP_CHK -->|"IPv6"| IP6["Extract IPv6 Headers\nTraverse Next Header Chain"]
     
-    IP4 & IP6 --> PROTO_FORK{Evaluate Protocol}
+    IP4 --> PROTO_FORK{"Evaluate Protocol"}
+    IP6 --> PROTO_FORK{"Evaluate Protocol"}
     
-    PROTO_FORK -->|UDP 500 / 4500| IKE_FLOW[Route to IKE Workflow]
-    PROTO_FORK -->|IP Proto 50 / UDP 4500 ESP| ESP_FLOW[Route to ESP Workflow]
-    PROTO_FORK -->|IP Proto 51| AH_FLOW[Route to AH Workflow]
-    PROTO_FORK -->|Other Protocol| NOISE[Route to Noise / Background Counter]
+    PROTO_FORK -->|"UDP 500 / 4500"| IKE_FLOW["Route to IKE Workflow"]
+    PROTO_FORK -->|"IP Proto 50 / UDP 4500 ESP"| ESP_FLOW["Route to ESP Workflow"]
+    PROTO_FORK -->|"IP Proto 51"| AH_FLOW["Route to AH Workflow"]
+    PROTO_FORK -->|"Other Protocol"| NOISE["Route to Noise / Background Counter"]
+
 ```
 
 ---
@@ -552,32 +593,40 @@ flowchart LR
 ## 23. SA Reconstruction Workflow
 
 ```mermaid
+
 flowchart TD
-    IKE_MSG[IKE Negotiation Records] --> IKE_BUILDER[IKE SA Builder]
-    IKE_BUILDER --> IKE_SA_OBJ[Instantiate IKE SA Object\nInit SPI, Resp SPI, Active Transforms]
+    IKE_MSG["IKE Negotiation Records"] --> IKE_BUILDER["IKE SA Builder"]
+    IKE_BUILDER --> IKE_SA_OBJ["Instantiate IKE SA Object\nInit SPI, Resp SPI, Active Transforms"]
     
-    IKE_MSG --> CHILD_MSG[Child SA Exchange: CREATE_CHILD_SA / Quick Mode]
-    CHILD_MSG --> TS_EXTRACT[Extract Traffic Selectors & Notify Payloads]
+    IKE_MSG --> CHILD_MSG["Child SA Exchange: CREATE_CHILD_SA / Quick Mode"]
+    CHILD_MSG --> TS_EXTRACT["Extract Traffic Selectors & Notify Payloads"]
     
-    TS_EXTRACT --> MODE_DECIDE{Notify 16391 Observed?}
-    MODE_DECIDE -->|Yes| SET_TRANS[Set Mode: TRANSPORT_MODE\nEvidence: VERIFIED]
-    MODE_DECIDE -->|No| CHK_SUBNETS{Traffic Selectors Span Subnets?}
-    CHK_SUBNETS -->|Yes| SET_TUNNEL[Set Mode: TUNNEL_MODE\nEvidence: VERIFIED]
-    CHK_SUBNETS -->|No| INFER_MODE[Contextual Addressing Inference\nEvidence: INFERRED]
+    TS_EXTRACT --> MODE_DECIDE{"Notify 16391 Observed?"}
+    MODE_DECIDE -->|"Yes"| SET_TRANS["Set Mode: TRANSPORT_MODE\nEvidence: VERIFIED"]
+    MODE_DECIDE -->|"No"| CHK_SUBNETS{"Traffic Selectors Span Subnets?"}
+    CHK_SUBNETS -->|"Yes"| SET_TUNNEL["Set Mode: TUNNEL_MODE\nEvidence: VERIFIED"]
+    CHK_SUBNETS -->|"No"| INFER_MODE["Contextual Addressing Inference\nEvidence: INFERRED"]
     
-    CHILD_MSG --> KE_CHECK{New KE Payload in Child SA?}
-    KE_CHECK -->|Yes| PFS_ON[PFS: ENABLED\nEvidence: VERIFIED]
-    KE_CHECK -->|No| PFS_OFF[PFS: DISABLED\nEvidence: VERIFIED]
+    CHILD_MSG --> KE_CHECK{"New KE Payload in Child SA?"}
+    KE_CHECK -->|"Yes"| PFS_ON["PFS: ENABLED\nEvidence: VERIFIED"]
+    KE_CHECK -->|"No"| PFS_OFF["PFS: DISABLED\nEvidence: VERIFIED"]
     
-    SET_TRANS & SET_TUNNEL & INFER_MODE & PFS_ON & PFS_OFF --> CHILD_OBJ[Instantiate Child SA Object\nInbound SPI, Outbound SPI, Transforms, Mode, PFS]
+    SET_TRANS --> CHILD_OBJ["Instantiate Child SA Object\nInbound SPI, Outbound SPI, Transforms, Mode, PFS"]
+    SET_TUNNEL --> CHILD_OBJ["Instantiate Child SA Object\nInbound SPI, Outbound SPI, Transforms, Mode, PFS"]
+    INFER_MODE --> CHILD_OBJ["Instantiate Child SA Object\nInbound SPI, Outbound SPI, Transforms, Mode, PFS"]
+    PFS_ON --> CHILD_OBJ["Instantiate Child SA Object\nInbound SPI, Outbound SPI, Transforms, Mode, PFS"]
+    PFS_OFF --> CHILD_OBJ["Instantiate Child SA Object\nInbound SPI, Outbound SPI, Transforms, Mode, PFS"]
     
-    IKE_SA_OBJ & CHILD_OBJ --> LINK_SA[Link Child SA to Parent IKE SA]
+    IKE_SA_OBJ --> LINK_SA["Link Child SA to Parent IKE SA"]
+    CHILD_OBJ --> LINK_SA["Link Child SA to Parent IKE SA"]
     
-    ESP_PKTS[Incoming ESP Packet Stream] --> MATCH_SPI{SPI Matches Child SA?}
-    MATCH_SPI -->|Yes| BIND_FLOW[Bind ESP Flow to Child SA]
-    MATCH_SPI -->|No| ORPHAN_SA[Create Orphan Child SA\nEvidence: INFERRED\nTransforms: UNKNOWN]
+    ESP_PKTS["Incoming ESP Packet Stream"] --> MATCH_SPI{"SPI Matches Child SA?"}
+    MATCH_SPI -->|"Yes"| BIND_FLOW["Bind ESP Flow to Child SA"]
+    MATCH_SPI -->|"No"| ORPHAN_SA["Create Orphan Child SA\nEvidence: INFERRED\nTransforms: UNKNOWN"]
     
-    BIND_FLOW & ORPHAN_SA --> FINAL_GRAPH[(Complete Stateful SA Graph)]
+    BIND_FLOW --> FINAL_GRAPH[("Complete Stateful SA Graph")]
+    ORPHAN_SA --> FINAL_GRAPH[("Complete Stateful SA Graph")]
+
 ```
 
 ---
@@ -623,30 +672,37 @@ The workflow enforces strict mathematical rules for propagating uncertainty thro
 ## 26. Feature Extraction Flow
 
 ```mermaid
+
 flowchart TD
-    FLOW[Finalized ESPFlow Record] --> CHECK_MIN{Packet Count >= 10?}
-    CHECK_MIN -->|No| SKIP_ML[Assign Status: INSUFFICIENT_EVIDENCE_FOR_ML]
+    FLOW["Finalized ESPFlow Record"] --> CHECK_MIN{"Packet Count >= 10?"}
+    CHECK_MIN -->|"No"| SKIP_ML["Assign Status: INSUFFICIENT_EVIDENCE_FOR_ML"]
     
-    CHECK_MIN -->|Yes| FORK_FEAT[Feature Extraction Dispatcher]
+    CHECK_MIN -->|"Yes"| FORK_FEAT["Feature Extraction Dispatcher"]
     
     subgraph TABULAR["Branch A: Tabular Feature Vector (Model A)"]
-        FORK_FEAT --> STAT_LEN[Compute Packet Length Percentiles: 10, 25, 50, 75, 90]
-        FORK_FEAT --> STAT_MOM[Compute Mean, Std Dev, Skewness of Lengths]
-        FORK_FEAT --> STAT_IAT[Compute Mean, Std Dev, Max of IATs]
-        FORK_FEAT --> STAT_DIR[Compute Directional Ratios: Pkts & Bytes]
-        FORK_FEAT --> STAT_RATE[Compute Packet/Sec & Byte/Sec Rates]
-        STAT_LEN & STAT_MOM & STAT_IAT & STAT_DIR & STAT_RATE --> CONCAT_TAB[Concatenate into 1D Array]
-        CONCAT_TAB --> NORM_TAB[Apply Standard Scaler Fitted on Training Split Only]
+        FORK_FEAT --> STAT_LEN["Compute Packet Length Percentiles: 10, 25, 50, 75, 90"]
+        FORK_FEAT --> STAT_MOM["Compute Mean, Std Dev, Skewness of Lengths"]
+        FORK_FEAT --> STAT_IAT["Compute Mean, Std Dev, Max of IATs"]
+        FORK_FEAT --> STAT_DIR["Compute Directional Ratios: Pkts & Bytes"]
+        FORK_FEAT --> STAT_RATE["Compute Packet/Sec & Byte/Sec Rates"]
+        STAT_LEN --> CONCAT_TAB["Concatenate into 1D Array"]
+        STAT_MOM --> CONCAT_TAB["Concatenate into 1D Array"]
+        STAT_IAT --> CONCAT_TAB["Concatenate into 1D Array"]
+        STAT_DIR --> CONCAT_TAB["Concatenate into 1D Array"]
+        STAT_RATE --> CONCAT_TAB["Concatenate into 1D Array"]
+        CONCAT_TAB --> NORM_TAB["Apply Standard Scaler Fitted on Training Split Only"]
     end
     
     subgraph SEQUENCE["Branch B: Temporal Sequence Matrix (Model B)"]
-        FORK_FEAT --> EXTRACT_N[Extract First N Packets: N in 32, 64, 128]
-        EXTRACT_N --> CHK_LEN{Packet Count < N?}
-        CHK_LEN -->|Yes| PAD_ZERO[Right-Pad with Zeros & Generate Mask]
-        CHK_LEN -->|No| TRUNC_N[Truncate at N Packets]
-        PAD_ZERO & TRUNC_N --> MAT_BUILD[Format 3-Channel Array: direction, length/1500, min delta_t 1.0]
-        MAT_BUILD --> TENSOR_CONV[Convert to Float32 PyTorch Tensor 1 x 3 x N]
+        FORK_FEAT --> EXTRACT_N["Extract First N Packets: N in 32, 64, 128"]
+        EXTRACT_N --> CHK_LEN{"Packet Count < N?"}
+        CHK_LEN -->|"Yes"| PAD_ZERO["Right-Pad with Zeros & Generate Mask"]
+        CHK_LEN -->|"No"| TRUNC_N["Truncate at N Packets"]
+        PAD_ZERO --> MAT_BUILD["Format 3-Channel Array: direction, length/1500, min delta_t 1.0"]
+        TRUNC_N --> MAT_BUILD["Format 3-Channel Array: direction, length/1500, min delta_t 1.0"]
+        MAT_BUILD --> TENSOR_CONV["Convert to Float32 PyTorch Tensor 1 x 3 x N"]
     end
+
 ```
 
 ---
@@ -654,6 +710,7 @@ flowchart TD
 ## 27. ML Inference Workflow
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     participant FEAT as Feature Pipeline
@@ -692,6 +749,7 @@ sequenceDiagram
     
     XGB->>XAI: Compute TreeExplainer SHAP Values
     XAI-->>DB: Persist Top-5 Contributing Features & Attributions
+
 ```
 
 ---
@@ -754,23 +812,27 @@ sequenceDiagram
 ## 32. Security Policy Flow
 
 ```mermaid
+
 flowchart TD
-    SA_FACTS[Reconstructed Protocol & SA Facts] --> POL_LOAD[Load Versioned YAML Policy Profile]
-    POL_LOAD --> RULE_LOOP{Iterate Rules in Profile}
+    SA_FACTS["Reconstructed Protocol & SA Facts"] --> POL_LOAD["Load Versioned YAML Policy Profile"]
+    POL_LOAD --> RULE_LOOP{"Iterate Rules in Profile"}
     
-    RULE_LOOP --> RESOLVE_PATH[Resolve Target Field Path\ne.g. child_sa.encryption_algorithm]
-    RESOLVE_PATH --> CHECK_OP{Evaluate Condition Operator}
+    RULE_LOOP --> RESOLVE_PATH["Resolve Target Field Path\ne.g. child_sa.encryption_algorithm"]
+    RESOLVE_PATH --> CHECK_OP{"Evaluate Condition Operator"}
     
-    CHECK_OP -->|in / equals / less_than| VIOLATION{Condition Met?}
+    CHECK_OP -->|"in / equals / less_than"| VIOLATION{"Condition Met?"}
     
-    VIOLATION -->|Yes (Violation)| EMIT_FINDING[Construct SecurityFinding Object\nSeverity, Clause Citation, Remediation Snippet]
-    VIOLATION -->|No (Clean)| RECORD_PASS[Record Control Status: PASS]
+    VIOLATION -->|"Yes (Violation)"| EMIT_FINDING["Construct SecurityFinding Object\nSeverity, Clause Citation, Remediation Snippet"]
+    VIOLATION -->|"No (Clean)"| RECORD_PASS["Record Control Status: PASS"]
     
-    RESOLVE_PATH -->|Field Absent in Capture| RECORD_UNK[Record Control Status: UNKNOWN\nReason: Inconclusive Passive Evidence]
+    RESOLVE_PATH -->|"Field Absent in Capture"| RECORD_UNK["Record Control Status: UNKNOWN\nReason: Inconclusive Passive Evidence"]
     
-    EMIT_FINDING & RECORD_PASS & RECORD_UNK --> MORE_RULES{More Rules?}
-    MORE_RULES -->|Yes| RULE_LOOP
-    MORE_RULES -->|No| COMPILE_FINDINGS[Compile Final Security Assessment Bundle]
+    EMIT_FINDING --> MORE_RULES{"More Rules?"}
+    RECORD_PASS --> MORE_RULES{"More Rules?"}
+    RECORD_UNK --> MORE_RULES{"More Rules?"}
+    MORE_RULES -->|"Yes"| RULE_LOOP
+    MORE_RULES -->|"No"| COMPILE_FINDINGS["Compile Final Security Assessment Bundle"]
+
 ```
 
 ---
@@ -794,28 +856,35 @@ flowchart TD
 ## 34. Security Score Flow
 
 ```mermaid
+
 flowchart TD
-    FINDINGS[Itemized Security Findings] --> BASE[Initialize Base Score: 100.0]
+    FINDINGS["Itemized Security Findings"] --> BASE["Initialize Base Score: 100.0"]
     
     subgraph DEDUCTIONS["Dimension Deduction Calculator"]
-        FINDINGS --> CAT_CRYPTO[Cryptographic Strength Deductions]
-        FINDINGS --> CAT_KE[Key Exchange & PFS Deductions]
-        FINDINGS --> CAT_AUTH[Authentication & Integrity Deductions]
-        FINDINGS --> CAT_SA[SA Lifecycle & Replay Deductions]
-        FINDINGS --> CAT_META[Metadata Exposure Deductions]
+        FINDINGS --> CAT_CRYPTO["Cryptographic Strength Deductions"]
+        FINDINGS --> CAT_KE["Key Exchange & PFS Deductions"]
+        FINDINGS --> CAT_AUTH["Authentication & Integrity Deductions"]
+        FINDINGS --> CAT_SA["SA Lifecycle & Replay Deductions"]
+        FINDINGS --> CAT_META["Metadata Exposure Deductions"]
     end
     
-    CAT_CRYPTO & CAT_KE & CAT_AUTH & CAT_SA & CAT_META --> SUM_DED[Sum Weighted Penalties\nEvery deduction bound to Finding ID]
+    CAT_CRYPTO --> SUM_DED["Sum Weighted Penalties\nEvery deduction bound to Finding ID"]
+    CAT_KE --> SUM_DED["Sum Weighted Penalties\nEvery deduction bound to Finding ID"]
+    CAT_AUTH --> SUM_DED["Sum Weighted Penalties\nEvery deduction bound to Finding ID"]
+    CAT_SA --> SUM_DED["Sum Weighted Penalties\nEvery deduction bound to Finding ID"]
+    CAT_META --> SUM_DED["Sum Weighted Penalties\nEvery deduction bound to Finding ID"]
     
-    BASE & SUM_DED --> SUBTRACT[Compute Raw Score = max 0, 100 - Penalties]
+    BASE --> SUBTRACT["Compute Raw Score = max 0, 100 - Penalties"]
+    SUM_DED --> SUBTRACT["Compute Raw Score = max 0, 100 - Penalties"]
     
-    SUBTRACT --> CHECK_INCOMPLETE{Capture Missing IKE Handshake?}
-    CHECK_INCOMPLETE -->|Yes| APPLY_CAP[Apply Incomplete Analysis Ceiling\nMax Score Capped at 60.0]
-    CHECK_INCOMPLETE -->|No| FINAL_SCORE[Final 0-100 Security Posture Score]
+    SUBTRACT --> CHECK_INCOMPLETE{"Capture Missing IKE Handshake?"}
+    CHECK_INCOMPLETE -->|"Yes"| APPLY_CAP["Apply Incomplete Analysis Ceiling\nMax Score Capped at 60.0"]
+    CHECK_INCOMPLETE -->|"No"| FINAL_SCORE["Final 0-100 Security Posture Score"]
     APPLY_CAP --> FINAL_SCORE
     
-    FINAL_SCORE --> RADAR[Generate Per-Dimension Radar Chart Values]
-    FINAL_SCORE --> AUDIT_TBL[Generate Score Deduction Audit Table]
+    FINAL_SCORE --> RADAR["Generate Per-Dimension Radar Chart Values"]
+    FINAL_SCORE --> AUDIT_TBL["Generate Score Deduction Audit Table"]
+
 ```
 
 ---
@@ -864,20 +933,23 @@ flowchart TD
 ## 38. Evidence/Provenance Flow
 
 ```mermaid
+
 flowchart TD
-    FIND[Security Finding Object] --> GET_EVID[Query Evidence Node Pointer]
-    GET_EVID --> NODE[Evidence Node Record]
+    FIND["Security Finding Object"] --> GET_EVID["Query Evidence Node Pointer"]
+    GET_EVID --> NODE["Evidence Node Record"]
     
-    NODE --> PKT[Packet Index: #14]
-    NODE --> FLD[TShark Field: isakmp.transform.id == 3]
-    NODE --> BYTES[Hex Byte Offset: 0x004c to 0x004f]
-    NODE --> SHA[Capture Hash: SHA-256]
+    NODE --> PKT["Packet Index: #14"]
+    NODE --> FLD["TShark Field: isakmp.transform.id == 3"]
+    NODE --> BYTES["Hex Byte Offset: 0x004c to 0x004f"]
+    NODE --> SHA["Capture Hash: SHA-256"]
     
-    FIND --> RULE[Policy Rule: IPSEC-CRYPTO-001]
-    RULE --> STD[NIST SP 800-77 Rev. 1 Section 4.1.1]
+    FIND --> RULE["Policy Rule: IPSEC-CRYPTO-001"]
+    RULE --> STD["NIST SP 800-77 Rev. 1 Section 4.1.1"]
     
-    NODE & RULE --> GRAPH_RENDER[Compile Evidence Graph Node]
-    GRAPH_RENDER --> UI_FLOW[Render Interactive React Flow Graph]
+    NODE --> GRAPH_RENDER["Compile Evidence Graph Node"]
+    RULE --> GRAPH_RENDER["Compile Evidence Graph Node"]
+    GRAPH_RENDER --> UI_FLOW["Render Interactive React Flow Graph"]
+
 ```
 
 ---
@@ -885,20 +957,22 @@ flowchart TD
 ## 39. Dashboard Data Flow
 
 ```mermaid
+
 flowchart LR
-    BACKEND[(PostgreSQL + Redis)] --> API[FastAPI Gateway]
-    API -->|REST Endpoints / JSON| RQ[TanStack Query Cache]
-    API -->|WebSocket Stream| WS_CLIENT[WebSocket Client Hook]
+    BACKEND[("PostgreSQL + Redis")] --> API["FastAPI Gateway"]
+    API -->|"REST Endpoints / JSON"| RQ["TanStack Query Cache"]
+    API -->|"WebSocket Stream"| WS_CLIENT["WebSocket Client Hook"]
     
-    RQ --> DASH_STATE[Next.js App State]
+    RQ --> DASH_STATE["Next.js App State"]
     WS_CLIENT --> DASH_STATE
     
-    DASH_STATE --> W1[Command Center Overview Cards]
-    DASH_STATE --> W2[Protocol Intelligence Dissector View]
-    DASH_STATE --> W3[SA Explorer: React Flow Topology]
-    DASH_STATE --> W4[Encrypted Traffic: ECharts Distribution]
-    DASH_STATE --> W5[Policy Findings & Threat Matrix Tables]
-    DASH_STATE --> W6[Evidence Graph: React Flow Traceability]
+    DASH_STATE --> W1["Command Center Overview Cards"]
+    DASH_STATE --> W2["Protocol Intelligence Dissector View"]
+    DASH_STATE --> W3["SA Explorer: React Flow Topology"]
+    DASH_STATE --> W4["Encrypted Traffic: ECharts Distribution"]
+    DASH_STATE --> W5["Policy Findings & Threat Matrix Tables"]
+    DASH_STATE --> W6["Evidence Graph: React Flow Traceability"]
+
 ```
 
 ---
@@ -906,6 +980,7 @@ flowchart LR
 ## 40. Report Generation Flow
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     actor Analyst as Analyst / UI
@@ -928,13 +1003,14 @@ sequenceDiagram
     alt PDF Generation Successful
         REP->>PDF: Compile HTML to PDF (Print-ready CSS)
         PDF-->>REP: Binary PDF Artifact
-        REP->>S3: Store PDF at /reports/{id}_tech.pdf
+        REP->>S3: Store PDF at /reports/id_tech.pdf
     else PDF Engine Times Out
         REP->>S3: Store Print-Ready HTML Fallback
     end
     
     REP-->>API: Task COMPLETED (Download URL)
     API-->>Analyst: Render Download Modal & Trigger File Save
+
 ```
 
 ---
@@ -942,6 +1018,7 @@ sequenceDiagram
 ## 41. AI Analyst/RAG Flow
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     actor Analyst as Analyst / UI
@@ -965,6 +1042,7 @@ sequenceDiagram
     LLM-->>RAG: Stream Factual Grounded Response
     RAG-->>API: Stream Tokens + Citations
     API-->>Analyst: Render Response with Clickable Evidence Links
+
 ```
 
 ---
@@ -1002,6 +1080,7 @@ sequenceDiagram
 ## 44. Closed-Loop Verification Flow
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     actor Analyst as Security Engineer
@@ -1034,6 +1113,7 @@ sequenceDiagram
         LAB->>LAB: Compare Baseline Findings vs New Findings
         LAB-->>UI: Render Verification Card (Status: VERIFIED_RESOLVED)
     end
+
 ```
 
 ---
@@ -1065,31 +1145,33 @@ sequenceDiagram
 ## 47. Dataset Generation Workflow
 
 ```mermaid
+
 flowchart TD
-    DEF[Matrix Sweep Definition] --> LOOP_CFG{Iterate Matrix Rows}
+    DEF["Matrix Sweep Definition"] --> LOOP_CFG{"Iterate Matrix Rows"}
     
-    LOOP_CFG --> SETUP_NS[Provision Namespaces & Routing]
-    SETUP_NS --> CFG_SW[Deploy Gateway Configurations]
-    CFG_SW --> TC_RULES[Apply WAN Impairment Profile]
+    LOOP_CFG --> SETUP_NS["Provision Namespaces & Routing"]
+    SETUP_NS --> CFG_SW["Deploy Gateway Configurations"]
+    CFG_SW --> TC_RULES["Apply WAN Impairment Profile"]
     
-    TC_RULES --> START_CAP[Start Dual tcpdump Captures\nPlain & Encrypted Interfaces]
-    START_CAP --> START_VPN[Establish strongSwan IPsec Tunnel]
+    TC_RULES --> START_CAP["Start Dual tcpdump Captures\nPlain & Encrypted Interfaces"]
+    START_CAP --> START_VPN["Establish strongSwan IPsec Tunnel"]
     
-    START_VPN --> CHK_UP{Tunnel Active?}
-    CHK_UP -->|No| LOG_FAIL[Record Matrix Cell: FAILED\nDiscard Capture]
+    START_VPN --> CHK_UP{"Tunnel Active?"}
+    CHK_UP -->|"No"| LOG_FAIL["Record Matrix Cell: FAILED\nDiscard Capture"]
     
-    CHK_UP -->|Yes| RUN_WORKLOAD[Inject Workload Stream\nRecord Ground Truth Logs]
-    RUN_WORKLOAD --> STOP_CAP[Stop tcpdump & Collect PCAPs]
+    CHK_UP -->|"Yes"| RUN_WORKLOAD["Inject Workload Stream\nRecord Ground Truth Logs"]
+    RUN_WORKLOAD --> STOP_CAP["Stop tcpdump & Collect PCAPs"]
     
-    STOP_CAP --> VALIDATE[Validate Packet Counts & Handshake Integrity]
-    VALIDATE --> BIND_META[Generate manifest.json\nSession ID, Labels, Transforms, Impairments]
+    STOP_CAP --> VALIDATE["Validate Packet Counts & Handshake Integrity"]
+    VALIDATE --> BIND_META["Generate manifest.json\nSession ID, Labels, Transforms, Impairments"]
     
-    BIND_META --> SAVE_DS[(Save to Curated Dataset Repository)]
-    SAVE_DS --> TEARDOWN[Tear Down Namespaces & Clean Sockets]
+    BIND_META --> SAVE_DS[("Save to Curated Dataset Repository")]
+    SAVE_DS --> TEARDOWN["Tear Down Namespaces & Clean Sockets"]
     
-    TEARDOWN --> NEXT_ROW{More Matrix Rows?}
-    NEXT_ROW -->|Yes| LOOP_CFG
-    NEXT_ROW -->|No| EXPORT_DS[Publish Dataset Manifest & Split Partitions]
+    TEARDOWN --> NEXT_ROW{"More Matrix Rows?"}
+    NEXT_ROW -->|"Yes"| LOOP_CFG
+    NEXT_ROW -->|"No"| EXPORT_DS["Publish Dataset Manifest & Split Partitions"]
+
 ```
 
 ---
@@ -1121,22 +1203,24 @@ flowchart TD
 ## 50. Train/Test Leakage Prevention
 
 ```mermaid
+
 flowchart TD
-    ALL_SESSIONS[(All Testbed Sessions)] --> GROUP_SPLIT{GroupKFold by session_id}
+    ALL_SESSIONS[("All Testbed Sessions")] --> GROUP_SPLIT{"GroupKFold by session_id"}
     
-    GROUP_SPLIT --> TRAIN_SESS[Training Sessions]
-    GROUP_SPLIT --> VAL_SESS[Validation Sessions]
-    GROUP_SPLIT --> TEST_SESS[Holdout Test Sessions]
+    GROUP_SPLIT --> TRAIN_SESS["Training Sessions"]
+    GROUP_SPLIT --> VAL_SESS["Validation Sessions"]
+    GROUP_SPLIT --> TEST_SESS["Holdout Test Sessions"]
     
-    TRAIN_SESS --> FIT_SCALER[Fit Feature Scaler\nTraining Data ONLY]
+    TRAIN_SESS --> FIT_SCALER["Fit Feature Scaler\nTraining Data ONLY"]
     
-    FIT_SCALER --> APPLY_TRAIN[Transform Training Features]
-    FIT_SCALER -.->|Transform Only\nNo Refitting| APPLY_VAL[Transform Validation Features]
-    FIT_SCALER -.->|Transform Only\nNo Refitting| APPLY_TEST[Transform Test Features]
+    FIT_SCALER --> APPLY_TRAIN["Transform Training Features"]
+    FIT_SCALER -.->|"Transform Only\nNo Refitting"| APPLY_VAL["Transform Validation Features"]
+    FIT_SCALER -.->|"Transform Only\nNo Refitting"| APPLY_TEST["Transform Test Features"]
     
-    APPLY_TRAIN --> TRAIN_MODELS[Train XGBoost & 1D-CNN]
-    APPLY_VAL --> EVAL_VAL[Tune Calibration & Fusion]
-    APPLY_TEST --> EVAL_TEST[Final Model Evaluation]
+    APPLY_TRAIN --> TRAIN_MODELS["Train XGBoost & 1D-CNN"]
+    APPLY_VAL --> EVAL_VAL["Tune Calibration & Fusion"]
+    APPLY_TEST --> EVAL_TEST["Final Model Evaluation"]
+
 ```
 
 ---
@@ -1153,16 +1237,18 @@ flowchart TD
 ## 52. Public Dataset Workflow (ISCXVPN2016)
 
 ```mermaid
+
 flowchart LR
-    ISCX[(UNB ISCXVPN2016 Archive)] --> FILTER[Feature Extraction Pipeline]
-    FILTER --> BENCH[Baseline Algorithm Benchmarking\nResearch Branch ONLY]
-    BENCH --> DOCS[Document Methodology Results]
+    ISCX[("UNB ISCXVPN2016 Archive")] --> FILTER["Feature Extraction Pipeline"]
+    FILTER --> BENCH["Baseline Algorithm Benchmarking\nResearch Branch ONLY"]
+    BENCH --> DOCS["Document Methodology Results"]
     
-    NATIVE[(IPsec-Native Testbed Dataset)] --> TRAIN[Primary ML Training Pipeline]
-    TRAIN --> PROD_MODEL[(Production Model Artifacts)]
+    NATIVE[("IPsec-Native Testbed Dataset")] --> TRAIN["Primary ML Training Pipeline"]
+    TRAIN --> PROD_MODEL[("Production Model Artifacts")]
     
     style ISCX fill:#f9f,stroke:#333,stroke-width:2px
     style NATIVE fill:#bbf,stroke:#333,stroke-width:2px
+
 ```
 
 * **Governance Rule:** ISCXVPN2016 traffic uses OpenVPN, not IPsec ESP. It is strictly segregated into research benchmarking and is never merged into the IPsec-native training dataset.
@@ -1185,6 +1271,7 @@ flowchart LR
 ## 54. WebSocket/Event Flow
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     participant UI as Browser WebSocket Client
@@ -1192,8 +1279,8 @@ sequenceDiagram
     participant REDIS as Redis Pub/Sub
     participant WRK as Celery Worker
 
-    UI->>HUB: Connect /ws/analyses/{analysis_id}
-    HUB->>REDIS: Subscribe channel: analysis_{analysis_id}
+    UI->>HUB: Connect /ws/analyses/analysis_id
+    HUB->>REDIS: Subscribe channel: analysis_analysis_id
     HUB-->>UI: Connection Established (ACK)
     
     WRK->>REDIS: Publish STAGE_STARTED (stage="PROTOCOL_DISSECTION")
@@ -1207,6 +1294,7 @@ sequenceDiagram
     WRK->>REDIS: Publish STAGE_COMPLETED (stage="ALL", score=82.5)
     REDIS->>HUB: Forward Message
     HUB-->>UI: Push STAGE_COMPLETED (Trigger React Query Invalidate)
+
 ```
 
 ---
@@ -1241,29 +1329,32 @@ sequenceDiagram
 ## 57. Privacy Data Flow
 
 ```mermaid
+
 flowchart TD
-    RAW_NET[Raw PCAP / Network Stream] --> LOCAL_HOST[Local Host Boundary]
+    RAW_NET["Raw PCAP / Network Stream"] --> LOCAL_HOST["Local Host Boundary"]
     
     subgraph LOCAL_HOST["Local Host / Private Deployment Perimeter"]
-        PARSER[TShark Dissector]
-        ML_ENG[ML Inference Workers]
-        POL_ENG[Policy Engine]
-        DB[(PostgreSQL Store)]
-        SAN_FILTER[Prompt Sanitization Filter]
-        LOCAL_LLM[Local / Private LLM]
+        PARSER["TShark Dissector"]
+        ML_ENG["ML Inference Workers"]
+        POL_ENG["Policy Engine"]
+        DB[("PostgreSQL Store")]
+        SAN_FILTER["Prompt Sanitization Filter"]
+        LOCAL_LLM["Local / Private LLM"]
     end
     
     RAW_NET --> PARSER
     PARSER --> ML_ENG & POL_ENG
-    ML_ENG & POL_ENG --> DB
+    ML_ENG --> DB
+    POL_ENG --> DB
     
     DB --> SAN_FILTER
-    SAN_FILTER -->|Sanitized Findings & Standards ONLY\nZero Packets / Zero IPs| LOCAL_LLM
+    SAN_FILTER -->|"Sanitized Findings & Standards ONLY\nZero Packets / Zero IPs"| LOCAL_LLM
     
-    LOCAL_LLM --> OUT_ANS[Analyst Answer]
+    LOCAL_LLM --> OUT_ANS["Analyst Answer"]
     
-    CLOUD_EXT[Public Cloud / Third-Party APIs]
+    CLOUD_EXT["Public Cloud / Third-Party APIs"]
     LOCAL_HOST x--x|STRICTLY BLOCKED: No Outbound Traffic| CLOUD_EXT
+
 ```
 
 ---
@@ -1284,24 +1375,26 @@ flowchart TD
 ## 59. User Workflow — Security Analyst
 
 ```mermaid
+
 flowchart TD
-    START[Analyst Opens Web UI] --> VIEW_CMD[Command Center Dashboard]
-    VIEW_CMD --> ACTION{Select Action}
+    START["Analyst Opens Web UI"] --> VIEW_CMD["Command Center Dashboard"]
+    VIEW_CMD --> ACTION{"Select Action"}
     
-    ACTION -->|New Audit| UPLOAD[Upload Capture File / Select Interface]
-    UPLOAD --> WAIT[Monitor Progress Bar via WebSockets]
-    WAIT --> DASH[Review Analysis Overview & Security Score]
+    ACTION -->|"New Audit"| UPLOAD["Upload Capture File / Select Interface"]
+    UPLOAD --> WAIT["Monitor Progress Bar via WebSockets"]
+    WAIT --> DASH["Review Analysis Overview & Security Score"]
     
-    DASH --> DRILL1[Protocol Intelligence: Review Transforms & Mode]
-    DASH --> DRILL2[SA Explorer: Inspect Interactive Topology]
-    DASH --> DRILL3[Encrypted Traffic: Review Classified Workloads & SHAP]
-    DASH --> DRILL4[Threat Matrix: Inspect Attack Scenarios]
+    DASH --> DRILL1["Protocol Intelligence: Review Transforms & Mode"]
+    DASH --> DRILL2["SA Explorer: Inspect Interactive Topology"]
+    DASH --> DRILL3["Encrypted Traffic: Review Classified Workloads & SHAP"]
+    DASH --> DRILL4["Threat Matrix: Inspect Attack Scenarios"]
     
-    DRILL4 --> CLICK_FIND[Click Critical Finding]
-    CLICK_FIND --> EVID_EXP[Evidence Explorer: Trace to Packet & Standard]
+    DRILL4 --> CLICK_FIND["Click Critical Finding"]
+    CLICK_FIND --> EVID_EXP["Evidence Explorer: Trace to Packet & Standard"]
     
-    EVID_EXP --> EXPORT[Export Publication-Grade Technical Report]
-    EVID_EXP --> ASK_AI[Ask AI Analyst for Remediation Advice]
+    EVID_EXP --> EXPORT["Export Publication-Grade Technical Report"]
+    EVID_EXP --> ASK_AI["Ask AI Analyst for Remediation Advice"]
+
 ```
 
 ---
@@ -1354,21 +1447,27 @@ flowchart TD
 ## 64. Partial Analysis / Graceful Degradation
 
 ```mermaid
+
 flowchart TD
-    IN[Capture File Ingested] --> PROTO_P{IKE Negotiation Present?}
+    IN["Capture File Ingested"] --> PROTO_P{"IKE Negotiation Present?"}
     
-    PROTO_P -->|Yes| PROTO_OK[Extract Protocol Facts & Evaluate Policy]
-    PROTO_P -->|No| PROTO_FAIL[Mark Crypto Facts: UNKNOWN\nPolicy Evaluation: INCOMPLETE]
+    PROTO_P -->|"Yes"| PROTO_OK["Extract Protocol Facts & Evaluate Policy"]
+    PROTO_P -->|"No"| PROTO_FAIL["Mark Crypto Facts: UNKNOWN\nPolicy Evaluation: INCOMPLETE"]
     
-    IN --> ESP_P{ESP Traffic Present?}
+    IN --> ESP_P{"ESP Traffic Present?"}
     
-    ESP_P -->|Yes| ESP_OK[Reconstruct Flows & Execute ML Classification]
-    ESP_P -->|No| ESP_FAIL[Mark Encrypted Traffic ML: UNAVAILABLE]
+    ESP_P -->|"Yes"| ESP_OK["Reconstruct Flows & Execute ML Classification"]
+    ESP_P -->|"No"| ESP_FAIL["Mark Encrypted Traffic ML: UNAVAILABLE"]
     
-    PROTO_OK & ESP_OK --> FULL[Output Full Analysis Result]
-    PROTO_OK & ESP_FAIL --> PARTIAL_A[Output Cryptographic Audit ONLY]
-    PROTO_FAIL & ESP_OK --> PARTIAL_B[Output Encrypted Traffic Intelligence ONLY]
-    PROTO_FAIL & ESP_FAIL --> HALT[Halt Analysis: ERR_NO_IPSEC_DETECTED]
+    PROTO_OK --> FULL["Output Full Analysis Result"]
+    ESP_OK --> FULL["Output Full Analysis Result"]
+    PROTO_OK --> PARTIAL_A["Output Cryptographic Audit ONLY"]
+    ESP_FAIL --> PARTIAL_A["Output Cryptographic Audit ONLY"]
+    PROTO_FAIL --> PARTIAL_B["Output Encrypted Traffic Intelligence ONLY"]
+    ESP_OK --> PARTIAL_B["Output Encrypted Traffic Intelligence ONLY"]
+    PROTO_FAIL --> HALT["Halt Analysis: ERR_NO_IPSEC_DETECTED"]
+    ESP_FAIL --> HALT["Halt Analysis: ERR_NO_IPSEC_DETECTED"]
+
 ```
 
 ---
@@ -1391,6 +1490,7 @@ flowchart TD
 ## 66. Analysis State Machine
 
 ```mermaid
+
 stateDiagram-v2
     [*] --> CREATED
     CREATED --> VALIDATING : Upload stream received
@@ -1415,6 +1515,7 @@ stateDiagram-v2
     
     COMPLETED --> [*]
     FAILED --> [*]
+
 ```
 
 ---
@@ -1422,6 +1523,7 @@ stateDiagram-v2
 ## 67. Live Capture State Machine
 
 ```mermaid
+
 stateDiagram-v2
     [*] --> IDLE
     IDLE --> STARTING : User clicks "Start Live Capture"
@@ -1437,6 +1539,7 @@ stateDiagram-v2
     
     COMPLETED --> IDLE
     FAILED --> IDLE
+
 ```
 
 ---
@@ -1444,6 +1547,7 @@ stateDiagram-v2
 ## 68. Dataset Experiment State Machine
 
 ```mermaid
+
 stateDiagram-v2
     [*] --> PENDING
     PENDING --> PROVISIONING : Matrix row dispatched
@@ -1462,6 +1566,7 @@ stateDiagram-v2
     DISCARDED --> TEARDOWN : Error logged
     
     TEARDOWN --> [*]
+
 ```
 
 ---
@@ -1469,6 +1574,7 @@ stateDiagram-v2
 ## 69. Report State Machine
 
 ```mermaid
+
 stateDiagram-v2
     [*] --> REQUESTED
     REQUESTED --> COMPILING_DATA : Worker dequeues report task
@@ -1483,6 +1589,7 @@ stateDiagram-v2
     
     COMPLETED --> [*]
     FAILED --> [*]
+
 ```
 
 ---
@@ -1490,6 +1597,7 @@ stateDiagram-v2
 ## 70. Remediation State Machine
 
 ```mermaid
+
 stateDiagram-v2
     [*] --> PROPOSED
     PROPOSED --> SIMULATED : Tested in Configuration Twin
@@ -1513,6 +1621,7 @@ stateDiagram-v2
     VERIFIED --> [*]
     ROLLED_BACK --> [*]
     REGRESSION --> [*]
+
 ```
 
 ---
@@ -1535,17 +1644,19 @@ stateDiagram-v2
 ## 72. Version/Re-analysis Flow
 
 ```mermaid
+
 flowchart TD
-    EXISTING[Existing Analysis Session] --> RE_REQ[User Requests Re-analysis]
-    RE_REQ --> SELECT_VER[Select New Engine / Policy / Model Version]
+    EXISTING["Existing Analysis Session"] --> RE_REQ["User Requests Re-analysis"]
+    RE_REQ --> SELECT_VER["Select New Engine / Policy / Model Version"]
     
-    SELECT_VER --> CLONE_JOB[Create Brand New Analysis Session\nUnique analysis_id]
-    CLONE_JOB --> REUSE_PCAP[Point to Original Stored PCAP via SHA-256]
+    SELECT_VER --> CLONE_JOB["Create Brand New Analysis Session\nUnique analysis_id"]
+    CLONE_JOB --> REUSE_PCAP["Point to Original Stored PCAP via SHA-256"]
     
-    REUSE_PCAP --> RUN_PIPE[Execute Full Analysis Pipeline]
-    RUN_PIPE --> PERSIST_NEW[Persist New Findings & Scores]
+    REUSE_PCAP --> RUN_PIPE["Execute Full Analysis Pipeline"]
+    RUN_PIPE --> PERSIST_NEW["Persist New Findings & Scores"]
     
-    PERSIST_NEW --> COMPARE[Render Comparative Diff View\nOld Version vs New Version Findings]
+    PERSIST_NEW --> COMPARE["Render Comparative Diff View\nOld Version vs New Version Findings"]
+
 ```
 
 ---
@@ -1665,13 +1776,15 @@ flowchart TD
 ## 77. Risks and Flow Failure Points
 
 ```mermaid
+
 flowchart LR
-    F1[Failure: Truncated Capture] --> R1[Mitigation: Reconstruct partial state; flag UNKNOWN]
-    F2[Failure: Zero ESP Traffic] --> R2[Mitigation: Skip ML flow; complete protocol audit]
-    F3[Failure: Zero IKE Traffic] --> R3[Mitigation: Run ML flow; mark crypto UNKNOWN]
-    F4[Failure: Lab Tunnel Fails] --> R4[Mitigation: Trigger automatic config rollback]
-    F5[Failure: Worker OOM] --> R5[Mitigation: Memory limits & chunked packet spooling]
-    F6[Failure: LLM Crash] --> R6[Mitigation: Graceful degradation; static summaries]
+    F1["Failure: Truncated Capture"] --> R1["Mitigation: Reconstruct partial state; flag UNKNOWN"]
+    F2["Failure: Zero ESP Traffic"] --> R2["Mitigation: Skip ML flow; complete protocol audit"]
+    F3["Failure: Zero IKE Traffic"] --> R3["Mitigation: Run ML flow; mark crypto UNKNOWN"]
+    F4["Failure: Lab Tunnel Fails"] --> R4["Mitigation: Trigger automatic config rollback"]
+    F5["Failure: Worker OOM"] --> R5["Mitigation: Memory limits & chunked packet spooling"]
+    F6["Failure: LLM Crash"] --> R6["Mitigation: Graceful degradation; static summaries"]
+
 ```
 
 ---

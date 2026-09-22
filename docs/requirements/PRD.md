@@ -216,50 +216,60 @@ Deliver a modular, privacy-conscious, local-first platform that ingests IPsec ne
 ## 17. End-to-End Product Concept
 
 ```mermaid
+
 flowchart TD
     subgraph INGESTION["1. Capture & Ingestion"]
-        A1[PCAP / PCAPNG Upload] --> B[Ingestion & Validation Engine]
-        A2[Live Network Stream] --> B
+        A1["PCAP / PCAPNG Upload"] --> B["Ingestion & Validation Engine"]
+        A2["Live Network Stream"] --> B
     end
 
     subgraph DECONSTRUCTION["2. Protocol Dissection & State Reconstruction"]
-        B --> C[TShark / PyShark Dissection Pipeline]
-        C --> D1[IKE State Reconstruction\nIKEv1 / IKEv2]
-        C --> D2[ESP / AH Flow Dissection\nSPI, Seq, Timing]
-        D1 --> E[Security Association Graph\nIKE SA & Child SAs]
+        B --> C["TShark / PyShark Dissection Pipeline"]
+        C --> D1["IKE State Reconstruction\nIKEv1 / IKEv2"]
+        C --> D2["ESP / AH Flow Dissection\nSPI, Seq, Timing"]
+        D1 --> E["Security Association Graph\nIKE SA & Child SAs"]
         D2 --> E
     end
 
     subgraph INFERENCE["3. Cryptographic Audit & ML Inference"]
-        E --> F1[Policy-as-Code Engine\nNIST SP 800-77 / RFC 8221]
-        D2 --> F2[Bidirectional Flow Feature Extractor]
-        D2 --> F3[Packet Sequence Matrix Extractor]
-        F2 --> G1[Model A: XGBoost Classifier]
-        F3 --> G2[Model B: 1D-CNN Sequence Model]
-        G1 & G2 --> H[Model Fusion & Probability Calibration]
-        H --> I1[Encrypted Traffic Classification]
-        H --> I2[Unknown / OOD Detector]
-        G1 --> I3[SHAP Feature Attribution]
-        D2 --> J[Isolation Forest Behavioral Anomaly]
+        E --> F1["Policy-as-Code Engine\nNIST SP 800-77 / RFC 8221"]
+        D2 --> F2["Bidirectional Flow Feature Extractor"]
+        D2 --> F3["Packet Sequence Matrix Extractor"]
+        F2 --> G1["Model A: XGBoost Classifier"]
+        F3 --> G2["Model B: 1D-CNN Sequence Model"]
+        G1 --> H["Model Fusion & Probability Calibration"]
+        G2 --> H["Model Fusion & Probability Calibration"]
+        H --> I1["Encrypted Traffic Classification"]
+        H --> I2["Unknown / OOD Detector"]
+        G1 --> I3["SHAP Feature Attribution"]
+        D2 --> J["Isolation Forest Behavioral Anomaly"]
     end
 
     subgraph SCORING["4. Posture Assessment & Evidence Binding"]
-        F1 --> K1[Deterministic Security Findings]
-        I1 & I3 --> K2[Metadata Exposure / Fingerprintability]
-        K1 & K2 --> L1[0-100 Security Posture Score]
-        K1 & K2 --> L2[Threat Matrix & Risk Engine]
-        E & F1 & K1 --> M[Forensic Evidence Graph Engine]
+        F1 --> K1["Deterministic Security Findings"]
+        I1 --> K2["Metadata Exposure / Fingerprintability"]
+        I3 --> K2["Metadata Exposure / Fingerprintability"]
+        K1 --> L1["0-100 Security Posture Score"]
+        K2 --> L1["0-100 Security Posture Score"]
+        K1 --> L2["Threat Matrix & Risk Engine"]
+        K2 --> L2["Threat Matrix & Risk Engine"]
+        E --> M["Forensic Evidence Graph Engine"]
+        F1 --> M["Forensic Evidence Graph Engine"]
+        K1 --> M["Forensic Evidence Graph Engine"]
     end
 
     subgraph INTERFACE["5. Action, Remediation & Reporting"]
-        L1 & L2 & M --> N[Analyst Web Dashboard & Visualizer]
-        N --> O1[Executive Report PDF/HTML]
-        N --> O2[Technical Report PDF/HTML]
-        N --> O3[Configuration Security Twin]
-        O3 --> P[Closed-Loop Lab Remediation Engine]
+        L1 --> N["Analyst Web Dashboard & Visualizer"]
+        L2 --> N["Analyst Web Dashboard & Visualizer"]
+        M --> N["Analyst Web Dashboard & Visualizer"]
+        N --> O1["Executive Report PDF/HTML"]
+        N --> O2["Technical Report PDF/HTML"]
+        N --> O3["Configuration Security Twin"]
+        O3 --> P["Closed-Loop Lab Remediation Engine"]
         P --> A2
-        M --> Q[Local RAG + AI Analyst Workspace]
+        M --> Q["Local RAG + AI Analyst Workspace"]
     end
+
 ```
 
 ---
@@ -305,24 +315,26 @@ flowchart TD
 ## 20. Product Modules
 
 ```mermaid
+
 graph LR
-    subgraph Core Modules of TunnelTrace AI
-        M01[1. Command Center / Overview]
-        M02[2. Ingestion & Capture Engine]
-        M03[3. Protocol Intelligence Engine]
-        M04[4. Security Association Explorer]
-        M05[5. Encrypted Traffic Intelligence]
-        M06[6. Policy-as-Code Security Engine]
-        M07[7. Risk & Threat Matrix Module]
-        M08[8. Compliance Audit Module]
-        M09[9. Behavioral Anomaly Monitor]
-        M10[10. Forensic Evidence Explorer]
-        M11[11. Configuration Security Twin]
-        M12[12. Remediation & Validation Engine]
-        M13[13. Dual-Tier Reporting Engine]
-        M14[14. Privacy-First AI Analyst]
-        M15[15. Automated Testbed Orchestrator]
+    subgraph Core_Modules_of_TunnelTrace_AI ["Core Modules of TunnelTrace AI"]
+        M01["1. Command Center / Overview"]
+        M02["2. Ingestion & Capture Engine"]
+        M03["3. Protocol Intelligence Engine"]
+        M04["4. Security Association Explorer"]
+        M05["5. Encrypted Traffic Intelligence"]
+        M06["6. Policy-as-Code Security Engine"]
+        M07["7. Risk & Threat Matrix Module"]
+        M08["8. Compliance Audit Module"]
+        M09["9. Behavioral Anomaly Monitor"]
+        M10["10. Forensic Evidence Explorer"]
+        M11["11. Configuration Security Twin"]
+        M12["12. Remediation & Validation Engine"]
+        M13["13. Dual-Tier Reporting Engine"]
+        M14["14. Privacy-First AI Analyst"]
+        M15["15. Automated Testbed Orchestrator"]
     end
+
 ```
 
 ---
@@ -1419,25 +1431,27 @@ The platform enforces strict behavioral protocols when encountering incomplete d
 *Note: Specific numeric targets will be frozen post-baseline testing.*
 
 ```mermaid
+
 graph TD
-    KPI[Platform Success Metrics]
-    KPI --> K1[Protocol & SA Engine]
-    KPI --> K2[Machine Learning Engine]
-    KPI --> K3[Security & Policy Engine]
-    KPI --> K4[Product & Operational UX]
+    KPI["Platform Success Metrics"]
+    KPI --> K1["Protocol & SA Engine"]
+    KPI --> K2["Machine Learning Engine"]
+    KPI --> K3["Security & Policy Engine"]
+    KPI --> K4["Product & Operational UX"]
 
-    K1 --> K11[Extraction Correctness: 100% on Controlled Captures]
-    K1 --> K12[Zero Crash Rate on Malformed PCAPs]
+    K1 --> K11["Extraction Correctness: 100% on Controlled Captures"]
+    K1 --> K12["Zero Crash Rate on Malformed PCAPs"]
 
-    K2 --> K21[Macro-F1 Score: Target TBD post-baseline]
-    K2 --> K22[ECE Calibration Error: Target TBD]
-    K2 --> K23[OOD Detection Accuracy on Novel Workloads]
+    K2 --> K21["Macro-F1 Score: Target TBD post-baseline"]
+    K2 --> K22["ECE Calibration Error: Target TBD"]
+    K2 --> K23["OOD Detection Accuracy on Novel Workloads"]
 
-    K3 --> K31[Policy Evaluation Reproducibility: 100%]
-    K3 --> K32[Evidence Traceability: 100% of Findings Linked]
+    K3 --> K31["Policy Evaluation Reproducibility: 100%"]
+    K3 --> K32["Evidence Traceability: 100% of Findings Linked"]
 
-    K4 --> K41[End-to-End Processing Latency: Target TBD]
-    K4 --> K42[Closed-Loop Remediation Success in Lab]
+    K4 --> K41["End-to-End Processing Latency: Target TBD"]
+    K4 --> K42["Closed-Loop Remediation Success in Lab"]
+
 ```
 
 ### Detailed Evaluation KPI Matrix
@@ -1490,10 +1504,12 @@ graph TD
 ## 56. Prototype Scope vs. Product Hardening Scope
 
 ```mermaid
+
 pie title Project Scope Allocation
     "PS-Critical Mandatory Baseline" : 60
     "Product Differentiators" : 25
     "Future Product Hardening" : 15
+
 ```
 
 ### 56.1 Group A: PS-Critical / Mandatory Baseline (SIH Core)

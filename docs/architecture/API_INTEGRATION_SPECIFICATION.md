@@ -142,41 +142,43 @@ This specification interfaces directly with the master system documentation:
 ## 12. API Architecture Overview
 
 ```mermaid
+
 graph TB
-    subgraph "Client Layer"
-        PWA[Next.js 14 Frontend / PWA]
+    subgraph Client_Layer ["Client Layer"]
+        PWA["Next.js 14 Frontend / PWA"]
     end
 
-    subgraph "Ingress & API Gateway (FastAPI)"
-        Router[API Route Controllers]
-        AuthGuard[Auth & RBAC Middleware]
-        WSManager[WebSocket Connection Hub]
+    subgraph Ingress___API_Gateway__FastAPI ["Ingress & API Gateway (FastAPI)"]
+        Router["API Route Controllers"]
+        AuthGuard["Auth & RBAC Middleware"]
+        WSManager["WebSocket Connection Hub"]
     end
 
-    subgraph "Internal Processing (Class A)"
-        CeleryWorker[Celery Background Workers]
-        RedisBroker[(Redis Broker & Pub/Sub)]
-        PostgresDB[(PostgreSQL 15 + pgvector)]
-        MinIO[(Object Storage)]
+    subgraph Internal_Processing__Class_A ["Internal Processing (Class A)"]
+        CeleryWorker["Celery Background Workers"]
+        RedisBroker[("Redis Broker & Pub/Sub")]
+        PostgresDB[("PostgreSQL 15 + pgvector")]
+        MinIO[("Object Storage")]
     end
 
-    subgraph "Privileged Agent (Class B)"
-        NetAgent[Privileged Network Agent]
-        KernelNet[Linux netns / strongSwan / tc]
+    subgraph Privileged_Agent__Class_B ["Privileged Agent (Class B)"]
+        NetAgent["Privileged Network Agent"]
+        KernelNet["Linux netns / strongSwan / tc"]
     end
 
-    PWA -->|REST HTTPS| AuthGuard
-    PWA -->|WSS Realtime| WSManager
+    PWA -->|"REST HTTPS"| AuthGuard
+    PWA -->|"WSS Realtime"| WSManager
     AuthGuard --> Router
-    Router -->|Enqueue Job| RedisBroker
-    Router -->|Query / Mutate| PostgresDB
-    Router -->|Stream Upload| MinIO
+    Router -->|"Enqueue Job"| RedisBroker
+    Router -->|"Query / Mutate"| PostgresDB
+    Router -->|"Stream Upload"| MinIO
     RedisBroker --> CeleryWorker
-    CeleryWorker -->|Persist Results| PostgresDB
-    CeleryWorker -->|Publish Event| RedisBroker
-    RedisBroker -->|Event Fanout| WSManager
-    Router -->|Typed RPC (UNIX Socket)| NetAgent
-    NetAgent -->|Syscalls / Netlink| KernelNet
+    CeleryWorker -->|"Persist Results"| PostgresDB
+    CeleryWorker -->|"Publish Event"| RedisBroker
+    RedisBroker -->|"Event Fanout"| WSManager
+    Router -->|"Typed RPC (UNIX Socket)"| NetAgent
+    NetAgent -->|"Syscalls / Netlink"| KernelNet
+
 ```
 
 ---
@@ -206,18 +208,20 @@ graph TB
 ## 15. Resource Model
 
 ```mermaid
+
 graph LR
-    Capture[Capture] -->|1:N| Analysis[Analysis]
-    Analysis -->|1:N| IKESession[IKE Session]
-    Analysis -->|1:N| SA[Security Association]
-    Analysis -->|1:N| Flow[Encrypted Flow]
-    Analysis -->|1:N| Finding[Security Finding]
-    Analysis -->|1:1| Score[Security Score]
-    Analysis -->|1:1| ThreatMat[Threat Matrix]
-    Analysis -->|1:N| Report[Report Artifact]
-    Analysis -->|1:N| Twin[Twin Scenario]
-    Finding -->|1:1| RemPlan[Remediation Plan]
-    RemPlan -->|1:N| RemRun[Remediation Run]
+    Capture["Capture"] -->|"1:N"| Analysis["Analysis"]
+    Analysis -->|"1:N"| IKESession["IKE Session"]
+    Analysis -->|"1:N"| SA["Security Association"]
+    Analysis -->|"1:N"| Flow["Encrypted Flow"]
+    Analysis -->|"1:N"| Finding["Security Finding"]
+    Analysis -->|"1:1"| Score["Security Score"]
+    Analysis -->|"1:1"| ThreatMat["Threat Matrix"]
+    Analysis -->|"1:N"| Report["Report Artifact"]
+    Analysis -->|"1:N"| Twin["Twin Scenario"]
+    Finding -->|"1:1"| RemPlan["Remediation Plan"]
+    RemPlan -->|"1:N"| RemRun["Remediation Run"]
+
 ```
 
 ---
@@ -358,6 +362,7 @@ List endpoints support cursor-based pagination for high-volume entities (flows, 
 ## 26. Async Job Pattern
 
 ```mermaid
+
 sequenceDiagram
     autonumber
     actor Client as Frontend Client
@@ -375,8 +380,9 @@ sequenceDiagram
     Worker->>Worker: Execute Protocol, ML, Security Pipelines
     Worker->>DB: UPDATE analyses SET status='COMPLETED'
     Worker->>Client: Emit WebSocket: analysis.completed
-    Client->>API: GET /api/v1/analyses/{id}
+    Client->>API: GET /api/v1/analyses/id
     API-->>Client: HTTP 200 OK (Full Analysis Results)
+
 ```
 
 ---
@@ -960,6 +966,7 @@ Internal communication between modular subsystems is governed by typed Python da
 ## 66. Privileged Network Agent Integration
 
 ```mermaid
+
 sequenceDiagram
     participant FastAPI as FastAPI Backend
     participant Socket as UNIX Domain Socket
@@ -973,6 +980,7 @@ sequenceDiagram
     Agent->>Kernel: netns exec ipsec-ns swanctl --load-all
     Agent-->>Socket: Return RPC Response: OK
     Socket-->>FastAPI: Return Success (200)
+
 ```
 
 ---

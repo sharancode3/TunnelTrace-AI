@@ -77,6 +77,7 @@ The complete specification suite is organized into [`docs/requirements/`](docs/r
 ## High-Level System Architecture
 
 ```mermaid
+
 graph TD
     subgraph Client["Client Tier"]
         UI["Next.js 14 Web Console<br/>(0px Brutalist Design System)"]
@@ -96,16 +97,17 @@ graph TD
         NETEM["tc/netem & tcpdump<br/>(Impairment Injection & Sniffing)"]
     end
 
-    UI <-->|HTTP / WS| API
+    UI <-->|"HTTP / WS"| API
     API <--> REDIS
     API <--> POSTGRES
     API <--> STORAGE
     CELERY <--> REDIS
     CELERY <--> POSTGRES
     CELERY <--> STORAGE
-    API <-->|UNIX Socket| AGENT
+    API <-->|"UNIX Socket"| AGENT
     AGENT <--> SWAN
     AGENT <--> NETEM
+
 ```
 
 ---
