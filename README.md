@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# 🛡️ TunnelTrace AI
+# TunnelTrace AI
 ### AI-Powered IPsec VPN Protocol Analyzer & Security Assessment Framework
 **Smart India Hackathon 2026 — Problem Statement ID: 26160 (PS 160)**  
 **Sponsoring Organization:** National Technical Research Organisation (NTRO)  
@@ -22,18 +22,18 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
-1. [Executive Summary](#-executive-summary)
-2. [Why TunnelTrace AI? (The Epistemic Separation)](#-why-tunneltrace-ai-the-epistemic-separation)
-3. [Competitive Matrix & Value Proposition](#-competitive-matrix--value-proposition)
-4. [Core Architectural Pillars](#-core-architectural-pillars)
-5. [System Architecture & Execution Topologies](#-system-architecture--execution-topologies)
+1. [Executive Summary](#executive-summary)
+2. [Architectural Mandate: The Epistemic Separation](#architectural-mandate-the-epistemic-separation)
+3. [Competitive Matrix & Value Proposition](#competitive-matrix--value-proposition)
+4. [Core Architectural Pillars](#core-architectural-pillars)
+5. [System Architecture & Execution Topologies](#system-architecture--execution-topologies)
    - [High-Level Execution Topology (Class A vs. Class B Isolation)](#high-level-execution-topology-class-a-vs-class-b-isolation)
    - [End-to-End Forensic Processing Pipeline](#end-to-end-forensic-processing-pipeline)
    - [Zero-Decryption ML Inference Engine (Dual Ensemble)](#zero-decryption-ml-inference-engine-dual-ensemble)
    - [Configuration Security Twin & Closed-Loop Remediation Cycle](#configuration-security-twin--closed-loop-remediation-cycle)
-6. [Deep-Dive Subsystem Capabilities](#-deep-dive-subsystem-capabilities)
+6. [Subsystem Capabilities & Technical Specifications](#subsystem-capabilities--technical-specifications)
    - [1. Deterministic Protocol Forensics & State Reconstruction](#1-deterministic-protocol-forensics--state-reconstruction)
    - [2. Encrypted Traffic Intelligence (Zero Payload Decryption)](#2-encrypted-traffic-intelligence-zero-payload-decryption)
    - [3. Policy-as-Code & Audit-Proof Security Scoring](#3-policy-as-code--audit-proof-security-scoring)
@@ -41,60 +41,77 @@
    - [5. Automated strongSwan Remediation Testbed](#5-automated-strongswan-remediation-testbed)
    - [6. Byte-Level Cryptographic Evidence DAG](#6-byte-level-cryptographic-evidence-dag)
    - [7. Air-Gapped Grounded AI Analyst (Local RAG)](#7-air-gapped-grounded-ai-analyst-local-rag)
-7. [Repository Structure & Specification Suite](#-repository-structure--specification-suite)
-8. [Technology Stack](#-technology-stack)
-9. [Quickstart & Local-First Deployment](#-quickstart--local-first-deployment)
-10. [Golden SIH 2026 Demonstration Flow](#-golden-sih-2026-demonstration-flow)
-11. [Regulatory Compliance & RFC Standards Matrix](#-regulatory-compliance--rfc-standards-matrix)
-12. [Security, Privacy & Zero-Egress Governance](#-security-privacy--zero-egress-governance)
-13. [Problem Statement Attribution](#-problem-statement-attribution)
+7. [Repository Structure & Specification Suite](#repository-structure--specification-suite)
+8. [Technology Stack](#technology-stack)
+9. [Quickstart & Local-First Deployment](#quickstart--local-first-deployment)
+10. [Golden SIH 2026 Demonstration Flow](#golden-sih-2026-demonstration-flow)
+11. [Regulatory Compliance & RFC Standards Matrix](#regulatory-compliance--rfc-standards-matrix)
+12. [Security, Privacy & Zero-Egress Governance](#security-privacy--zero-egress-governance)
+13. [Problem Statement Attribution](#problem-statement-attribution)
+14. [License & Intellectual Property](#license--intellectual-property)
 
 ---
 
-## 🏛️ Executive Summary
+## Executive Summary
 
 **TunnelTrace AI** is an enterprise-grade, evidence-first **IPsec VPN Protocol Analyzer and Security Assessment Framework** engineered for the **National Technical Research Organisation (NTRO)** under Smart India Hackathon 2026 (Problem Statement ID: `26160`).
 
 Modern national defense organizations, intelligence entities, and critical infrastructure operators rely heavily on IPsec VPNs to establish secure communication enclaves across untrusted or contested wide-area networks. However, real-world deployments face severe operational vulnerabilities:
 - **Cryptographic Rot:** Undetected use of deprecated ciphers (3DES, DES, Blowfish), broken hashing algorithms (MD5, SHA-1), and inadequate Diffie-Hellman groups (DH 1, 2, 5) that fail modern NIST standards.
 - **Protocol State Desynchronization:** Misconfigured Perfect Forward Secrecy (PFS), asymmetric Security Association (SA) lifetimes, broken Dead Peer Detection (DPD), and silent rekeying failures.
-- **Side-Channel Metadata Leakage:** Encapsulated payloads remain opaque, yet packet size dynamics, inter-arrival bursts, and timing signatures expose sensitive inner application behavior (e.g., VoIP calls, video feeds, bulk exfiltration) without breaking encryption.
+- **Side-Channel Metadata Leakage:** Encapsulated payloads remain opaque, yet packet size dynamics, inter-arrival bursts, and timing signatures expose sensitive inner application behavior (such as VoIP calls, video feeds, and bulk exfiltration) without breaking encryption.
 - **Remediation Paralysis:** Network engineers hesitate to update cryptographic policies due to fears of catastrophic tunnel outages on mission-critical links.
 
 **TunnelTrace AI solves this holistically.** It ingests raw packet captures (PCAP/PCAPNG) or live network streams, reconstructs deterministic IKEv1/IKEv2 negotiations and bidirectional Child SA states, infers inner application traffic with **zero payload decryption** using a calibrated dual-ensemble ML pipeline, audits observed postures against versioned Policy-as-Code rules (NIST SP 800-77 Rev. 1 / RFC 8221), simulates safe configuration updates in a **Configuration Security Twin**, and validates automated remediations in an isolated, multi-namespace **strongSwan testbed**.
 
 ---
 
-## ⚖️ Why TunnelTrace AI? (The Epistemic Separation)
+## Architectural Mandate: The Epistemic Separation
 
-The defining architectural principle of TunnelTrace AI is **strict epistemic separation**:
+The defining architectural principle of TunnelTrace AI is **strict epistemic separation** between deterministic protocol observation and probabilistic machine learning inference:
 
+```mermaid
+graph LR
+    subgraph DeterministicLayer ["Deterministic Layer (Zero Guesswork)"]
+        D1["IKEv1 / IKEv2 State Machines"]
+        D2["SPI Pairings & Lifetime Tracking"]
+        D3["Cryptographic Ciphers & DH Groups"]
+        D4["NIST SP 800-77 Rev. 1 Policy Audit"]
+        D5["Byte-Level Frame Offsets & Hashes"]
+        DRULE["Principle: Protocol parameters are NEVER predicted.<br/>Extracted strictly from wire header bytes."]
+        D1 --> D2
+        D2 --> D3
+        D3 --> D4
+        D4 --> D5
+        D5 --> DRULE
+    end
+
+    subgraph ProbabilisticLayer ["Probabilistic Layer (Calibrated Inference)"]
+        P1["Encrypted Flow Metadata Ingestion"]
+        P2["24 Tabular Features & (3, N) Sequence Tensors"]
+        P3["Dual Ensemble: XGBoost + 1D-CNN"]
+        P4["Platt Temperature Scaling & Entropy OOD Gating"]
+        P5["Application Class Inferred (VoIP, Video, Web, Bulk)"]
+        PRULE["Principle: Payload data is NEVER decrypted.<br/>Inferred strictly from side-channel metadata."]
+        P1 --> P2
+        P2 --> P3
+        P3 --> P4
+        P4 --> P5
+        P5 --> PRULE
+    end
 ```
-┌─────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                              THE TUNNELTRACE AI EPISTEMIC MANDATE                               │
-├─────────────────────────────────────────────────────────────────────────────────────────────────┤
-│                                                                                                 │
-│   DETERMINISTIC LAYER (Zero Guesswork)              PROBABILISTIC LAYER (Calibrated Inference)  │
-│   ──────────────────────────────────                ─────────────────────────────────────────   │
-│   • IKEv1 / IKEv2 State Machines                    • Encrypted Application Traffic Class       │
-│   • SPI Pairings & Lifetime Tracking                • VoIP / Video / Web / Bulk Data / Exfil   │
-│   • Cryptographic Ciphers & DH Groups               • Inter-Arrival Time & Packet Size Tensors │
-│   • NIST SP 800-77 Rev. 1 Policy Audit              • Platt Temperature Scaled Probabilities   │
-│   • Byte-Level Frame Offsets & Hashes               • Shannon Entropy Out-of-Distribution Gating│
-│                                                                                                 │
-│   RULE: Protocol parameters are NEVER predicted.    RULE: Payload data is NEVER decrypted.      │
-│   Extracted strictly from wire header bytes.        Inferred strictly from encrypted metadata.  │
-│                                                                                                 │
-└─────────────────────────────────────────────────────────────────────────────────────────────────┘
-```
 
-1. **Protocol Forensics are 100% Deterministic:** Cryptographic algorithms, SPIs, key exchange groups, and SA states are parsed directly from wire byte offsets using dissectors. The machine learning model is **never** asked to guess what cipher is configured.
-2. **Traffic Classification is 100% Non-Invasive:** Encapsulated application types are inferred strictly from packet length distributions, inter-arrival bursts, and directionality tensors. Payloads are never decrypted, preserving absolute privacy and compliance.
-3. **Policy Evaluation is 100% Code-Driven:** Security scores and vulnerability deductions derive from open, auditable YAML rules. Large Language Models (LLMs) are restricted to explaining findings and never hallucinate vulnerabilities.
+| Architectural Dimension | Deterministic Layer (Protocol Forensics) | Probabilistic Layer (Traffic Intelligence) |
+| :--- | :--- | :--- |
+| **Operational Target** | IKEv1/IKEv2 negotiations, SA state machine, SPI pairs | Encapsulated application category inside ESP tunnel |
+| **Input Signals** | Raw packet header fields, transform payloads, notification types | Packet lengths, inter-arrival times, burst ratios, sequence numbers |
+| **Core Method** | State machine parser, RFC transform mapping, YAML rules | XGBoost + PyTorch 1D-CNN dual ensemble with Platt scaling |
+| **Standard / Reference** | NIST SP 800-77 Rev. 1, RFC 8221, RFC 7296, RFC 4301 | UNB ISCXVPN2016 methodology, strongSwan native dataset |
+| **Epistemic Rule** | **Zero Prediction:** Cryptographic parameters are never guessed | **Zero Decryption:** Plaintext payloads are never inspected |
 
 ---
 
-## 📊 Competitive Matrix & Value Proposition
+## Competitive Matrix & Value Proposition
 
 | Evaluation Vector | Traditional Packet Sniffers (Wireshark / tcpdump) | Generic Cloud SIEMs (Splunk / QRadar) | Black-Box AI Anomaly Detectors | TunnelTrace AI (SIH 2026 / NTRO) |
 | :--- | :--- | :--- | :--- | :--- |
@@ -108,38 +125,36 @@ The defining architectural principle of TunnelTrace AI is **strict epistemic sep
 
 ---
 
-## 💎 Core Architectural Pillars
+## Core Architectural Pillars
 
+```mermaid
+graph TD
+    CORE["TunnelTrace AI Core Architectural Pillars"]
+
+    P1["1. Deterministic Protocol Forensics<br/>IKEv1/IKEv2 state machines, cryptographic transform extraction,<br/>bidirectional Child SA pairing, SPI mapping, and NAT-T tracking."]
+    P2["2. Encrypted Traffic Inference (Zero Decryption)<br/>Dual-ensemble classification (XGBoost + 1D-CNN) over 24 tabular features<br/>and (3, N) packet tensors. Platt calibration and Shannon entropy OOD gating."]
+    P3["3. Deterministic Policy-as-Code & Security Score<br/>YAML-driven compliance evaluation against NIST SP 800-77 Rev. 1<br/>and RFC 8221. Transparent, auditable 0–100 Security Score."]
+    P4["4. Configuration Security Twin & Closed-Loop Remediation<br/>What-if simulation of ciphersuite upgrades without touching live links.<br/>Automated patch generation and re-test verification in strongSwan lab."]
+    P5["5. Cryptographic Evidence DAG & Local RAG Assistant<br/>Byte-level provenance tracing findings to packet frame offsets.<br/>Grounded AI Analyst explaining RFC citations without hallucination."]
+
+    CORE --> P1
+    CORE --> P2
+    CORE --> P3
+    CORE --> P4
+    CORE --> P5
 ```
-┌────────────────────────────────────────────────────────────────────────┐
-│                        CORE ARCHITECTURAL PILLARS                      │
-├────────────────────────────────────────────────────────────────────────┤
-│ 1. DETERMINISTIC PROTOCOL FORENSICS                                    │
-│    IKEv1/IKEv2 state machines, cryptographic transform extraction,     │
-│    bidirectional Child SA pairing, SPI mapping, and NAT-T tracking.    │
-├────────────────────────────────────────────────────────────────────────┤
-│ 2. ENCRYPTED TRAFFIC INFERENCE (ZERO DECRYPTION)                       │
-│    Dual-ensemble classification (XGBoost + 1D-CNN) over 24 tabular     │
-│    features and (3, N) packet tensors. Platt calibrated confidence     │
-│    and Shannon entropy Out-of-Distribution (OOD) gating.               │
-├────────────────────────────────────────────────────────────────────────┤
-│ 3. DETERMINISTIC POLICY-AS-CODE & SECURITY SCORE                       │
-│    YAML-driven compliance evaluation against NIST SP 800-77 Rev. 1 and  │
-│    RFC 8221. Transparent, auditable 0–100 Security Score.              │
-├────────────────────────────────────────────────────────────────────────┤
-│ 4. CONFIGURATION SECURITY TWIN & CLOSED-LOOP REMEDIATION               │
-│    What-if simulation of ciphersuite upgrades without touching live     │
-│    links. Automated patch generation and re-test verification in lab.  │
-├────────────────────────────────────────────────────────────────────────┤
-│ 5. CRYPTOGRAPHIC EVIDENCE DAG & LOCAL RAG ASSISTANT                    │
-│    Byte-level provenance tracing findings to packet frame offsets.     │
-│    Grounded AI Analyst explaining RFC citations without hallucination. │
-└────────────────────────────────────────────────────────────────────────┘
-```
+
+| Pillar | Focus Area | Key Technical Mechanisms | Deliverable Outcome |
+| :--- | :--- | :--- | :--- |
+| **1. Deterministic Protocol Forensics** | IKE & ESP Wire Dissection | TShark / Scapy, state machines, bidirectional SPI tracker | Complete SA session graph & cryptographic inventory |
+| **2. Encrypted Traffic Inference** | Side-Channel Metadata Analysis | XGBoost + 1D-CNN, Platt scaling, Shannon entropy OOD gate | Inferred application type with zero payload decryption |
+| **3. Policy-as-Code & Scoring** | Regulatory Compliance | Versioned YAML rules, NIST SP 800-77 Rev. 1, RFC 8221 | Mathematical 0–100 score with exact byte citations |
+| **4. Configuration Security Twin** | Impact Simulation & Remediation | Headless strongSwan model, Linux network namespaces, tc/netem | Validated configuration patch without production risk |
+| **5. Evidence DAG & Local RAG** | Non-Repudiation & Explanation | Merkle-tree rooted DAG, pgvector, local Llama-3 / Mistral-7B | Audit-proof evidence chain & grounded explanation |
 
 ---
 
-## 🏗️ System Architecture & Execution Topologies
+## System Architecture & Execution Topologies
 
 TunnelTrace AI is architected with strict privilege boundary separation, preventing unprivileged web services from accessing raw network interfaces or privileged operating system capabilities.
 
@@ -285,7 +300,7 @@ graph TD
 
 ---
 
-## 🔍 Deep-Dive Subsystem Capabilities
+## Subsystem Capabilities & Technical Specifications
 
 ### 1. Deterministic Protocol Forensics & State Reconstruction
 - **IKEv1 & IKEv2 State Machines:** Tracks Main Mode, Aggressive Mode, Quick Mode, `IKE_SA_INIT`, `IKE_AUTH`, and `CREATE_CHILD_SA` exchanges with exact message ID sequencing.
@@ -321,12 +336,12 @@ graph TD
 ---
 
 ### 4. The Configuration Security Twin
-- **Headless Virtual Clone:** Ingests active StrongSwan (`ipsec.conf` / `swanctl.conf`) configurations and models them in a virtual state machine.
+- **Headless Virtual Clone:** Ingests active strongSwan (`ipsec.conf` / `swanctl.conf`) configurations and models them in a virtual state machine.
 - **What-If Impact Simulator:** Projects the consequence of ciphersuite upgrades prior to touching production hardware:
   - Validates compatibility against remote peer capabilities.
   - Calculates cryptographic computational overhead and throughput impact.
   - Detects potential Path MTU (PMTU) and ESP fragmentation hazards.
-- **Score Uplift Projection:** Accurately predicts the post-remediation security score (e.g., demonstrating a leap from 38/100 to 96/100).
+- **Score Uplift Projection:** Accurately predicts the post-remediation security score (for example, demonstrating a verified leap from 38/100 to 96/100).
 
 ---
 
@@ -341,19 +356,19 @@ graph TD
 
 ### 6. Byte-Level Cryptographic Evidence DAG
 - **Immutable Provenance:** Every finding, deduction, and compliance check is anchored in a Directed Acyclic Graph (DAG) persisted in PostgreSQL.
-- **Wire-Level Precision:** Points directly to the packet number, timestamp, protocol layer, field name, and hexadecimal byte offset (e.g., `Frame 14, Offset 0x0042: Transform Type 1 = ENCR_3DES`).
+- **Wire-Level Precision:** Points directly to the packet number, timestamp, protocol layer, field name, and hexadecimal byte offset (for example, `Frame 14, Offset 0x0042: Transform Type 1 = ENCR_3DES`).
 - **Cryptographic Integrity:** Each evidence record includes a SHA-256 hash of the parent PCAP segment, guaranteeing non-repudiation in intelligence and court-admissible forensic scenarios.
 
 ---
 
 ### 7. Air-Gapped Grounded AI Analyst (Local RAG)
-- **100% Offline & Sovereign:** Powered by local open-weight language models (e.g., Llama-3-8B-Instruct or Mistral-7B via Ollama / vLLM). No data ever leaves the local enclave.
+- **100% Offline & Sovereign:** Powered by local open-weight language models (such as Llama-3-8B-Instruct or Mistral-7B via Ollama / vLLM). No data ever leaves the local enclave.
 - **Grounded Retrieval-Augmented Generation:** Queries a vector database (`pgvector`) populated with RFC 7296, RFC 8221, RFC 4301, NIST SP 800-77 Rev. 1, and the current session's Evidence DAG nodes.
 - **Strict Guardrails:** The AI Analyst is constrained by strict system prompts: it cannot invent vulnerabilities, override deterministic scores, or assert findings without citing frame numbers and RFC section numbers.
 
 ---
 
-## 📂 Repository Structure & Specification Suite
+## Repository Structure & Specification Suite
 
 The repository is structured into an approved, industry-grade specification and implementation hierarchy:
 
@@ -398,7 +413,7 @@ TunnelTrace-AI/
 
 ---
 
-## 💻 Technology Stack
+## Technology Stack
 
 | Architecture Layer | Technology Selection | Exact Version | Rationale & Responsibility |
 | :--- | :--- | :--- | :--- |
@@ -409,19 +424,19 @@ TunnelTrace-AI/
 | **Data Serialization** | Pydantic | `v2.6+` | Contract-first DTO schemas, strict validation, zero-copy serialization |
 | **Task Queue & Broker** | Celery / Redis | `5.3+` / `7.2+` | Distributed task execution for heavy PCAP parsing, ML inference, and reports |
 | **Relational Database** | PostgreSQL | `15.6+` | Acid-compliant state store, temporal session indexing, relational integrity |
-| **Vector Search Engine** | `pgvector` extension | `0.6+` | High-dimensional embedding storage for RFC documents and RAG queries |
+| **Vector Search Engine** | pgvector extension | `0.6+` | High-dimensional embedding storage for RFC documents and RAG queries |
 | **Protocol Forensics** | TShark / PyShark / Scapy | `4.2+` / `0.6+` | Low-level C-based wire dissection, frame offset extraction, packet parsing |
 | **ML: Gradient Boosting** | XGBoost | `2.0+` | High-speed inference over 24 tabular statistical side-channel features |
 | **ML: Deep Learning** | PyTorch | `2.2+` | 1D-CNN temporal sequence modeling over packet length and timing tensors |
 | **Explainable AI (XAI)** | TreeSHAP | `0.44+` | Local feature attribution explaining why an encrypted flow was classified |
 | **Local LLM Runtime** | Ollama / vLLM | `0.1.30+` | 100% offline, air-gapped natural language inference (Llama-3-8B / Mistral-7B) |
 | **VPN Testbed Daemon** | strongSwan | `5.9.13+` | Standard-compliant IKEv1/IKEv2 daemon supporting custom crypto suites |
-| **Traffic Emulation** | Linux `iproute2` / `tc` | Kernel 5.15+ | Multi-namespace routing (`veth`), latency, jitter, and loss injection |
+| **Traffic Emulation** | Linux iproute2 / tc | Kernel 5.15+ | Multi-namespace routing (veth), latency, jitter, and loss injection |
 | **Report Generation** | WeasyPrint / Jinja2 | `61.0+` | Cryptographically signed, audit-grade executive and technical PDF reports |
 
 ---
 
-## 🚀 Quickstart & Local-First Deployment
+## Quickstart & Local-First Deployment
 
 TunnelTrace AI is designed to run 100% locally on standard x86_64 Linux workstations without requiring external cloud accounts or internet connectivity.
 
@@ -449,7 +464,7 @@ cp .env.example .env
 ```bash
 docker compose up -d
 ```
-*This initializes PostgreSQL 15 with `pgvector`, Redis 7, the FastAPI backend server, Celery asynchronous workers, and the Next.js frontend console.*
+*This initializes PostgreSQL 15 with pgvector, Redis 7, the FastAPI backend server, Celery asynchronous workers, and the Next.js frontend console.*
 
 ### Step 4: Verify Subsystem Health
 ```bash
@@ -491,7 +506,7 @@ http://localhost:3000
 
 ---
 
-## 🏆 Golden SIH 2026 Demonstration Flow
+## Golden SIH 2026 Demonstration Flow
 
 The following 12-step sequence constitutes the primary evaluation walkthrough designed for NTRO judges during the Smart India Hackathon 2026 Grand Finale:
 
@@ -505,14 +520,14 @@ The following 12-step sequence constitutes the primary evaluation walkthrough de
 | **06** | **Encrypted Flow ML** | XGBoost + 1D-CNN classify encapsulated traffic | Inferred inner flow: **VoIP (94.2% conf)** with zero decryption |
 | **07** | **Evidence DAG Inspection** | Drill into finding in the Web Console | UI highlights Frame 4, Offset `0x003A` showing Transform 3DES |
 | **08** | **What-If Twin Simulation** | Launch Configuration Security Twin | Proposes AES-256-GCM + DH19 + PFS; projects **Score: 96/100** |
-| **09** | **Automated Patch Synthesis** | Click *"Generate Hardened Patch"* | Produces clean, unified diff for `swanctl.conf` |
-| **10** | **Testbed Closed-Loop Test** | Click *"Verify in Lab Testbed"* | Agent updates `ns-peer-a`, establishes tunnel, streams packets |
+| **09** | **Automated Patch Synthesis** | Click "Generate Hardened Patch" | Produces clean, unified diff for `swanctl.conf` |
+| **10** | **Testbed Closed-Loop Test** | Click "Verify in Lab Testbed" | Agent updates `ns-peer-a`, establishes tunnel, streams packets |
 | **11** | **Delta Score Verification** | System captures fresh verification PCAP | Automated re-audit confirms **Score: 96/100 (VERIFIED)** |
-| **12** | **Executive Report Export** | Click *"Export Signed Defense Report"* | Generates tamper-proof PDF with complete cryptographic chain |
+| **12** | **Executive Report Export** | Click "Export Signed Defense Report" | Generates tamper-proof PDF with complete cryptographic chain |
 
 ---
 
-## 📜 Regulatory Compliance & RFC Standards Matrix
+## Regulatory Compliance & RFC Standards Matrix
 
 TunnelTrace AI natively implements and verifies compliance against the following official standards:
 
@@ -529,7 +544,7 @@ TunnelTrace AI natively implements and verifies compliance against the following
 
 ---
 
-## 🔒 Security, Privacy & Zero-Egress Governance
+## Security, Privacy & Zero-Egress Governance
 
 ### Execution Class Isolation
 - **Execution Class A (Unprivileged):** The Web Console, FastAPI Gateway, Celery Workers, Redis, and PostgreSQL run as unprivileged, unmapped service accounts within isolated Docker containers. They have zero access to raw host sockets.
@@ -543,7 +558,7 @@ The entire platform operates 100% offline. No telemetry, crash reports, packet f
 
 ---
 
-## 🎖️ Problem Statement Attribution
+## Problem Statement Attribution
 
 - **Competition:** Smart India Hackathon (SIH) 2026, Grand Finale
 - **Problem Statement ID:** `26160` (Internal Reference: PS 160)
@@ -555,7 +570,7 @@ The entire platform operates 100% offline. No telemetry, crash reports, packet f
 
 ---
 
-## 📄 License & Intellectual Property
+## License & Intellectual Property
 
 This project is licensed under the **Apache License, Version 2.0**. See the [LICENSE](LICENSE) file for complete terms.
 
