@@ -44,49 +44,42 @@ The platform enforces strict privilege boundary separation between unprivileged 
 
 ```mermaid
 graph TD
-    classDef client fill:#1e293b,stroke:#38bdf8,stroke-width:2px,color:#f8fafc;
-    classDef api fill:#0f172a,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
-    classDef worker fill:#0f172a,stroke:#a78bfa,stroke-width:2px,color:#f8fafc;
-    classDef storage fill:#0f172a,stroke:#34d399,stroke-width:2px,color:#f8fafc;
-    classDef agent fill:#1c1917,stroke:#f97316,stroke-width:2px,color:#f8fafc;
-    classDef network fill:#1c1917,stroke:#fb7185,stroke-width:2px,color:#f8fafc;
-
-    subgraph Tier_Client [Presentation Tier - Web Interface]
-        UI([Next.js 14 High-Density Web Console]):::client
+    subgraph Client_Tier ["Presentation Tier"]
+        UI["Next.js 14 Web Console<br/>(0px Brutalist Interface / React Flow)"]
     end
 
-    subgraph Tier_ClassA [Execution Class A - Unprivileged Container Stack]
-        API([FastAPI Gateway & Realtime Hub]):::api
-        CELERY([Celery Asynchronous Task Pipeline]):::worker
-        REDIS[(Redis 7 - Broker & State Cache)]:::storage
-        POSTGRES[(PostgreSQL 15 & pgvector - Evidence DAG & Relational Store)]:::storage
-        MINIO[(Local Object Storage - PCAPs & Reports)]:::storage
-        LLM([Local LLM Engine - Ollama / vLLM]):::worker
+    subgraph Class_A ["Execution Class A: Unprivileged Container Stack"]
+        API["FastAPI Application Server (:8000)<br/>REST /api/v1 and WebSockets"]
+        CELERY["Celery Asynchronous Workers<br/>(Parsing, ML Inference, Policy Audit)"]
+        REDIS[("Redis 7<br/>Task Queue, Cache and PubSub")]
+        POSTGRES[("PostgreSQL 15 + pgvector<br/>State Store and Evidence DAG")]
+        STORAGE[("Local Object Storage<br/>(PCAPs, Model Weights, Reports)")]
+        LOCAL_LLM["Local LLM Engine<br/>(Ollama / vLLM - Air-Gapped RAG)"]
     end
 
-    subgraph Tier_ClassB [Execution Class B - Privileged Host Network Domain]
-        SOCK{{UNIX Domain Socket RPC - /run/tunneltrace.sock}}:::agent
-        AGENT([Privileged Network Management Agent]):::agent
-        SWAN[strongSwan 5.9+ IPsec Daemon - Multi-Namespace Lab]:::network
-        NETEM[Linux tc/netem - Impairment Injection Engine]:::network
-        SNIFF[Raw Socket Packet Sniffer - Promiscuous Ring]:::network
+    subgraph Class_B ["Execution Class B: Privileged Host Network Domain"]
+        SOCK{"UNIX Domain Socket RPC<br/>/run/tunneltrace.sock"}
+        AGENT["Privileged Network Management Agent"]
+        SWAN["strongSwan 5.9+ IPsec Daemon<br/>(ns-peer-a and ns-peer-b Namespaces)"]
+        NETEM["Linux tc/netem<br/>Impairment Injection Engine"]
+        SNIFF["Raw Socket Packet Sniffer<br/>(Promiscuous libpcap Ring)"]
     end
 
-    UI <-->|HTTP REST & WebSockets| API
-    API <-->|Dispatch Jobs & Event Stream| REDIS
-    API <-->|SQL Queries & Session State| POSTGRES
-    API <-->|Direct PCAP Upload & Retrieval| MINIO
-    API <-->|Unix Domain Socket IPC| SOCK
-    SOCK <-->|Authenticated Local RPC| AGENT
+    UI <-->|"HTTP / WebSocket"| API
+    API <-->|"Job Dispatch"| REDIS
+    API <-->|"Session Queries"| POSTGRES
+    API <-->|"Capture Upload"| STORAGE
+    API <-->|"UNIX Socket IPC"| SOCK
+    SOCK <-->|"Local RPC"| AGENT
 
-    CELERY <-->|Consume Jobs & Publish Events| REDIS
-    CELERY <-->|Persist Sessions, SAs & DAG Nodes| POSTGRES
-    CELERY <-->|Read Raw PCAPs & Save Reports| MINIO
-    CELERY <-->|Grounded Vector RAG Queries| LLM
+    CELERY <-->|"Consume Tasks"| REDIS
+    CELERY <-->|"Persist Evidence DAG"| POSTGRES
+    CELERY <-->|"Artifact Storage"| STORAGE
+    CELERY <-->|"Local RAG Queries"| LOCAL_LLM
 
-    AGENT <-->|swanctl & stroke VICI Interface| SWAN
-    AGENT <-->|Netlink qdisc Impairment Rules| NETEM
-    AGENT <-->|AF_PACKET Promiscuous Ingestion| SNIFF
+    AGENT <-->|"swanctl / VICI"| SWAN
+    AGENT <-->|"Netlink qdisc Rules"| NETEM
+    AGENT <-->|"AF_PACKET Stream"| SNIFF
 ```
 
 ---
@@ -97,81 +90,42 @@ A four-phase pipeline governing trace ingestion, deterministic protocol extracti
 
 ```mermaid
 graph TD
-    classDef input fill:#1e293b,stroke:#38bdf8,stroke-width:1px,color:#f8fafc;
-    classDef dissect fill:#0f172a,stroke:#818cf8,stroke-width:1px,color:#f8fafc;
-    classDef branch fill:#1e1e38,stroke:#a78bfa,stroke-width:1px,color:#f8fafc;
-    classDef engine fill:#0f172a,stroke:#f59e0b,stroke-width:1px,color:#f8fafc;
-    classDef verified fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
-    classDef report fill:#1e293b,stroke:#ec4899,stroke-width:1px,color:#f8fafc;
+    RAW_CAPTURE["Raw Network Capture: PCAP / Live Stream"] --> INGEST["Capture Ingestion and Header Validator"]
+    INGEST --> TSHARK["TShark Subprocess: JSON Event Dissector"]
 
-    subgraph Phase1_Ingestion [Phase 1: Ingestion & Dissection]
-        IN_FILE[/Raw PCAP / PCAPNG Trace Capture/]:::input
-        IN_LIVE[/Live Interface Capture Stream/]:::input
-        INGEST[Packet Header Ingestion & Integrity Validation]:::dissect
-        TSHARK[TShark Wire Dissector Subsystem]:::dissect
+    TSHARK --> PARSE_IKE["IKE Dissection Module"]
+    TSHARK --> PARSE_ESP["ESP Outer Header Dissector"]
+    TSHARK --> PARSE_FLOW["Encrypted Flow Side-Channel Extractor"]
 
-        IN_FILE --> INGEST
-        IN_LIVE --> INGEST
-        INGEST --> TSHARK
-    end
+    PARSE_IKE --> EXT_VER["Extract IKE Version: IKEv1 vs IKEv2"]
+    PARSE_IKE --> EXT_PROP["Extract Transform Proposals: Encr, Integ, PRF, DH"]
+    PARSE_IKE --> EXT_SPI["Extract Initiator and Responder SPIs"]
 
-    subgraph Phase2_Deterministic [Phase 2: Deterministic Protocol Forensics]
-        IKE_MOD[IKEv1 / IKEv2 Dissection Module]:::branch
-        ESP_MOD[ESP Tunnel Dissection Module]:::branch
+    PARSE_ESP --> EXT_ESP_SPI["Extract ESP Security Parameter Index"]
+    PARSE_ESP --> EXT_SEQ["Extract Sequence Numbers and Anti-Replay"]
 
-        IKE_TRANS[Extract Cryptographic Transforms: ENCR, INTEG, PRF, DH]:::branch
-        IKE_STATE[Reconstruct IKE SA State Machine]:::branch
-        ESP_SPI[Pair Bidirectional Child SA SPIs & Flow Volumes]:::branch
-        ESP_SEQ[Verify Sequence Numbers & Anti-Replay Window]:::branch
+    PARSE_FLOW --> EXT_TAB["Extract 24 Tabular Features: Lengths, IAT, Bursts"]
+    PARSE_FLOW --> EXT_TENS["Construct Directional Sequence Tensors"]
 
-        TSHARK --> IKE_MOD
-        TSHARK --> ESP_MOD
+    EXT_VER --> POLICY["Policy-as-Code Engine: NIST SP 800-77 and RFC 8221"]
+    EXT_PROP --> POLICY
+    EXT_SPI --> POLICY
+    EXT_ESP_SPI --> POLICY
+    EXT_SEQ --> POLICY
 
-        IKE_MOD --> IKE_TRANS
-        IKE_MOD --> IKE_STATE
-        ESP_MOD --> ESP_SPI
-        ESP_MOD --> ESP_SEQ
+    EXT_TAB --> ML_MODEL["Dual-Ensemble Model: XGBoost + PyTorch 1D-CNN"]
+    EXT_TENS --> ML_MODEL
 
-        POLICY[Policy-as-Code Engine: NIST SP 800-77 & RFC 8221]:::engine
-        SCORE[Deterministic 0-100 Security Scoring Engine]:::engine
+    POLICY --> SCORE["Deterministic 0-100 Security Scoring Engine"]
+    ML_MODEL --> CALIB["Platt Temperature Scaling and Entropy OOD Gate"]
 
-        IKE_TRANS --> POLICY
-        IKE_STATE --> POLICY
-        ESP_SPI --> POLICY
-        ESP_SEQ --> POLICY
-        POLICY --> SCORE
-    end
+    SCORE --> DAG[("Cryptographic Evidence DAG: Frame Byte Provenance")]
+    CALIB --> DAG
 
-    subgraph Phase3_Inference [Phase 3: Zero-Decryption Encrypted Traffic ML]
-        SIDE_MOD[Side-Channel Feature Extraction Module]:::branch
-        TAB_STAT[24 Tabular Metrics: Lengths, IAT, Bursts]:::branch
-        SEQ_TENS[(3, N) Directional Sequence Tensors]:::branch
-
-        TSHARK --> SIDE_MOD
-        SIDE_MOD --> TAB_STAT
-        SIDE_MOD --> SEQ_TENS
-
-        ML_DUAL[Dual-Ensemble Model: XGBoost + PyTorch 1D-CNN]:::engine
-        CALIB[Platt Temperature Scaling & Entropy OOD Gate]:::engine
-
-        TAB_STAT --> ML_DUAL
-        SEQ_TENS --> ML_DUAL
-        ML_DUAL --> CALIB
-    end
-
-    subgraph Phase4_ClosedLoop [Phase 4: Evidence Synthesis & Closed-Loop Remediation]
-        DAG[(Cryptographic Evidence DAG - Byte-Level Provenance)]:::verified
-        TWIN[Configuration Security Twin - What-If Simulation]:::engine
-        LAB[strongSwan Remediation Testbed - ns-peer-a <-> ns-peer-b]:::engine
-        REPORT[\Cryptographically Signed Defense Audit Report\]:::report
-
-        SCORE --> DAG
-        CALIB --> DAG
-        DAG --> TWIN
-        TWIN --> LAB
-        LAB -->|Automated Verification Loop| DAG
-        DAG --> REPORT
-    end
+    DAG --> TWIN["Configuration Security Twin: What-If Simulation"]
+    TWIN --> LAB["strongSwan Testbed: ns-peer-a and ns-peer-b Re-Test"]
+    LAB -->|"Automated Verification Re-Run"| DAG
+    DAG --> REPORT["Cryptographically Signed Defense Audit Report"]
 ```
 
 ---
@@ -182,51 +136,22 @@ Dual-stream feature engineering feeding a parallel model architecture (XGBoost +
 
 ```mermaid
 graph TD
-    classDef stream fill:#0f172a,stroke:#38bdf8,stroke-width:1px,color:#f8fafc;
-    classDef feat fill:#1e1e38,stroke:#a78bfa,stroke-width:1px,color:#f8fafc;
-    classDef model fill:#0f172a,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
-    classDef fusion fill:#1e293b,stroke:#818cf8,stroke-width:2px,color:#f8fafc;
-    classDef gate fill:#312e81,stroke:#c084fc,stroke-width:2px,color:#f8fafc;
-    classDef passed fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
-    classDef ood fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#f8fafc;
+    ESP_FLOW["Encapsulated ESP Flow Stream"] --> SPLIT_FEAT["Dual-Stream Feature Extractor"]
 
-    RAW_ESP[/Encapsulated ESP Packet Flow Stream/]:::stream
+    SPLIT_FEAT --> FEAT_TAB["Tabular Feature Extractor<br/>(24 Statistical Metrics: Lengths, IAT Quantiles, Bursts)"]
+    SPLIT_FEAT --> FEAT_SEQ["Sequence Tensor Constructor<br/>(Normalized Direction, Length, Delta-Time Tensors)"]
 
-    subgraph FeatureEngineering [Dual-Stream Feature Extraction]
-        FEAT_TAB[Tabular Feature Extractor<br/>24 Statistical Metrics: Mean, Std, Skew, IAT Quantiles]:::feat
-        FEAT_SEQ[Spatio-Temporal Sequence Constructor<br/>Direction, Length, Delta-Time 3x100 Tensor]:::feat
-    end
+    FEAT_TAB --> XGB["XGBoost Classifier<br/>(500 Trees, Depth 6, Tabular Dynamics)"]
+    FEAT_SEQ --> CNN["PyTorch 1D-CNN<br/>(3 Conv Blocks, BatchNorm, Global MaxPool)"]
 
-    subgraph ModelHeads [Dual-Model Architecture]
-        MODEL_XGB[XGBoost Gradient Boosted Trees<br/>500 Trees, Max Depth 6, Subsample 0.8]:::model
-        MODEL_CNN[PyTorch 1D-CNN Deep Network<br/>3 Conv1D Blocks + BatchNorm + GlobalMaxPool]:::model
-    end
+    XGB --> FUSION["Weighted Late Fusion Layer<br/>Logits = 0.55 * XGB + 0.45 * CNN"]
+    CNN --> FUSION
 
-    subgraph PostProcessing [Calibration & Epistemic Uncertainty Gating]
-        FUSION[Weighted Late Fusion Layer<br/>Logits = 0.55 * XGB + 0.45 * CNN]:::fusion
-        PLATT[Platt Temperature Scaling<br/>Calibrated Probability Distribution]:::fusion
-        GATE{Shannon Entropy Gate<br/>H = -SUM p*log p <= 1.85?}:::gate
-    end
+    FUSION --> PLATT["Platt Temperature Scaling<br/>Calibrated Posterior Probabilities"]
+    PLATT --> GATE{"Shannon Entropy Gate<br/>H <= 1.85?"}
 
-    subgraph DecisionOutput [Classification Outcome]
-        PRED_KNOWN[Confident Inferred Application Class<br/>VoIP, Video, Web, SSH, SFTP, Bulk Exfil, DNS]:::passed
-        PRED_OOD[Quarantined Out-of-Distribution<br/>Unseen Protocol / Tunnel Evasion Anomaly]:::ood
-    end
-
-    RAW_ESP --> FEAT_TAB
-    RAW_ESP --> FEAT_SEQ
-
-    FEAT_TAB --> MODEL_XGB
-    FEAT_SEQ --> MODEL_CNN
-
-    MODEL_XGB --> FUSION
-    MODEL_CNN --> FUSION
-
-    FUSION --> PLATT
-    PLATT --> GATE
-
-    GATE -->|Pass: H <= 1.85| PRED_KNOWN
-    GATE -->|Fail: H > 1.85| PRED_OOD
+    GATE -->|"Pass: Confident"| PREDICTED["Inferred Application Class<br/>(VoIP, Video, Web, SSH, SFTP, Bulk Exfil, DNS)"]
+    GATE -->|"Fail: High Uncertainty"| OOD["Quarantined Out-of-Distribution<br/>(Unseen Protocol / Tunnel Evasion Anomaly)"]
 ```
 
 ---
@@ -237,52 +162,22 @@ Automated remediation workflow: projecting safe cryptographic migrations in a vi
 
 ```mermaid
 graph TD
-    classDef finding fill:#450a0a,stroke:#ef4444,stroke-width:2px,color:#f8fafc;
-    classDef twin fill:#1e1e38,stroke:#a78bfa,stroke-width:1px,color:#f8fafc;
-    classDef synth fill:#0f172a,stroke:#818cf8,stroke-width:1px,color:#f8fafc;
-    classDef lab fill:#1c1917,stroke:#f97316,stroke-width:2px,color:#f8fafc;
-    classDef verify fill:#312e81,stroke:#c084fc,stroke-width:2px,color:#f8fafc;
-    classDef passed fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#f8fafc;
-    classDef failed fill:#450a0a,stroke:#f43f5e,stroke-width:1px,color:#f8fafc;
+    VULN["Vulnerability Detected: Weak Ciphersuite or Missing PFS"] --> TWIN_INIT["Initialize Configuration Security Twin"]
+    TWIN_INIT --> PARSE_CONF["Parse Active strongSwan swanctl.conf Topology"]
+    
+    PARSE_CONF --> SIMULATE["What-If Simulation Engine<br/>(Compatibility Check, Crypto Overhead and MTU Modeling)"]
+    SIMULATE --> PROJECTION["Score Uplift Projection<br/>(Baseline 38/100 -> Target 96/100)"]
+    PROJECTION --> PATCH_GEN["Synthesize Remediation Patch<br/>(Unified Diff and Hardened swanctl.conf)"]
 
-    VULN[Vulnerability Detected: Weak Ciphersuite or Missing PFS]:::finding
+    PATCH_GEN --> LAB_PROVISION["Provision strongSwan Testbed<br/>(Linux Namespaces: ns-peer-a and ns-peer-b)"]
+    LAB_PROVISION --> NETEM_INJECT["Inject Tactical Impairments<br/>(Linux tc/netem Latency, Jitter, Loss)"]
+    NETEM_INJECT --> APPLY_CONFIG["Deploy Synthesized Hardened Configuration"]
+    APPLY_CONFIG --> TRAFFIC_RUN["Establish IPsec Tunnel and Stream Synthetic Traffic"]
+    TRAFFIC_RUN --> RE_CAPTURE["Capture Verification PCAP and Re-Run Forensics"]
 
-    subgraph Simulation_Twin [Phase 1: Configuration Security Twin]
-        CONF_INGEST[Ingest Live strongSwan / swanctl.conf Topology]:::twin
-        WHATIF[What-If Simulation Engine: Compatibility, Crypto Overhead & MTU]:::twin
-        PROJECTION[Score Uplift Projection: Baseline 38/100 -> Target 96/100]:::twin
-        PATCH_GEN[Automated Hardening Patch Synthesizer - Unified Diff]:::synth
-
-        CONF_INGEST --> WHATIF
-        WHATIF --> PROJECTION
-        PROJECTION --> PATCH_GEN
-    end
-
-    subgraph Verification_Lab [Phase 2: Closed-Loop strongSwan Lab Testbed]
-        NS_SETUP[Provision Isolated Linux Namespaces: ns-peer-a <-> ns-peer-b]:::lab
-        NETEM_INJECT[Inject Tactical Network Impairments: tc/netem Latency & Jitter]:::lab
-        APPLY_CONFIG[Deploy Synthesized Hardened Configuration]:::lab
-        TRAFFIC_RUN[Establish IPsec Child SA & Stream Synthetic Traffic]:::lab
-        RE_CAPTURE[Capture Verification PCAP & Re-Run Forensic Dissection]:::lab
-
-        NS_SETUP --> NETEM_INJECT
-        NETEM_INJECT --> APPLY_CONFIG
-        APPLY_CONFIG --> TRAFFIC_RUN
-        TRAFFIC_RUN --> RE_CAPTURE
-    end
-
-    subgraph Decision_Gate [Phase 3: Automated Verification Audit]
-        GATE{Verification Audit Passed?<br/>No Weak Transforms & Target Score Confirmed}:::verify
-        PROD_PATCH[Cryptographically Signed Production Remediation Patch]:::passed
-        ROLLBACK[Automated Rollback & Root-Cause Diagnostic Report]:::failed
-    end
-
-    VULN --> CONF_INGEST
-    PATCH_GEN --> NS_SETUP
-    RE_CAPTURE --> GATE
-
-    GATE -->|Confirmed: Score Uplift Met| PROD_PATCH
-    GATE -->|Failed: Negotiation Broken| ROLLBACK
+    RE_CAPTURE --> AUDIT_GATE{"Verification Audit Passed?<br/>No Weak Ciphers and Target Score Met"}
+    AUDIT_GATE -->|"Yes: Confirmed"| PROD_PATCH["Cryptographically Signed Production Patch"]
+    AUDIT_GATE -->|"No: Failed"| ROLLBACK["Automated Rollback and Diagnostic Report"]
 ```
 
 ---
@@ -293,17 +188,13 @@ Explicit division between facts extracted with 100% certainty from packet header
 
 ```mermaid
 graph LR
-    classDef det fill:#0f172a,stroke:#38bdf8,stroke-width:1px,color:#f8fafc;
-    classDef prob fill:#1e1e38,stroke:#a78bfa,stroke-width:1px,color:#f8fafc;
-    classDef rule fill:#1e293b,stroke:#f59e0b,stroke-width:2px,color:#f8fafc;
-
-    subgraph Deterministic_Forensics [Deterministic Protocol Forensics Layer]
-        D1[IKEv1 / IKEv2 State Machine Tracking]:::det
-        D2[Bidirectional Child SA SPI Pairing]:::det
-        D3[Cryptographic Suite & DH Group Extraction]:::det
-        D4[NIST SP 800-77 Rev. 1 Policy Audit]:::det
-        D5[Byte-Level Frame Offsets & Cryptographic Hashes]:::det
-        DRULE[Epistemic Guarantee:<br/>Protocol parameters are NEVER predicted.<br/>Extracted strictly from wire header bytes.]:::rule
+    subgraph Deterministic_Forensics ["Deterministic Protocol Forensics Layer"]
+        D1["IKEv1 / IKEv2 State Machine Tracking"]
+        D2["Bidirectional Child SA SPI Pairing"]
+        D3["Cryptographic Suite and DH Group Extraction"]
+        D4["NIST SP 800-77 Rev. 1 Policy Audit"]
+        D5["Byte-Level Frame Offsets and Cryptographic Hashes"]
+        DRULE["Epistemic Guarantee:<br/>Protocol parameters are NEVER predicted.<br/>Extracted strictly from wire header bytes."]
 
         D1 --> D2
         D2 --> D3
@@ -312,13 +203,13 @@ graph LR
         D5 --> DRULE
     end
 
-    subgraph Probabilistic_ML [Probabilistic Traffic Intelligence Layer]
-        P1[Encrypted ESP Flow Metadata Ingestion]:::prob
-        P2[24 Tabular Metrics & 3x100 Sequence Tensors]:::prob
-        P3[Dual-Ensemble Inference: XGBoost + 1D-CNN]:::prob
-        P4[Platt Temperature Scaling & Entropy OOD Gating]:::prob
-        P5[Inferred Application Category: VoIP, Video, Web]:::prob
-        PRULE[Epistemic Guarantee:<br/>Payload data is NEVER decrypted.<br/>Inferred strictly from side-channel metadata.]:::rule
+    subgraph Probabilistic_ML ["Probabilistic Traffic Intelligence Layer"]
+        P1["Encrypted ESP Flow Metadata Ingestion"]
+        P2["24 Tabular Metrics and Sequence Tensors"]
+        P3["Dual-Ensemble Inference: XGBoost + 1D-CNN"]
+        P4["Platt Temperature Scaling and Entropy OOD Gating"]
+        P5["Inferred Application Category: VoIP, Video, Web"]
+        PRULE["Epistemic Guarantee:<br/>Payload data is NEVER decrypted.<br/>Inferred strictly from side-channel metadata."]
 
         P1 --> P2
         P2 --> P3
