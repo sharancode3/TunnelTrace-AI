@@ -1,1036 +1,1232 @@
-# TunnelTrace AI
+# TUNNEL TRACE AI
 ## Overall Requirements, Solution & System Architecture Document
 
-### Project Identification
-* **Project Name:** TunnelTrace AI
-* **Competition:** Smart India Hackathon 2026
-* **Problem Statement ID:** 26160
-* **Problem Statement Title:** AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework
-* **Organization:** National Technical Research Organisation (NTRO)
-* **Theme:** Blockchain & Cybersecurity
-* **Category:** Software
-* **Target Audience:** Academic Mentors, Technical Evaluators, System Architects
+---
+
+### Document Control & Metadata
+
+| Attribute | Specification Details |
+| :--- | :--- |
+| **Project Name** | TUNNEL TRACE AI |
+| **Document Classification** | Master Requirements, Solution & System Architecture Document |
+| **Target Audience** | Project Mentors, Faculty Guides, SIH Technical Evaluators, Engineering Leads |
+| **Competition** | Smart India Hackathon 2026 |
+| **Problem Statement ID** | 26160 |
+| **Problem Statement Title** | AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework |
+| **Sponsoring Organization** | National Technical Research Organisation (NTRO) |
+| **Category & Theme** | Software \| Blockchain & Cybersecurity |
+| **Current Baseline Status** | Architecture Design & Specifications Frozen; Implementation & Empirical Validation In Progress |
+| **Document Version** | 2.0.0 (Pre-Implementation Master Baseline) |
 
 ---
 
-## 1. Executive Summary
+## 1. Document Purpose
 
-Virtual Private Networks (VPNs) based on the IPsec protocol suite represent the core cryptographic perimeter safeguarding national defense, critical infrastructure, intelligence backbones, and enterprise wide-area networks. When functioning correctly, IPsec tunnels provide confidentiality, data origin authentication, connectionless integrity, and anti-replay protection. However, the security posture of an IPsec tunnel is entirely contingent on its operational configuration: negotiated protocol versions (IKEv1 vs. IKEv2), operational modes (Tunnel vs. Transport), cipher algorithms, integrity transforms, Diffie-Hellman (DH) exchange groups, key lifetimes, rekeying mechanisms, and encapsulation parameters.
+This master document serves as the single technical blueprint and mentor-facing presentation guide for **TUNNEL TRACE AI**. It consolidates the full architectural, algorithmic, operational, and validation framework of the project into a unified document. 
 
-Traditional network analysis tools—most notably Wireshark, TShark, and tcpdump—provide granular packet dissections, hex dumps, and protocol decodes. However, they suffer from three critical architectural limitations:
-1. **Passive Dissection Without Configuration Reconstruction:** They display raw, isolated frames without statefully correlating IKE handshakes and dynamic Child Security Associations (SAs) into a coherent, bidirectional VPN topology.
-2. **Total Blindness to Encrypted Payloads:** When Encapsulating Security Payload (ESP) encrypts inner IP packets, existing tools treat the traffic as an opaque stream of hex bytes, providing zero visibility into what broad applications (e.g., VoIP, bulk file transfer, video streaming) are traversing the tunnel.
-3. **Absence of Grounded Compliance Auditing & Remediation:** They do not audit observed cryptographic transforms against authoritative national standards (such as NIST SP 800-77 Rev. 1 or RFC 8221), cannot project the impact of configuration changes, and provide no mechanism to validate proposed remediations on real network interfaces.
-
-**TunnelTrace AI** directly bridges this operational divide.
-
-> **Core Product Positioning:**  
-> TunnelTrace AI is an explainable IPsec Security Intelligence Platform that reconstructs VPN configurations from network evidence, infers traffic behavior inside encrypted ESP flows without decrypting payloads, evaluates VPN security against versioned standards-based policies, traces findings back to packet-level evidence, and supports closed-loop remediation validation in a controlled IPsec testbed.
-
-The system is engineered upon a foundational principle of **Hybrid Intelligence**:
-* **Deterministic Protocol Forensics:** Dissects observable packets via standards-compliant parsers with 100% mathematical reproducibility. Observable fields (SPIs, transform IDs, IKE versions, DH groups, modes) are never guessed or predicted by AI.
-* **Metadata-Only Encrypted Traffic Machine Learning:** Extracts temporal, directional, and statistical characteristics from opaque ESP flows to predict broad application traffic categories without attempting or requiring payload decryption.
-* **Deterministic Policy-as-Code Engine:** Assesses extracted configurations against versioned YAML rules mapped directly to NIST SP 800-77 Rev. 1, RFC 8221, and RFC 8247 standards.
-* **Grounded AI Analyst:** Leverages a local Retrieval-Augmented Generation (RAG) architecture to explain findings, cite standards, and draft configurations strictly anchored to verified database facts, completely eliminating generative hallucinations.
-
-By combining deep protocol forensics, privacy-preserving machine learning, standards compliance auditing, a Configuration Security Twin, and closed-loop strongSwan testbed verification, TunnelTrace AI delivers an unbroken operational workflow from initial packet capture to validated security remediation.
+A technical mentor, faculty advisor, or hackathon evaluator reading this document will understand:
+1. The exact technical demands of SIH Problem Statement 26160 (NTRO).
+2. Why standard packet analysis tools fail to meet modern VPN assessment needs.
+3. The hybrid engineering design of TUNNEL TRACE AI (Deterministic Protocol Forensics + Supervised Flow ML + Policy-as-Code Compliance + Grounded Retrieval-Augmented Explanation).
+4. The synthetic and empirical dataset strategy, separating primary IPsec-native data generation from secondary OpenVPN baseline data.
+5. The complete closed-loop workflow: from raw packet ingestion to automated Security Association (SA) reconstruction, encrypted payload traffic classification without decryption, standards-based policy scoring, Configuration Security Twin modeling, and verifiable testbed remediation.
+6. The exact demarcation between frozen architectural choices and parameters requiring empirical validation.
 
 ---
 
-## 2. Official Problem Statement
+## 2. Executive Summary
 
-### 2.1 Context and Background
-Virtual Private Networks (VPNs) are critical components of modern network infrastructure, securing communications across untrusted public and private networks. Among various VPN implementations, IPsec (Internet Protocol Security) is widely deployed due to its strong security guarantees, operating at the network layer (Layer 3) to protect all higher-layer protocols.
+Virtual Private Networks (VPNs) built on the IPsec protocol suite form the backbone of government, military, critical infrastructure, and enterprise data protection across untrusted wide-area networks. However, the operational security of IPsec deployments remains fragile. Security is governed by dozens of interdependent parameters: IKE versioning, Diffie-Hellman / Key Exchange (KE) groups, symmetric cipher choices, integrity hashing, Perfect Forward Secrecy (PFS) settings, Security Association (SA) lifetimes, replay protection windows, and Traffic Selector constraints. A single legacy choice (such as 3DES, CBC with weak HMAC, DH Group 2, or omitted PFS) undermines the confidentiality and integrity guarantees of an entire tunnel.
 
-The real-world security of an IPsec implementation depends heavily on:
-* Cryptographic algorithms chosen for encryption (e.g., 3DES, AES-CBC, AES-GCM).
-* Authentication and integrity mechanisms (e.g., HMAC-MD5, HMAC-SHA1, HMAC-SHA256, AEAD).
-* Key exchange mechanisms and Diffie-Hellman parameters (e.g., MODP-1024, MODP-2048, ECP-256).
-* Operational mode (Tunnel Mode vs. Transport Mode).
-* Key management practices, lifetime expirations, and dynamic rekeying intervals.
-* System implementation details, encapsulation headers (NAT-Traversal on UDP 4500), and outer IP routing.
+Existing network analysis tools provide low-level packet dissection but place the burden of protocol reconstruction, policy compliance, and traffic inference entirely on human experts. Furthermore, when analyzing encrypted Encapsulating Security Payload (ESP) streams, standard tools are blind to payload contents without access to private session keys.
 
-Traditional packet-analysis utilities provide low-level packet decodes but place an immense cognitive burden on human analysts, who must manually inspect thousands of frames, cross-reference RFC specifications, decode hexadecimal transform parameters, identify subtle misconfigurations, and assess whether legacy, deprecated, or vulnerable cryptographic primitives are active.
+**TUNNEL TRACE AI** resolves this operational gap as an **explainable IPsec Security Intelligence Platform**. The system does not merely capture packets; it answers three core operational questions:
+1. **What IPsec configuration is running?** (Reconstructed deterministically from IKE exchanges, Security Associations, and packet headers).
+2. **How secure is it, and why?** (Evaluated against formal cryptographic standards including NIST SP 800-77 Rev. 1, RFC 8221, RFC 8247, and RFC 7296 using versioned Policy-as-Code).
+3. **What should be changed, and can the system verify that the change improved security?** (Projected via a Configuration Security Twin and verified through closed-loop re-testing in a controlled testbed).
 
-### 2.2 Official Problem Mandate
-The official Smart India Hackathon Problem Statement (PS ID: 26160), released by the National Technical Research Organisation (NTRO), mandates the development of an automated, AI-powered system capable of:
-1. **Inspecting Network Traffic:** Ingesting offline packet traces (PCAP/PCAPNG) and intercepting live network interface streams.
-2. **Identifying Protocol Characteristics:** Automatically identifying IPsec protocol components (IKEv1, IKEv2, ESP, and AH where present), determining operational modes, extracting encryption/integrity transforms, and extracting Security Association (SA) parameters.
-3. **Classifying Inner Encrypted Traffic:** Applying machine learning to predict the broad nature of encrypted traffic flowing inside ESP tunnels without breaking encryption.
-4. **Evaluating Cryptographic Security:** Conducting an automated security audit of the observed parameters against modern standards, checking for deprecated ciphers, weak key exchange parameters, and missing security controls.
-5. **Generating Comprehensive Outputs:** Delivering a holistic security assessment comprising quantitative posture scores, risk ratings, threat matrices, technical reports, executive summaries, and calibrated AI confidence metrics.
+### Core Differentiator Summary
+- **Zero Decryption Required:** Inspects encrypted ESP flows using external statistical and sequential metadata (packet lengths, inter-arrival times, burst directions) to infer high-level application categories (VoIP, Video, Messaging, Web, Email, File Transfer) without decrypting payloads.
+- **Hybrid Intelligence Architecture:** Enforces strict boundaries: direct protocol facts are deterministic; traffic categorization is probabilistic (XGBoost + 1D-CNN); security scoring is deterministic Policy-as-Code; and natural language explanations are grounded in verified evidence via RAG.
+- **Closed-Loop Remediation:** Goes beyond static reporting by providing a sandbox environment to apply configuration changes, re-capture traffic, re-analyze sessions, and verify compliance upgrades.
 
 ---
 
-## 3. Why the Problem Matters
+## 3. Project Identity
 
-1. **Strategic Defense & National Infrastructure:** Critical government links, military telemetry, and sovereign data centers rely on IPsec tunnels. Undetected cryptographic obsolescence (such as residual 3DES or 1024-bit Diffie-Hellman) leaves state infrastructure vulnerable to advanced persistent threats and nation-state cryptanalytic attacks (e.g., Sweet32, Logjam).
-2. **Operational Configuration Drift:** In large enterprise and defense networks, VPN tunnels established years ago continue running with legacy, insecure defaults because network teams fear disrupting mission-critical communications. Without automated posture auditing, these silent vulnerabilities remain invisible until a breach occurs.
-3. **The Blindness of Payload Encryption:** Network defenders cannot inspect payload contents inside ESP tunnels without terminating the tunnel or violating communications privacy. Inferring whether an active tunnel carries interactive remote management, unauthorized video streaming, or bulk exfiltration requires sophisticated traffic flow intelligence based purely on packet sizes, timing, and directionality.
-4. **Cognitive Load in Security Operations Centers (SOCs):** SOC analysts triage thousands of alerts daily. They lack the specialized cryptanalytic expertise required to manually audit IKE proposals against NIST guidelines. An automated system that translates raw wire frames into definitive pass/fail findings, grounded citations, and verified configuration remediations provides immense operational leverage.
-
----
-
-## 4. Official Requirement Breakdown
-
-The official NTRO Problem Statement 26160 encompasses six core functional pillars (Sections A through F). The following breakdown details every mandatory requirement, the corresponding implementation in TunnelTrace AI, and the verified operational output:
-
-### Pillar A: VPN Testbed Generation
-* **Tunnel Mode:** Automated strongSwan lab orchestrator provisions gateway-to-gateway topologies encapsulating complete inner IP packets.
-* **Transport Mode:** Provisions host-to-host topologies inserting ESP headers between the original IP header and Layer 4 payload.
-* **AES-128 Encryption:** Provisions standard 128-bit AES transform profiles across CBC and GCM modes.
-* **AES-256 Encryption:** Provisions high-assurance 256-bit AES transform profiles.
-* **AES-GCM Authenticated Encryption:** Provisions modern AEAD ciphers (AES-GCM-16) combining confidentiality and integrity without separate HMACs.
-* **AES-CBC + HMAC Legacy Combinations:** Provisions traditional cipher block chaining paired with HMAC-SHA1 and HMAC-SHA256.
-* **Multiple Diffie-Hellman Groups:** Provisions Diffie-Hellman Key Exchange Groups: Group 2 (MODP-1024), Group 14 (MODP-2048), Group 19 (ECP-256), Group 20 (ECP-384), and Group 21 (ECP-521).
-* **Perfect Forward Secrecy (PFS) Enabled:** Configures explicit Child SA renegotiation requiring independent ephemeral Diffie-Hellman exchanges.
-* **Perfect Forward Secrecy (PFS) Disabled:** Configures Child SA rekeying utilizing original IKE SA keying material.
-* **IPv4 Encapsulated Communication:** Provisions pure IPv4 outer and inner addressing topologies.
-* **IPv6 Encapsulated Communication:** Provisions IPv6 outer transport and dual-stack tunnel addressing.
-* **VoIP Traffic Simulation:** Synthetic RTP/SIP traffic injection utilizing realistic codecs (e.g., G.711 / G.729 packet cadence and bidirectional symmetric flows).
-* **WhatsApp / Messaging Simulation:** Interactive chat traffic modeling characterized by short, sporadic message bursts and keepalive heartbeats.
-* **E-mail Traffic Simulation:** Synthetic IMAP/SMTP workloads featuring structured text commands and periodic payload attachments.
-* **Web Browsing Traffic Simulation:** Synthetic HTTP/HTTPS browsing sessions featuring asymmetric request/response cascades and parallel connection bursts.
-* **ICMP Diagnostic Simulation:** Periodic ping and echo request/reply diagnostic streams.
-* **Video Streaming Traffic Simulation:** Sustained downstream high-bitrate video streams characterized by large packet sizes and variable bitrate burstiness.
-
-### Pillar B: Traffic Capture
-* **IKE Protocol Negotiation Interception:** Intercepts UDP port 500 / 4500 handshakes across IKE_SA_INIT and IKE_AUTH exchanges.
-* **ESP Packet Capture:** Captures IP protocol 50 datagrams across both standard raw IP and UDP-encapsulated NAT-Traversal channels.
-* **AH Packet Capture:** Ingests and parses IP protocol 51 (Authentication Header) packets where present in legacy captures.
-* **Normal Communication Background Traffic:** Represents standard enterprise background traffic patterns in baseline capture sessions.
-* **Offline PCAP/PCAPNG Trace Analysis:** Dedicated asynchronous file ingestion pipeline supporting multi-gigabyte forensic capture files.
-* **Live Network Interface Stream Capture:** Controlled, authorized packet capture agent bound to local physical or virtual network interfaces via libpcap.
-
-### Pillar C: AI-Based Protocol Identification
-* **IPsec Protocol Identification:** Deterministic layer-3/layer-4 filtering identifying IKE, ESP, and AH protocol structures.
-* **IKE Version Identification:** Strict byte-offset extraction differentiating IKEv1 (Major 1, Minor 0) from IKEv2 (Major 2, Minor 0).
-* **Tunnel vs. Transport Mode Identification:** Mode inference based on observable outer headers, traffic selectors, and encapsulation context.
-* **Encryption Algorithm Identification:** Deterministic mapping of transform proposal attributes against authoritative IANA registries.
-* **Authentication / Integrity Algorithm Identification:** Deterministic extraction of integrity and PRF algorithms from observable proposals.
-* **Key-Exchange Method Identification:** Deterministic extraction of Key Exchange (KE) payloads and negotiated DH Group IDs.
-* **Security Association (SA) Parameter Extraction:** Extraction of inbound/outbound Security Parameter Indexes (SPIs), sequence counters, and lifetime parameters.
-* **Encrypted ESP Inner Traffic Classification:** Primary supervised machine learning classification inferring broad workload categories from encrypted ESP flow metadata.
-
-### Pillar D: Security Assessment
-* **Cryptographic Strength Audit:** Evaluates effective bit-level strength of all negotiated symmetric ciphers and asymmetric key exchange groups.
-* **Configuration Compliance Audit:** Audits extracted configurations against formal rules derived from NIST SP 800-77 Rev. 1, RFC 8221, and RFC 8247.
-* **SA Parameter Evaluation:** Validates lifetime limits, rekey boundaries, and traffic selector restrictions.
-* **Key Lifetime & Rekeying Evaluation:** Analyzes packet volume and elapsed session duration against recommended cryptographic rekeying thresholds.
-* **Anti-Replay Protection Evaluation:** Evaluates sequence number monotonicity and flags potential replay window vulnerabilities.
-* **Forward Secrecy (PFS) Rigor Assessment:** Audits whether Child SAs execute independent DH exchanges upon rekeying.
-* **Cipher-Suite Strength & Vulnerability Scoring:** Flags known cryptanalytic weaknesses (e.g., Sweet32 collision vulnerabilities on 64-bit block ciphers like 3DES; precomputation attacks on 1024-bit DH).
-* **Metadata Exposure & Side-Channel Assessment:** Computes a quantitative Metadata Fingerprintability Index measuring application distinguishing patterns.
-
-### Pillar E: Required Outputs
-* **Comprehensive Security Score:** Quantitative 0–100 posture score derived from itemized, deterministic rule deductions.
-* **Encrypted Traffic Analysis & Class Distribution:** Inferred traffic breakdown across application classes with calibrated confidence ratings.
-* **Metadata Exposure Inference:** Side-channel risk assessment documenting application distinguishability.
-* **Executive Summary Report:** Publication-grade PDF report summarizing overall posture, compliance state, and high-level risk for leadership.
-* **Technical Deep-Dive Audit Report:** Comprehensive PDF/HTML audit report containing frame-level findings, hex evidence, and exact remediation directives.
-* **Categorized Risk Score:** Structured qualitative risk classifications (CRITICAL, HIGH, MEDIUM, LOW, INFORMATIONAL).
-* **Dynamic Threat Matrix:** Threat catalog mapping findings to STRIDE categories, CVE references, and attack consequences.
-* **Calibrated AI Confidence Score:** Mathematically calibrated probability metric (0–100%) indicating the reliability of ML traffic inferences.
-
-### Pillar F: Expected Deliverables
-* **Working Software Prototype:** Fully integrated, containerized platform deployable via Docker Compose.
-* **AI Classification Engine:** Calibrated machine learning pipeline combining XGBoost and 1D-CNN architectures.
-* **Interactive Web Dashboard:** High-performance, responsive Next.js Progressive Web Application (PWA).
-* **Security Assessment Report:** Automated report generation engine producing publication-quality PDF and HTML artifacts.
-* **Live Demonstration Runbook & Video:** Scripted, unbroken demonstration validating the entire end-to-end lifecycle in a controlled testbed.
-* **Comprehensive Technical Documentation:** Master documentation suite spanning architectural, requirements, workflow, and verification specifications.
-* **Curated IPsec Training & Validation Dataset:** Session-isolated IPsec traffic corpus complete with verified ground-truth metadata.
+| Parameter | Project Identity Specification |
+| :--- | :--- |
+| **System Name** | TUNNEL TRACE AI |
+| **Short Identifier** | TunnelTrace |
+| **Tagline** | Explainable IPsec Security Intelligence & Protocol Assessment Framework |
+| **Problem Statement** | SIH 2026 / PS 26160 / Software / Blockchain & Cybersecurity |
+| **Stakeholder Agency** | National Technical Research Organisation (NTRO) |
+| **Core Paradigm** | Hybrid Network Protocol Forensics + Applied Encrypted Traffic Machine Learning |
+| **Target Runtime** | Local-first containerized system with privileged Linux network inspection capabilities |
 
 ---
 
-## 5. Requirement-to-Solution Mapping Matrix
+## 4. Official Problem Statement
 
-The following matrix provides formal, unbroken traceability from every official SIH requirement clause to its architectural component, processing methodology, and tangible output:
+The official problem statement issued by the National Technical Research Organisation (NTRO) reads as follows:
 
-| Official PS Clause | Requirement Description | Architectural Subsystem | Processing Methodology | Tangible Platform Output |
+> **Background:** Virtual Private Networks (VPNs) are critical for securing data communications across untrusted networks. IPsec, a widely deployed VPN protocol suite, ensures data confidentiality, integrity, and authentication. However, the security provided by IPsec VPNs heavily depends on proper implementation and configuration, including the choice of cryptographic algorithms, operational modes, and key management practices. Misconfigurations, deprecated algorithms, or weak implementations can severely compromise the security posture of an organization. Traditional packet-analysis tools can capture and inspect network traffic, but they often require significant manual analysis and specialized knowledge to assess the security of IPsec implementations.
+>
+> **Description:** The objective is to develop an automated software framework that utilizes artificial intelligence and packet-level inspection to analyze IPsec VPN protocol configurations and assess their security posture. The tool should inspect captured network traffic or live streams, identify IPsec protocol characteristics, infer operational modes, evaluate cryptographic strength, and detect vulnerabilities or misconfigurations. The framework should provide a comprehensive security assessment, identifying potential risks and suggesting remediation strategies.
+
+---
+
+## 5. Problem Background & Industry Context
+
+IPsec operates at the Network Layer (OSI Layer 3) through two cooperating protocol mechanisms:
+1. **Internet Key Exchange (IKEv1 / IKEv2):** Controls peer authentication, cryptographic negotiation, and dynamic key management over UDP port 500 / 4500.
+2. **Data Encapsulation Protocols:**
+   - **Encapsulating Security Payload (ESP, IP Protocol 50):** Encapsulates and encrypts transport or network payloads, providing confidentiality, integrity, and replay protection.
+   - **Authentication Header (AH, IP Protocol 51):** Authenticates the outer IP header and payload without encryption (rarely deployed due to NAT incompatibility).
+
+### The Operational Challenge
+In enterprise and defense deployments, security administrators face major hurdles:
+- **Heterogeneous & Legacy Endpoints:** Interoperability pressures force gateways to support outdated cipher suites (3DES, AES-CBC without authenticated encryption, SHA-1, DH Groups 2 and 5).
+- **Silent Degradation:** During IKE negotiation, if a client proposes a weak fallback transform and the responder accepts it, the tunnel operates under reduced security without raising alerts.
+- **Encrypted Blindness:** Once ESP takes over, network operations teams cannot identify what types of traffic traverse the tunnel, making traffic engineering and metadata leak detection difficult.
+- **Manual Dissection Burden:** An analyst using standard tools like Wireshark must manually inspect multi-packet IKE exchanges, map initiator and responder Security Parameter Indexes (SPIs), decode nested transform payloads, cross-reference RFCs, and trace Child SAs.
+
+---
+
+## 6. Official PS Requirements
+
+The official problem statement outlines specific functional mandates across six core areas:
+
+**MANDATORY REQUIREMENTS MATRIX**
+
+| Requirement Area | Scope & Protocol Coverage Specified by NTRO |
+| :--- | :--- |
+| A. VPN Testbed | Tunnel Mode, Transport Mode, AES-128, AES-256, AES-GCM, AES-CBC+HMAC, |
+|  | Various DH/KE Groups, PFS Enabled, PFS Disabled, IPv4, IPv6, |
+|  | Workloads: VoIP, WhatsApp, Email, Web Browsing, ICMP, Video Streaming |
+| B. Traffic Capture | IKE Negotiation, ESP, AH where present, Offline PCAP/PCAPNG, Live Stream |
+| C. Protocol Detection | IPsec detection, IKE version, Mode, Encryption, Integrity, Key Exchange, |
+|  | SA characteristics, Traffic prediction inside ESP |
+| D. Security Assessment | Cryptographic strength, Compliance, SA parameters, Key lifetime, |
+|  | Replay protection, Forward Secrecy, Metadata exposure |
+| E. Output Requirements | Security Score, Traffic Analysis, Metadata Inference, Executive Report, |
+|  | Technical Report, Risk Score, Threat Matrix, AI Confidence Score |
+| F. Deliverables | Software Prototype, AI Classification Engine, Interactive Dashboard, |
+|  | Assessment Report, Demo Video, Technical Documentation, Dataset |
+
+---
+
+## 7. Key Challenges in IPsec VPN Analysis
+
+1. **Information Asymmetry in Passive Capture:** A passive network capture cannot read endpoint memory or internal gateway configuration files. It only observes traffic traversing the physical or virtual link. If the initial IKE negotiation was not captured, session keys and negotiated transform structures are absent, leaving only raw ESP flows identified by 32-bit SPIs.
+2. **Encrypted Payload Opacity:** ESP encrypts the transport header and payload. Traditional deep packet inspection (DPI) relying on port signatures (e.g., port 80/443/5060) or application regexes cannot read ESP. Traffic analysis must rely entirely on side-channel metadata: packet sizes, directional timing, and burst dynamics.
+3. **Over-Reliance on Machine Learning:** Attempting to use ML to guess whether a tunnel uses AES-256 or DH Group 14 is methodologically flawed. Cryptographic proposals are negotiated in plaintext during initial IKE phases. Predicting observable protocol transforms with statistical classifiers introduces hallucinations into what should be an exact forensic audit.
+4. **Domain Shift Between VPN Protocols:** OpenVPN over TLS exhibits distinct framing, handshake, and encapsulation behaviors compared to IPsec ESP operating directly over IP (Protocol 50) or UDP encapsulation (Port 4500). Training models on public OpenVPN datasets and applying them directly to IPsec results in poor generalization.
+5. **Remediation Gap:** Identifying a security vulnerability is only half the battle. Administrators require a safe, non-disruptive method to test recommended configuration fixes before deploying them to production.
+
+---
+
+## 8. Tunnel Trace AI Proposed Solution
+
+TUNNEL TRACE AI solves these challenges by implementing an integrated, modular security intelligence architecture. The platform operates on four distinct layers:
+
+1. **Protocol Forensics Engine:** Employs deterministic network parsing via TShark to extract observable facts from unencrypted IKE handshakes and ESP/AH packet headers.
+2. **Encrypted Flow Intelligence Engine:** Uses a hybrid machine learning pipeline (XGBoost for engineered tabular flow features + 1D-CNN for early packet sequence dynamics) to classify application types inside encrypted ESP flows without payload decryption.
+3. **Policy & Compliance Engine:** Applies versioned YAML Policy-as-Code against authoritative standards (NIST SP 800-77 Rev. 1, RFC 8221, RFC 8247, RFC 7296) to generate deterministic findings, risk scores, and a Threat Matrix.
+4. **Closed-Loop Remediation Engine:** Leverages a Configuration Security Twin and an automated strongSwan testbed to simulate, apply, and verify recommended configuration hardening.
+
+---
+
+## 9. Product Goals & Non-Goals
+
+### Product Goals
+- Provide fully automated, deterministic parsing of IKEv1, IKEv2, ESP, and AH traffic from PCAP files or live network interfaces.
+- Accurately reconstruct the complete lifecycle of Security Associations (IKE SA and Child SAs) and link them to active ESP streams via SPI mapping.
+- Classify application traffic categories traversing encrypted ESP tunnels using side-channel flow metadata with calibrated confidence and explicit Out-Of-Distribution (OOD) handling.
+- Deliver evidence-backed security audits that trace every security finding directly to specific packet frame numbers and byte offsets.
+- Offer an interactive Configuration Security Twin to model policy hardening before deployment.
+- Provide automated closed-loop remediation validation within a controlled Linux strongSwan testbed.
+
+### Product Non-Goals
+- **No Payload Decryption:** TUNNEL TRACE AI does not attempt to break AES encryption, factor private keys, or decrypt ESP payloads.
+- **Not a Generic IDS/IPS:** It is not a signature-based intrusion detection system (like Snort or Suricata) and does not detect malware payloads or exploit shellcodes.
+- **Not a Production Firewall Configurator:** The prototype does not execute automatic configuration push to proprietary enterprise appliances (such as Cisco ASA, FortiGate, or Palo Alto). Automatic remediation is intentionally restricted to the controlled strongSwan lab.
+- **No Unbounded AI Authority:** The system does not allow Large Language Models to invent protocol facts, security findings, compliance states, or risk scores.
+
+---
+
+## 10. Core Product Philosophy
+
+The operational paradigm of TUNNEL TRACE AI follows an eight-stage closed loop:
+
+``
+DETECT ──> RECONSTRUCT ──> INFER ──> ASSESS ──> EXPLAIN ──> REMEDIATE ──> RE-TEST ──> VERIFY
+``
+
+**OPERATIONAL PARADIGM STAGES**
+
+| Stage | System Action & Operational Guarantee |
+| :--- | :--- |
+| DETECT | Ingest raw packets from PCAP/PCAPNG or live Linux network tap; detect IPsec. |
+| RECONSTRUCT | Parse IKE exchanges, map SPIs, resolve transforms, and reconstruct Child SAs. |
+| INFER | Extract ESP flow metadata; predict application traffic class via ML without keys. |
+| ASSESS | Execute versioned Policy-as-Code against NIST and RFC baselines; score posture. |
+| EXPLAIN | Bind all findings to packet frame evidence; generate SHAP feature attribution. |
+| REMEDIATE | Generate hardened configuration files; model projected score in Configuration Twin. |
+| RE-TEST | Deploy hardened configuration into controlled strongSwan network testbed. |
+| VERIFY | Re-capture traffic, re-execute analysis, and mathematically verify risk resolution. |
+
+---
+
+## 11. Deterministic vs ML vs Policy vs LLM
+
+To maintain absolute scientific and forensic credibility, TUNNEL TRACE AI strictly separates analytical responsibilities across four distinct intelligence paradigms:
+
+**HYBRID INTELLIGENCE RESPONSIBILITY MATRIX**
+
+| System Task | Analytical Paradigm | Primary Technology | Justification |
+| :--- | :--- | :--- | :--- |
+| Protocol Detection | Deterministic Forensics | TShark / Dissectors | Exact protocol headers |
+| Transform Analysis | Deterministic Forensics | IKE Parser Engine | Direct binary payloads |
+| SA Reconstruction | Deterministic Forensics | State Graph Tracker | Explicit SPI linkages |
+| Traffic Prediction | Supervised Machine Learning | XGBoost + 1D-CNN | Payload is encrypted |
+| Anomaly Detection | Unsupervised ML | Isolation Forest | Unknown traffic behavior |
+| Security Scoring | Policy-as-Code Engine | YAML Rules / Python | Strict standards audit |
+| Threat Assessment | Deterministic Mapping | Threat Matrix Engine | Standards-based impact |
+| Evidence Tracing | Relational Provenance | PostgreSQL Graph Index | Non-repudiable audit |
+| Natural Language QA | Grounded RAG + LLM | pgvector + Local LLM | Human explanation only |
+
+---
+
+## 12. Overall System Architecture
+
+The TUNNEL TRACE AI platform is organized into three decoupled architectural domains operating over a strict security and privilege boundary:
+
+```mermaid
+graph TD
+    subgraph DOMAIN1["DOMAIN 1: DATA ACQUISITION & NETWORK INTELLIGENCE"]
+        A1["Raw Inputs: PCAP / Live Interface / Lab Testbed"] --> A2["Capture Engine: tcpdump / libpcap"]
+        A2 --> A3["Protocol Forensics: TShark Dissectors"]
+        A3 --> A4["IKE & SA Reconstruction Engine"]
+        A4 --> A5["Deterministic Protocol Facts"]
+        A3 --> A6["ESP / AH Flow Engine"]
+        A6 --> A7["Flow Feature Extraction: Tabular & Sequences"]
+    end
+
+    subgraph DOMAIN2["DOMAIN 2: AI, SECURITY & EVIDENCE INTELLIGENCE"]
+        A7 --> B1["XGBoost Classifier (Tabular Flows)"]
+        A7 --> B2["1D-CNN Classifier (Packet Sequences)"]
+        B1 --> B3["Ensemble & Calibration Engine"]
+        B2 --> B3
+        B3 --> B4["Calibrated Prediction & OOD Gate"]
+        B1 --> B5["SHAP Feature Attribution"]
+        A7 --> B6["Isolation Forest Anomaly Detector"]
+        A5 --> B7["Policy-as-Code Compliance Engine (NIST / RFC)"]
+        B7 --> B8["Deterministic Security Findings"]
+        B8 --> B9["Security Score & Risk Matrix Engine"]
+        B4 --> B10["Metadata Fingerprintability Engine"]
+        B8 --> B11["Evidence & Forensic Provenance Graph"]
+        B5 --> B11
+        B10 --> B11
+    end
+
+    subgraph DOMAIN3["DOMAIN 3: PRODUCT, REMEDIATION & PLATFORM"]
+        B11 --> C1["FastAPI Application Services"]
+        C1 --> C2["PostgreSQL / pgvector Storage"]
+        C1 --> C3["Next.js Responsive Dashboard (Light Default)"]
+        C1 --> C4["Executive & Technical PDF/JSON Reports"]
+        C1 --> C5["Grounded AI Analyst (RAG Pipeline)"]
+        C1 --> C6["Configuration Security Twin"]
+        C6 --> C7["Controlled Remediation Controller"]
+        C7 -.->|"Apply Config & Re-Test"| A1
+    end
+```
+``
+
+---
+
+## 13. Three Main Architecture Domains
+
+### Domain 1: Data Acquisition & Network Intelligence
+- **Purpose:** Ingest raw packets from live network interfaces or PCAP files, decode layered protocols, extract deterministic parameters, reconstruct Security Association states, and aggregate ESP packets into structured flows.
+- **Technologies:** Linux XFRM, strongSwan 5.9+, tcpdump, libpcap, TShark, PyShark.
+- **Output:** Normalized protocol facts (JSON) and bidirectional flow feature records.
+
+### Domain 2: AI, Security & Evidence Intelligence
+- **Purpose:** Process encrypted flow features using statistical and deep learning models; evaluate protocol configurations against security standards; calculate multi-dimensional risk scores; and bind every finding to immutable packet evidence.
+- **Technologies:** XGBoost, PyTorch, scikit-learn, SHAP, Python YAML Policy-as-Code Engine.
+- **Output:** Calibrated traffic predictions, SHAP explanations, compliance audits, security scores, and forensic evidence links.
+
+### Domain 3: Product, Remediation & Platform
+- **Purpose:** Provide an intuitive, responsive user interface for security analysts, generate executive and technical documentation, support conversational natural-language exploration through grounded RAG, and orchestrate closed-loop remediation within the testbed.
+- **Technologies:** FastAPI, PostgreSQL, pgvector, Next.js, TypeScript, Tailwind CSS, Apache ECharts, React Flow.
+- **Output:** Interactive visual dashboards, downloadable audit reports, interactive twin modeling, and verified testbed configurations.
+
+---
+
+## 14. End-to-End Workflow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Analyst as Security Analyst
+    participant UI as Dashboard / PWA
+    participant API as FastAPI Backend
+    participant Dissect as TShark / Forensics
+    participant ML as ML Inference Engine
+    participant Policy as Policy-as-Code Engine
+    participant Twin as Configuration Twin
+    participant Lab as strongSwan Testbed
+
+    Analyst->>UI: Upload PCAP or Start Live Capture
+    UI->>API: Ingest Stream / Register Analysis Job
+    API->>Dissect: Execute Protocol Dissection & Flow Aggregation
+    Dissect-->>API: Deterministic Facts (IKE/SA) + ESP Flow Features
+    par Parallel Intelligence Processing
+        API->>ML: Pass Flow Features (Tabular + Sequences)
+        ML-->>API: Predictions + Calibrated Confidence + SHAP
+    and
+        API->>Policy: Pass Reconstructed SA Facts
+        Policy-->>API: Compliance Status + Security Findings
+    end
+    API->>API: Compile Evidence Graph, Security Score & Risk
+    API-->>UI: Render Command Center, SA Explorer, & Findings
+    Analyst->>UI: Review Weak Crypto Finding & Launch Twin
+    UI->>Twin: Request Hardening Simulation (e.g., Enable PFS, AES-GCM)
+    Twin-->>UI: Display Projected Score & Hardened Diff
+    Analyst->>UI: Authorize Testbed Remediation
+    UI->>Lab: Apply Hardened strongSwan Config & Reconnect
+    Lab->>Lab: Generate Traffic & Recapture PCAP
+    Lab-->>API: Submit Verification PCAP
+    API->>Dissect: Re-Analyze Hardened Capture
+    API->>Policy: Re-Assess Hardened Configuration
+    Policy-->>API: Verify Zero Critical Findings & Higher Score
+    API-->>UI: Display REMEDIATION VERIFIED Badge & Audit Delta
+```
+``
+
+---
+
+## 15. IPsec Testbed Architecture
+
+To satisfy the strict requirements of SIH Problem Statement 26160, TUNNEL TRACE AI incorporates an automated, isolated, Linux-native IPsec testbed. The testbed runs across network namespaces, allowing repeatable generation of both compliant and vulnerable VPN configurations alongside varied network traffic workloads.
+
+```mermaid
+graph LR
+    subgraph CLIENT_NS["Client Namespace (ns_client)"]
+        TG["Traffic Generator: curl / iperf3 / ffmpeg / scp"]
+        EP_A["Virtual Interface: veth_client (10.0.1.2)"]
+        TG --> EP_A
+    end
+
+    subgraph GW_A_NS["Gateway A Namespace (ns_gw_a)"]
+        GW_A_IN["Private Interface (10.0.1.1)"]
+        SW_A["strongSwan 5.9+ (IPsec Endpoint A)"]
+        WAN_A["WAN Interface: veth_wan_a (192.168.100.1)"]
+        EP_A --- GW_A_IN
+        GW_A_IN --> SW_A
+        SW_A --> WAN_A
+    end
+
+    subgraph WAN_NS["Untrusted WAN Namespace (ns_wan)"]
+        WAN_A --- BR["Virtual Bridge / Netem WAN Tap"]
+        NETEM["tc netem: Latency, Jitter, Packet Loss Injection"]
+        DUMP["Capture Point: tcpdump / libpcap (WAN PCAP Tap)"]
+        BR --- NETEM
+        NETEM --- DUMP
+        DUMP --- WAN_B
+    end
+
+    subgraph GW_B_NS["Gateway B Namespace (ns_gw_b)"]
+        WAN_B["WAN Interface: veth_wan_b (192.168.100.2)"]
+        SW_B["strongSwan 5.9+ (IPsec Endpoint B)"]
+        GW_B_OUT["Private Interface (10.0.2.1)"]
+        WAN_B --> SW_B
+        SW_B --> GW_B_OUT
+    end
+
+    subgraph SERVER_NS["Server Namespace (ns_server)"]
+        EP_B["Virtual Interface: veth_server (10.0.2.2)"]
+        SRV["Workload Targets: Nginx / RTMP / SIP / Echo Server"]
+        GW_B_OUT --- EP_B
+        EP_B --> SRV
+    end
+```
+``
+
+### Testbed Parameter Variation Matrix
+
+**TESTBED CONFIGURATION MATRIX**
+
+| Dimension | Supported Experimental Values | Purpose / Requirement Trace |
+| :--- | :--- | :--- |
+| Operational Mode | Tunnel Mode, Transport Mode | Mandatory PS Requirement A |
+| IP Protocol Version | IPv4, IPv6 | Mandatory PS Requirement A |
+| Encryption Cipher | AES-128-CBC, AES-256-CBC, AES-128-GCM, | Test legacy vs modern AEAD; |
+|  | AES-256-GCM, 3DES (legacy test fixture) | Mandatory PS Requirement A |
+| Integrity Hashing | HMAC-SHA256, HMAC-SHA384, HMAC-SHA1, None | Test integrity algorithms |
+| Key Exchange / DH | Group 2 (1024-bit), Group 14 (2048-bit), | Evaluate cryptographic bits |
+|  | Group 19 (ECP-256), Group 20 (ECP-384) | of security |
+| Forward Secrecy | PFS Enabled (rekey DH), PFS Disabled | Assess forward secrecy posture |
+| Encapsulation | Direct ESP (IP proto 50), NAT-T (UDP 4500) | Verify NAT traversal handling |
+| Impairment (tc) | Delay: 5-150ms, Jitter: 1-30ms, Loss: 0-5% | Validate ML robustness under |
+|  | Bandwidth: 1Mbps-100Mbps | real-world network turbulence |
+
+---
+
+## 16. Traffic Capture Architecture
+
+TUNNEL TRACE AI supports two distinct ingestion pipelines:
+1. **Offline Capture Ingestion:** Ingests standard `.pcap` and `.pcapng` files up to 2 GB via chunked HTTP upload or local filesystem binding. The file is hashed with SHA-256 immediately upon arrival to guarantee forensic integrity.
+2. **Authorized Live Capture:** Binds to designated Linux host interfaces via `libpcap` running inside a privileged worker container. Live capture requires explicit administrative authorization and operates in read-only tap mode.
+
+```mermaid
+graph TD
+    IN1["Offline File (.pcap / .pcapng)"] --> VAL["Ingestion Validator & File Sanity Check"]
+    IN2["Authorized Live Network Interface"] --> TAP["Privileged Packet Tap: libpcap"]
+    TAP --> ROT["Ring Buffer & Chunked Storage"]
+    ROT --> VAL
+    VAL --> HASH["SHA-256 Cryptographic Digest Generation"]
+    HASH --> STR["Chunked Storage Engine (Local Volume)"]
+    STR --> JOBS["Background Worker Queue"]
+    JOBS --> PARSE["TShark Streaming Dissector Pipeline"]
+```
+``
+
+---
+
+## 17. Protocol Forensics Engine
+
+The Protocol Forensics Engine processes packet captures deterministically without executing external shell commands or invoking heuristic ML models. It interacts directly with the compiled dissector tree of TShark.
+
+### Extracted Deterministic Parameters
+- **IKE Protocol Details:** Version (IKEv1 / IKEv2), Exchange Type (IKE_SA_INIT, IKE_AUTH, CREATE_CHILD_SA, INFORMATIONAL), Initiator SPI, Responder SPI, Message ID.
+- **Negotiated Transforms:** Encryption algorithms (ENCR), Key Exchange / DH groups (D-H), Pseudorandom functions (PRF), Integrity hashes (INTEG).
+- **Security Associations:** Child SA creation, proposal acceptance, SPI allocations.
+- **Network Metadata:** Encapsulation format (Raw ESP on Protocol 50 vs. UDP Encapsulation on Port 4500 for NAT-T), Traffic Selectors (source/destination subnets and ports), Sequence numbers.
+
+---
+
+## 18. Security Association (SA) Reconstruction
+
+IPsec connections operate as a hierarchy of bidirectional security relationships. The SA Reconstruction Engine assembles individual packet observations into a coherent state model:
+
+``
+Capture Run
+  └── IKE Session (Initiator SPI, Responder SPI)
+        ├── IKE SA (Control Plane: Transforms, DH Group, PRF, Key Lifetimes)
+        └── Child SA Pairs (Data Plane: Inbound SPI, Outbound SPI)
+              ├── Traffic Selectors (Source Subnet <-> Destination Subnet)
+              ├── Encapsulation Parameters (Tunnel vs. Transport Mode)
+              └── Associated ESP Traffic Flows (Directional Packet Sequences)
+``
+
+### Forensic Uncertainty & Evidence States
+Passive analysis cannot observe parameters that were never transmitted across the monitored link. Rather than hallucinating missing configuration details, TUNNEL TRACE AI enforces four discrete evidence states:
+
+**EVIDENCE UNCERTAINTY STATES**
+
+| Evidence State | Forensic Definition & Handling Rule |
+| :--- | :--- |
+| VERIFIED | Directly observed and validated within captured packet headers or payloads. |
+| INFERRED | Statistically deduced from flow dynamics with high calibrated confidence. |
+| UNKNOWN | Unobserved in capture (e.g., missing IKE handshake); flagged as UNKNOWN. |
+| MISCONFIGURATION | Conflicting or structurally broken protocol implementations observed. |
+
+---
+
+## 19. Flow Reconstruction
+
+Packets matching an established Child SA (or observed ESP SPI in the absence of IKE handshakes) are assembled into bidirectional network flows. Flow aggregation utilizes an inactivity timeout threshold (typically 60 seconds) or an explicit IKE SA termination message.
+
+### Extracted Flow Dimensions
+- **Volumetric Metrics:** Total packet count, total byte volume, forward-to-reverse packet ratio, forward-to-reverse byte ratio.
+- **Timing & Rate Dynamics:** Flow duration, inter-arrival time mean, variance, skewness, and min/max bounds per direction.
+- **Packet Length Distributions:** Minimum, maximum, mean, and standard deviation of packet lengths; quartile boundaries.
+- **Burst Dynamics:** Run-length distributions of consecutive packets in a single direction; idle time distributions between packet bursts.
+
+---
+
+## 20. Machine Learning Traffic Intelligence
+
+TUNNEL TRACE AI does not attempt to decrypt ESP packets. Instead, it classifies the broad category of traffic traversing an encrypted tunnel by analyzing observable side-channel flow patterns.
+
+```mermaid
+graph TD
+    A["Raw Encrypted ESP Flow"] --> B["Dual Feature Extractor"]
+    
+    subgraph PATH_A["Statistical Tabular Path"]
+        B --> C["Flow Statistics Generator"]
+        C --> D["Engineered Features: Durations, Ratios, Inter-arrival Stats, Bursts"]
+        D --> E["Model A: XGBoost Classifier"]
+        E --> F["Class Probability Vector P_xgb"]
+    end
+
+    subgraph PATH_B["Early Sequence Path"]
+        B --> G["Sequence Slicer (First N Packets: 32 / 64 / 128)"]
+        G --> H["Sequence Matrix: [Direction, Packet Length, Delta Time]"]
+        H --> I["Model B: PyTorch 1D-CNN Classifier"]
+        I --> J["Class Probability Vector P_cnn"]
+    end
+
+    F --> K["Ensemble & Fusion Layer (TBD Empirical Weighting)"]
+    J --> K
+    K --> L["Probability Calibration (Temperature Scaling / Platt)"]
+    L --> M["Predictive Entropy & Out-Of-Distribution (OOD) Gate"]
+    
+    M -->|"Confidence >= Threshold"| N["Assigned Traffic Class + Calibrated Confidence"]
+    M -->|"Confidence < Threshold"| O["Flagged as UNKNOWN / UNSEEN (No Force-Labeling)"]
+    
+    E -.-> P["SHAP Explainer (Feature Attribution)"]
+    A -.-> Q["Isolation Forest (Behavioral Anomaly Detection)"]
+```
+``
+
+---
+
+## 21. Model A: XGBoost Classifier
+
+- **Input:** Engineered tabular vector of flow statistics (durations, packet size percentiles, inter-arrival dynamics, burst ratios).
+- **Role:** High-performance tabular baseline that provides computational efficiency, resilience against outliers, and native integration with TreeSHAP for explainable AI.
+- **Target Application Classes:**
+  1. Web Browsing (HTTPS / HTTP)
+  2. Video Streaming
+  3. Voice over IP (VoIP)
+  4. Chat / Instant Messaging (including WhatsApp behavior)
+  5. Email (IMAP / SMTP / POP3)
+  6. ICMP Network Probing
+  7. File Transfer (SCP / SFTP / FTP)
+  8. Unknown / Unseen Traffic
+
+---
+
+## 22. Model B: Lightweight 1D-CNN
+
+- **Input:** Sequential matrix representing the first $N$ packets of an ESP flow (candidate sequence lengths: 32, 64, or 128 packets). Each packet is encoded as a three-dimensional vector:
+  $$\mathbf{x}_i = [\text{Direction} \in \{-1, +1\}, \text{Packet Length} \in [0, 65535], \Delta \text{Time} \in [0, \infty)]$$
+- **Role:** Captures early application handshake patterns, negotiation exchanges, and initial burst structures that tabular statistical aggregates compress away.
+- **Architecture:** Lightweight multi-layer 1D convolutional network with batch normalization, ReLU activations, max pooling, and global average pooling before the classification head.
+
+---
+
+## 23. Model Calibration & AI Confidence
+
+Standard machine learning models frequently produce overconfident probabilities that do not reflect true posterior accuracy. TUNNEL TRACE AI requires that all confidence scores be formally calibrated before presentation to the analyst.
+
+- **Calibration Approach:** Post-hoc probability calibration via Temperature Scaling for neural sequence outputs and Platt Scaling / Isotonic Regression for tree-based models.
+- **Evaluation Metrics:** Evaluated across test splits using Expected Calibration Error (ECE), Brier Score, and Reliability Diagrams.
+- **Operational Rule:** An uncalibrated probability score must never be presented as an authoritative AI Confidence Metric.
+
+---
+
+## 24. Out-Of-Distribution (OOD) & Unknown Traffic Detection
+
+A critical vulnerability of deployed network classifiers is force-labeling unseen applications into pre-existing training classes. TUNNEL TRACE AI implements explicit Out-Of-Distribution detection:
+
+- **Mechanism:** Evaluates predictive entropy across the calibrated probability distribution combined with Mahalanobis distance in the feature space.
+- **Operational Rule:** If an encrypted ESP flow does not exhibit sufficient similarity to known training distributions, the system labels it as **UNKNOWN / UNSEEN**. The platform explicitly prioritizes conservative classification over false certainty.
+
+---
+
+## 25. Explainability & SHAP Integration
+
+To ensure full transparency, the system couples XGBoost predictions with SHAP (SHapley Additive exPlanations):
+
+- **Purpose:** Identifies exactly which packet size distributions, burst directions, or timing intervals caused a specific encrypted flow to be classified under an application category.
+- **Example Operational Attribution:** A flow classified as *Video Streaming* will highlight positive SHAP contributions from high sustained downstream packet lengths and low inter-arrival variance, contrasting with the bursty, bi-directional, small-packet profile characteristic of *Chat / Messaging*.
+- **Forensic Guarantee:** Explanations are derived from mathematical feature contributions rather than synthetic text generation.
+
+---
+
+## 26. Behavioral Anomaly Detection
+
+In parallel with supervised classification, TUNNEL TRACE AI deploys an unsupervised **Isolation Forest** to detect behavioral anomalies across ESP flows:
+
+- **Observed Metrics:** Uncharacteristic throughput surges, unexpected packet size anomalies, abnormal SA rekey frequencies, or unusual peer communication volumes.
+- **Strict Analytical Demarcation:** The system explicitly maintains that **Anomaly $\neq$ Attack**. Anomalous behavior is reported as an operational outlier requiring administrative review, not as a confirmed intrusion or zero-day exploit.
+
+---
+
+## 27. Dataset Strategy
+
+The development of machine learning models for IPsec requires a transparent and methodologically sound data strategy. TUNNEL TRACE AI establishes a strict distinction between primary empirical data and supplementary public benchmarks.
+
+**DATASET STRATEGY MATRIX**
+
+| Dimension | Primary IPsec-Native Data | Supplementary Data | Downloaded Archive Status |
+| :--- | :--- | :--- | :--- |
+| Dataset Identifier | TunnelTrace Native IPsec | UNB/CIC ISCXVPN2016 | UNB/CIC Local Archives |
+| Encapsulation Type | Native IPsec (ESP/AH) | OpenVPN over TLS | OpenVPN over TLS |
+| Source Environment | Controlled strongSwan Lab | University of NB/CIC | Pre-downloaded Local Pkg |
+| Role in Project | PRIMARY Training & Audit | SECONDARY Benchmark | Baseline Inspection |
+| Ground Truth Trace | Paired Pre/Post Encrypt | Application Labels | Package Metadata Labels |
+| Protocol Alignment | 100% Exact Match | Domain Shift Present | Domain Shift Present |
+| Current Status | Generation In Progress | Reference Baseline | TBD - Local Verification |
+
+---
+
+## 28. Own IPsec-Native Dataset Generation
+
+Because public network datasets almost universally capture OpenVPN or raw TLS rather than native IPsec ESP, the primary dataset for TUNNEL TRACE AI is generated directly within our automated testbed:
+
+```mermaid
+graph TD
+    A["Select Target Matrix: Cipher, Mode, DH, Workload, Network Conditions"] --> B["Configure strongSwan Gateways & Netem Parameters"]
+    B --> C["Establish IPsec Tunnel & Start Synchronized Capture Engines"]
+    C --> D["Tap Point 1: Plaintext Internal Traffic (Ground Truth Baseline)"]
+    C --> E["Tap Point 2: Encrypted WAN Interface (Model Input)"]
+    D --> F["Execute Programmatic Workload: Web, Video, VoIP, Chat, Email, ICMP, SCP"]
+    E --> F
+    F --> G["Stop Captures & Register Unique Session ID"]
+    G --> H["Correlate Inner Ground Truth with Outer ESP Flow via Timestamp Matching"]
+    H --> I["Store Encrypted PCAP + Metadata Manifest (Zero Plaintext Payload Retained)"]
+```
+``
+
+---
+
+## 29. UNB/CIC Supplementary Dataset & Local File Accounting
+
+The project incorporates the public UNB/CIC ISCXVPN2016 dataset solely as a supplementary reference for encrypted-traffic methodology research and feature extractor benchmarking.
+
+### Critical Protocol Demarcation
+ISCXVPN2016 captures traffic encapsulated via OpenVPN over TLS. OpenVPN introduces distinct user-space framing, TLS records, and transport wrappers that do not match the binary framing of IPsec ESP operating directly over IP Protocol 50 or UDP port 4500. Consequently, UNB/CIC data is never mixed homogeneously with native IPsec training data.
+
+### Local Downloaded Archive Tracking
+The engineering team has downloaded two initial archive packages from the UNB/CIC repository for exploratory evaluation:
+- *File 1 Status:* Downloaded; estimated size ~600+ MB (`TBD — Verify downloaded UNB/CIC archive filename and exact size`).
+- *File 2 Status:* Downloaded; estimated size ~1.8+ GB (`TBD — Verify downloaded UNB/CIC archive filename and exact size`).
+- *Total Dataset Context:* The complete UNB/CIC ISCXVPN2016 corpus comprises ~28 GB of traffic. Downloaded archives represent targeted subsets and must be verified locally prior to experimental benchmarking.
+
+---
+
+## 30. Ground Truth Methodology
+
+In commercial networks, obtaining verified ground truth for encrypted traffic without decrypting user payloads is notoriously difficult. TUNNEL TRACE AI achieves non-repudiable ground truth exclusively within its controlled testbed by intercepting traffic at two synchronized vantage points:
+1. **Internal Client Interface (Pre-Encryption):** Captures cleartext application signatures, HTTP request headers, DNS lookups, or SIP signaling frames to establish verified application labels.
+2. **External WAN Interface (Post-Encryption):** Captures the resulting encrypted ESP packets identified by the active SPI.
+3. **Correlation Engine:** Binds the verified internal label to the external ESP flow based on strict timing synchronization, then permanently discards internal cleartext payloads.
+
+---
+
+## 31. Dataset Splitting & Leakage Prevention
+
+A critical error in network machine learning is random packet or flow splitting, where packets from the same communication session appear in both training and test sets, artificially inflating accuracy.
+
+- **Mandatory Splitting Rule:** TUNNEL TRACE AI strictly enforces **Session-Level Splitting** (GroupKFold by Session ID).
+- **Guarantee:** All flows, packets, and bursts originating from a given testbed run or capture session are assigned exclusively to either the training split, validation split, or test split. No session data crosses the split boundary.
+
+---
+
+## 32. Cross-Configuration Evaluation
+
+To verify that models learn generalizable application traffic behavior rather than memorizing specific cryptographic packet lengths or network artifacts, the platform incorporates cross-configuration stress testing:
+
+**CROSS-CONFIGURATION EVALUATION MATRIX**
+
+| Test Dimension | Training Distribution | Evaluation Hold-Out | Evaluation Objective |
+| :--- | :--- | :--- | :--- |
+| Cipher Invariance | AES-128-GCM Flows | AES-256-CBC + HMAC | Verify model does not overfit |
+|  |  |  | to specific cipher pad lengths |
+| Protocol Version | IPv4 En-route ESP | IPv6 En-route ESP | Verify robustness across IP |
+|  |  |  | header length differences |
+| Network Conditions | Baseline LAN (0ms loss | Netem Jitter & Loss | Prove stability under real |
+|  | 0ms delay) | (50ms delay, 2% loss) | WAN degradation |
+| Operational Mode | Tunnel Mode | Transport Mode | Evaluate mode boundary shifts |
+
+---
+
+## 33. Security Assessment Engine
+
+Security assessment within TUNNEL TRACE AI is entirely deterministic and decoupled from machine learning. The engine evaluates observed protocol parameters against formal cryptographic security standards encoded as versioned YAML Policy-as-Code.
+
+```mermaid
+graph TD
+    A["Normalized Protocol Facts (IKE / SA / ESP)"] --> B["Policy-as-Code Evaluation Engine"]
+    C["Versioned Policy Catalog (YAML: NIST, IETF, Enterprise)"] --> B
+    
+    B --> D["Rule Evaluation Pipeline"]
+    D --> E["Rule 1: Cipher Suite Security (RFC 8221 / NIST SP 800-77)"]
+    D --> F["Rule 2: Key Exchange & DH Group Bit Strength (NIST SP 800-57)"]
+    D --> G["Rule 3: Perfect Forward Secrecy (PFS) Enforcement"]
+    D --> H["Rule 4: SA Lifetime & Rekey Threshold Audit"]
+    D --> I["Rule 5: Replay Protection & Sequence Window Check"]
+    
+    E --> J["Structured Findings Engine"]
+    F --> J
+    G --> J
+    H --> J
+    I --> J
+    
+    J --> K["Compliance Status: PASS / FAIL / UNKNOWN / NA"]
+    J --> L["Deductive Security Score Calculation (0-100)"]
+    J --> M["Structured Risk Score & Threat Matrix Generation"]
+```
+``
+
+---
+
+## 34. Authoritative Standards & Policy-as-Code
+
+The Policy Engine implements baseline profiles sourced directly from authoritative international standards:
+- **NIST SP 800-77 Rev. 1:** Guide to IPsec VPNs.
+- **NIST SP 800-57 Part 1 Rev. 5:** Recommendation for Key Management (cryptographic algorithm security strengths).
+- **RFC 7296:** Internet Key Exchange Protocol Version 2 (IKEv2).
+- **RFC 8221:** Cryptographic Algorithm Implementation Requirements for ESP and AH.
+- **RFC 8247:** Cryptographic Algorithm Implementation Requirements for IKEv2.
+- **RFC 4301 / 4303:** Security Architecture for the Internet Protocol & ESP Specifications.
+
+---
+
+## 35. Security Score Methodology
+
+The **Security Score** is a product-defined, fully transparent 0–100 index representing the defensive posture of an evaluated IPsec deployment.
+
+### Scoring Dimensions & Principles
+1. **Deterministic Deductions:** The score begins at 100 and deducts points strictly based on verified policy findings.
+2. **Transparent Traceability:** Every score deduction must trace directly to a specific finding, rule ID, and packet frame reference.
+3. **No Black-Box Scoring:** The score is never generated by an ML model or LLM.
+4. **Scoring Dimensions:**
+   - Cryptographic Algorithm Strength (Cipher & Integrity)
+   - Key Exchange & Diffie-Hellman Bit Security
+   - Perfect Forward Secrecy (PFS) Enforcement
+   - Security Association Management & Rekey Lifetimes
+   - Anti-Replay Protection & Sequence Windowing
+   - Operational Compliance Against Selected Profile
+   - Side-Channel Metadata Exposure
+5. **Exact Dimension Weights:** `TBD — Requires empirical validation and mentor review`.
+
+---
+
+## 36. Risk Scoring & Threat Matrix
+
+Findings generated by the Policy Engine map into a structured **Threat Matrix** detailing potential adversarial exploitation:
+
+**STRUCTURED THREAT MATRIX**
+
+| Threat Category | Triggering Condition | Likelihood | Severity | Authoritative Standard |
 | :--- | :--- | :--- | :--- | :--- |
-| `PS-LAB-001` | Tunnel Mode Testbed | strongSwan Lab Orchestrator | Linux Network Namespaces (`netns`) + swanctl | Verified Tunnel Mode capture fixtures |
-| `PS-LAB-002` | Transport Mode Testbed | strongSwan Lab Orchestrator | Host-to-host strongSwan configuration | Verified Transport Mode capture fixtures |
-| `PS-LAB-003/004` | AES-128 / AES-256 | strongSwan Lab Orchestrator | Cryptographic proposal automation | Ciphersuite test matrices in lab |
-| `PS-LAB-005/006` | AES-GCM / CBC+HMAC | strongSwan Lab Orchestrator | AEAD vs. legacy cipher permutation scripts | Verified AEAD and legacy testbed traces |
-| `PS-LAB-007` | DH Groups 2, 14, 19, 20, 21 | strongSwan Lab Orchestrator | Automated key exchange transform matrix | Handshake traces across DH spectrum |
-| `PS-LAB-008/009` | PFS Enabled vs. Disabled | strongSwan Lab Orchestrator | Swanctl `esp` proposal with/without DH group | Rekeyed Child SA traces verifying PFS |
-| `PS-LAB-010/011` | IPv4 & IPv6 Encapsulation | strongSwan Lab Orchestrator | Dual-stack Linux veth interface pairs | Native IPv4 and IPv6 capture packages |
-| `PS-LAB-012..017` | Workload Traffic Simulation | Synthetic Traffic Generators | Socket-based VoIP, Chat, Web, Video generators | Labeled ground-truth traffic streams |
-| `PS-CAP-001..003` | IKE, ESP, AH Capture | Capture & Ingestion Engine | `libpcap` / `tcpdump` with BPF filters | Ingested raw PCAP / live packet buffer |
-| `PS-CAP-004..006` | Traces & Live Capture | Capture & Ingestion Engine | Asynchronous file dropzone + local live agent | Verified SHA-256 session ingest record |
-| `PS-PROTO-001..008`| Deterministic Protocol ID | Protocol Forensics Pipeline | TShark JSON stream parsing + IANA mapping | Normalized Protocol Facts & SA Graph |
-| `PS-PROTO-009` | Encrypted Traffic ML | Encrypted Traffic ML Engine | XGBoost + 1D-CNN on flow metadata | Calibrated Traffic Class Probabilities |
-| `PS-SEC-001..008` | Security & Compliance | Policy-as-Code Engine | Python + versioned YAML rule evaluation | Itemized Findings & Compliance Scorecard |
-| `PS-OUT-001..008` | Required Outputs | Risk, Scoring & Report Engine | Weighted posture calculation & WeasyPrint | Posture Score, Threat Matrix, PDF Reports |
-| `PS-DEL-001..007` | System Deliverables | Full System Deployment | Docker Compose + Next.js PWA + Testbed | Deployable prototype & Curated Dataset |
+| Deprecated Cipher | 3DES or DES negotiated | HIGH | CRITICAL | NIST SP 800-77 / RFC 8221 |
+| Sweet32 Collision | 64-bit block ciphers | MEDIUM | HIGH | CVE-2016-2183 / RFC 8221 |
+| Weak Key Exchange | DH Group 1 or 2 | HIGH | CRITICAL | NIST SP 800-57 / RFC 8247 |
+| Missing PFS | Child SA rekey without | MEDIUM | HIGH | NIST SP 800-77 Rev. 1 |
+|  | new Diffie-Hellman ex |  |  |  |
+| Replay Exposure | Sequence counter wrap | LOW | HIGH | RFC 4303 (Section 3.3.3) |
+|  | or disabled anti-rep |  |  |  |
+| Metadata Profiling | High fingerprintabili | MEDIUM | MEDIUM | Side-Channel Leakage Model |
 
 ---
 
-## 6. TunnelTrace AI Solution Overview
+## 37. Metadata Fingerprintability
 
-TunnelTrace AI approaches IPsec security not as a static file-scanning task, but as an unbroken, closed-loop operational workflow:
+Even when an IPsec tunnel utilizes strong cryptographic transforms (e.g., AES-256-GCM with DH Group 19), external metadata remains visible to network eavesdroppers:
+- Outer IP addresses and geographic locations.
+- ESP packet lengths revealing payload size distributions.
+- Precise packet inter-arrival times and burst characteristics.
+- Total communication volume and temporal usage schedules.
+
+### Metadata Fingerprintability Index
+TUNNEL TRACE AI introduces an experimental **Metadata Fingerprintability Index** that measures how readily an outside observer can fingerprint the underlying application workload without decryption:
+- **Input Signals:** Calibrated classifier certainty, burst predictability, and packet-size clustering.
+- **Strict Analytical Demarcation:** The system explicitly maintains that **High Fingerprintability $\neq$ Plaintext Leakage**. A score of 80/100 does not indicate that 80% of data was compromised; it indicates that traffic patterns are 80% distinguishable from background noise.
+- **Exact Formulation:** `TBD — Requires empirical validation`.
+
+---
+
+## 38. Evidence & Forensic Provenance
+
+A foundational tenet of TUNNEL TRACE AI is absolute forensic non-repudiation. Every conclusion asserted by the platform links to an immutable chain of evidence:
 
 ```mermaid
 graph TD
-    A["Raw PCAP Upload or Live Wire Ingestion"] --> B["Deterministic Protocol Forensics (TShark + PyShark)"]
-    B --> C["Security Association (SA) Topology Reconstruction"]
-    C --> D1["Deterministic Policy-as-Code Engine (NIST SP 800-77 / RFC 8221)"]
-    C --> D2["Bidirectional ESP Flow Reconstruction"]
-    D2 --> E["Metadata-Only Machine Learning (XGBoost + 1D-CNN)"]
-    E --> F["Confidence Calibration & OOD Detection Gate"]
-    D1 --> G["Structured Security Findings & Threat Matrix"]
-    F --> H["Traffic Classification & Metadata Fingerprintability"]
-    G --> I["0-100 Security Posture Score & Risk Classification"]
-    H --> I
-    I --> J["Forensic Evidence Graph (Finding-to-Packet Byte Linking)"]
-    J --> K["Configuration Security Twin (What-If Impact Simulator)"]
-    K --> L["Operator Review & Explicit Authorization Gate"]
-    L --> M["Closed-Loop Lab Remediation (strongSwan Testbed)"]
-    M --> N["Automated Re-Capture & Re-Analysis Verification"]
-    N --> O["Publication-Grade Executive & Technical PDF Reports"]
-    J --> P["Grounded Local AI Analyst (RAG-Powered Q&A)"]
+    A["Raw Capture: SHA-256 Hash"] --> B["Specific Packet Frame & Byte Offset"]
+    B --> C["Protocol Dissector Observation (e.g., Transform Payload ENCR_3DES)"]
+    C --> D["Normalized Protocol Fact (encryption_cipher = '3DES')"]
+    D --> E["Evaluated Policy Rule (SEC-RULE-001: Deprecated Algorithm)"]
+    E --> F["Structured Finding: CRITICAL Vulnerability"]
+    F --> G["Security Score Deduction & Risk Threat Entry"]
+    G --> H["Actionable Remediation Guidance & Configuration Twin Diff"]
 ```
+``
 
-The system continuously operationalizes three fundamental inquiries:
-1. **What IPsec configuration is running?** Extracted deterministically from observable packet headers, transform proposals, security associations, and network evidence without guesswork.
-2. **How secure is it, and why?** Evaluated against authoritative national standards, itemizing exact vulnerabilities (e.g., Sweet32 collision risks on 3DES, precomputation vulnerabilities on 1024-bit Diffie-Hellman) and side-channel exposure.
-3. **What should change, and can we verify that the change actually improved the configuration?** Projected through a virtual configuration twin, executed inside a controlled strongSwan lab, and verified through immediate wire recapture and re-analysis.
-
----
-
-## 7. Core Product Philosophy
-
-The architecture of TunnelTrace AI adheres to an uncompromising, eight-stage operational philosophy:
-
-$$\mathbf{DETECT} \longrightarrow \mathbf{RECONSTRUCT} \longrightarrow \mathbf{INFER} \longrightarrow \mathbf{ASSESS} \longrightarrow \mathbf{EXPLAIN} \longrightarrow \mathbf{REMEDIATE} \longrightarrow \mathbf{RE\text{-}TEST} \longrightarrow \mathbf{VERIFY}$$
-
-1. **DETECT:** Rapidly identify IPsec traffic structures on the wire or inside capture traces, distinguishing IKE negotiation exchanges from bulk ESP/AH data streams.
-2. **RECONSTRUCT:** Correlate disparate packet events into unified, stateful domain entities: linking IKE handshakes to Child SAs, pairing SPIs across bidirectional tunnels, and reconstructing bidirectional encrypted flows.
-3. **INFER:** Apply supervised machine learning solely where encryption obscures visibility, predicting inner application workloads from metadata while quantifying predictive uncertainty.
-4. **ASSESS:** Audit observed configurations against versioned, authoritative policy rules, generating deterministic findings with zero generative hallucination.
-5. **EXPLAIN:** Ground every finding, score deduction, and ML inference in tangible packet evidence, providing TreeSHAP feature attributions and standards citations.
-6. **REMEDIATE:** Synthesize hardened, vendor-accurate configuration directives directly addressing audited deficiencies.
-7. **RE-TEST:** Deploy synthesized configurations to a controlled, isolated network namespace testbed executing real strongSwan instances.
-8. **VERIFY:** Recapture wire traffic from the remediated testbed, re-run automated analysis, and prove mathematically that the security deficiencies are resolved.
+### Tracked Provenance Metadata
+Every generated analysis record stores:
+- Source PCAP SHA-256 digest and capture timestamp.
+- Software parser version and dissector build number.
+- Machine learning model identifiers and feature schema version hashes.
+- Policy-as-Code ruleset version and compliance profile identifier.
+- Unique execution UUID linking all database records.
 
 ---
 
-## 8. The Hybrid Intelligence Design Principle
+## 39. Configuration Security Twin
 
-A critical failure mode of modern security tooling is the indiscriminate application of machine learning to tasks where deterministic logic is required. TunnelTrace AI enforces a rigorous **Four-Layer Hybrid Intelligence Architecture**:
-
-```mermaid
-graph TD
-    subgraph Layer1 ["Layer 1: Deterministic Protocol Forensics"]
-        L1A["TShark / PyShark Dissector"] --> L1B["Observable Protocol Facts"]
-        L1B --> L1C["IKE Version, SPIs, Modes, Transforms, DH Groups, Selectors"]
-    end
-
-    subgraph Layer2 ["Layer 2: Statistical & Sequential ML"]
-        L2A["ESP Flow Metadata Extractor"] --> L2B["XGBoost (Tabular) + 1D-CNN (Sequential)"]
-        L2B --> L2C["Calibrated Traffic Class & OOD / Anomaly State"]
-    end
-
-    subgraph Layer3 ["Layer 3: Deterministic Security & Policy Engine"]
-        L3A["Versioned YAML Policy-as-Code"] --> L3B["NIST SP 800-77 / RFC Rules"]
-        L3B --> L3C["Itemized Findings, Security Posture Score, Threat Matrix"]
-    end
-
-    subgraph Layer4 ["Layer 4: Grounded AI Analyst (RAG)"]
-        L4A["PostgreSQL + pgvector Knowledge Base"] --> L4B["Local LLM Inference Engine"]
-        L4B --> L4C["Grounded Explanations & Natural-Language Q&A"]
-    end
-
-    L1C --> Layer3
-    L1C --> Layer2
-    Layer3 --> Layer4
-    Layer2 --> Layer4
-```
-
-### Functional Division of Intelligence
-* **Layer 1 (Deterministic Protocol Forensics):** Dedicated to directly observable wire facts. Parsing IKE headers, transform attributes, DH group IDs, SPIs, and packet offsets requires 100% mathematical precision. Machine learning is strictly forbidden here.
-* **Layer 2 (Machine Learning Engine):** Deployed exclusively where encryption prevents direct inspection—specifically, classifying application categories inside opaque ESP ciphertext, evaluating predictive entropy for Out-of-Distribution (OOD) detection, and calculating behavioral anomalies via Isolation Forest.
-* **Layer 3 (Deterministic Policy Engine):** Governs security scoring, compliance auditing, risk classification, and remediation generation. Security correctness is a regulatory and mathematical question, not a probabilistic one. Findings are evaluated via deterministic code asserting against versioned standard baselines.
-* **Layer 4 (Grounded AI Analyst):** Provides conversational explanation, executive summarization, and query resolution. Operating via local Retrieval-Augmented Generation (RAG), the model is strictly constrained to synthesize answers from verified database facts, active findings, and official standards documentation. The LLM never invents findings, modifies scores, or hallucinates protocol states.
-
-| Functional Area | Processing Layer | Technology / Mechanism | Justification & Safeguards |
-| :--- | :--- | :--- | :--- |
-| Protocol / SA Extraction | Layer 1: Deterministic | TShark / PyShark / EK JSON | Direct wire observable; 100% precision required; zero guessing |
-| Transform Identification | Layer 1: Deterministic | IANA Registry Mapping Tables | Standard RFC integer-to-name lookup; deterministic |
-| Inner ESP Classification | Layer 2: Machine Learning | XGBoost + 1D-CNN Ensemble | Payload is encrypted; statistical metadata inference required |
-| Anomaly / OOD Detection | Layer 2: Machine Learning | Isolation Forest + Predictive Entropy | Unseen pattern recognition; flags novel/deviant behavior |
-| Security Assessment | Layer 3: Policy Engine | Python + YAML Policy-as-Code | Regulatory compliance; must be auditable, repeatable, and exact |
-| Posture Score Calculation | Layer 3: Policy Engine | Mathematical Penalty Formula | Zero hallucination; every deduction traces to an active finding |
-| Threat Matrix Generation | Layer 3: Policy Engine | Deterministic Rule-to-Threat Mapping | Maps verified findings to STRIDE/CVE consequences |
-| Conversational Q&A | Layer 4: AI Analyst | Local LLM + pgvector RAG | Explanatory synthesis only; anchored strictly to verified findings |
-
----
-
-## 9. Evidence and Uncertainty Model
-
-Passive network capture inherently involves incomplete visibility: captures may start mid-session, handshakes may occur out-of-band, or packets may be dropped by sniffers. TunnelTrace AI rejects binary true/false assumptions, formalizing an **Explicit Four-State Evidence Model**:
+The **Configuration Security Twin** is an interactive configuration modeling tool that allows security administrators to simulate the impact of security hardening before modifying active gateways.
 
 ```mermaid
 graph LR
-    PE["Passive Network Evidence"] --> V["VERIFIED"]
-    PE --> I["INFERRED"]
-    PE --> U["UNKNOWN"]
-    V --> M["MISCONFIGURATION OBSERVED"]
-```
+    subgraph INPUT_STATE["Observed Network State"]
+        A["Active Parsed Configuration"] --> B["Current Score: 48/100"]
+        A --> C["Critical Findings: 3DES, DH Group 2, No PFS"]
+    end
 
-* **`VERIFIED` (Direct Observable Proof):** Assigned when an explicit packet exchange unambiguously proves a parameter (e.g., IKE_SA_INIT response containing Transform Type 1 = AES-CBC-256; Frame #14).
-* **`INFERRED` (Heuristic or Statistical Derivation):** Assigned when a property is derived through probabilistic modeling or structural heuristics (e.g., inner traffic classified as Video Streaming with 91% calibrated confidence; or Tunnel Mode inferred from gateway IP differences).
-* **`UNKNOWN` (Unobserved Parameter):** Assigned when passive wire evidence is insufficient to verify or refute a property (e.g., Child SA rekeying was not captured, leaving Perfect Forward Secrecy unobservable). The system transparently flags the state as unknown without guessing or applying unfair penalties.
-* **`MISCONFIGURATION OBSERVED` (Proven Specification Breach):** Assigned when observable evidence definitively violates governing policy rules (e.g., DES or 3DES negotiated in active transform proposals). Directly incurs scoring deductions.
+    subgraph TWIN_SIMULATION["Configuration Security Twin"]
+        D["Interactive Hardening Editor"] --> E["Apply Recommended Baseline: AES-256-GCM, DH 19, PFS"]
+        E --> F["Re-run Policy-as-Code Engine (Virtual Audit)"]
+    end
+
+    subgraph PROJECTED_STATE["Projected Security Posture"]
+        F --> G["Projected Score: 95/100 (PROJECTED)"]
+        F --> H["Projected Findings: 0 Critical, 0 High"]
+        F --> I["Generate strongSwan swanctl.conf Hardened Diff"]
+    end
+
+    INPUT_STATE --> TWIN_SIMULATION
+    TWIN_SIMULATION --> PROJECTED_STATE
+```
+``
+
+*Operational Boundary:* The Configuration Security Twin is a policy and compliance projection tool; it is not a full-scale network traffic emulator.
 
 ---
 
-## 10. High-Level System Architecture
+## 40. Closed-Loop Remediation Engine
 
-The overall architecture of TunnelTrace AI is structured into three decoupled, high-cohesion operational domains:
-
-```mermaid
-graph TB
-    subgraph DOMAIN1 ["DOMAIN 1: DATA ACQUISITION & NETWORK INTELLIGENCE"]
-        IN1["Offline PCAP / PCAPNG Ingestion"]
-        IN2["Live Interface Packet Capture"]
-        IN3["strongSwan Linux Testbed"]
-        DISSECT["TShark / PyShark Streaming Dissection"]
-        SA_REC["Stateful SA Graph Reconstruction"]
-        FLOW_REC["ESP Flow Correlation & Feature Extraction"]
-
-        IN1 --> DISSECT
-        IN2 --> DISSECT
-        IN3 --> DISSECT
-        DISSECT --> SA_REC
-        DISSECT --> FLOW_REC
-    end
-
-    subgraph DOMAIN2 ["DOMAIN 2: AI, SECURITY & EVIDENCE INTELLIGENCE"]
-        ML_TAB["Model A: XGBoost 2.0 (Tabular)"]
-        ML_SEQ["Model B: PyTorch 1D-CNN (Spatial)"]
-        FUSION["Ensemble Fusion & Platt Calibration"]
-        OOD["Predictive Entropy & Isolation Forest Gate"]
-        SHAP_EXP["TreeSHAP Explainability Engine"]
-        POL_ENG["Deterministic Policy-as-Code Engine"]
-        SCORE_ENG["0-100 Posture Score & Threat Matrix"]
-        META_IDX["Metadata Fingerprintability Evaluator"]
-        EVID_GRAPH["Forensic Evidence & Provenance Graph"]
-
-        FLOW_REC --> ML_TAB
-        FLOW_REC --> ML_SEQ
-        ML_TAB --> FUSION
-        ML_SEQ --> FUSION
-        FUSION --> OOD
-        ML_TAB --> SHAP_EXP
-        SA_REC --> POL_ENG
-        POL_ENG --> SCORE_ENG
-        FLOW_REC --> META_IDX
-        POL_ENG --> EVID_GRAPH
-        SCORE_ENG --> EVID_GRAPH
-    end
-
-    subgraph DOMAIN3 ["DOMAIN 3: PRODUCT, REMEDIATION & PLATFORM"]
-        API["FastAPI Asynchronous Application Core"]
-        DB[(PostgreSQL 15 + pgvector)]
-        TWIN["Configuration Security Twin Simulator"]
-        REMED["Closed-Loop strongSwan Lab Remediation"]
-        REPORT["WeasyPrint PDF / HTML Report Exporter"]
-        RAG["Local Grounded AI Analyst (RAG)"]
-        UI["Next.js 14 Responsive PWA Dashboard"]
-
-        API --> DB
-        EVID_GRAPH --> API
-        FUSION --> API
-        SCORE_ENG --> API
-        API --> TWIN
-        TWIN --> REMED
-        REMED --> IN3
-        API --> REPORT
-        API --> RAG
-        API --> UI
-    end
-```
-
-### Domain Functional Breakdown
-1. **Domain 1: Data Acquisition & Network Intelligence:** Ingests raw PCAP traces or intercepts wire interfaces. Executes streaming dissection via TShark child processes, normalizes raw event dictionaries, correlates dynamic SPI parameters into a stateful Security Association graph, and aggregates raw ESP frames into bidirectional flows.
-2. **Domain 2: AI, Security & Evidence Intelligence:** Executes parallel analytical pipelines. The machine learning pipeline extracts statistical and sequential features, inferring encrypted workloads via calibrated XGBoost and 1D-CNN models with SHAP explanations. The policy pipeline audits reconstructed SAs against NIST/RFC rules, generating itemized findings, quantitative posture scores, threat matrices, and cryptographic evidence breadcrumbs.
-3. **Domain 3: Product, Remediation & Platform:** Exposes structured findings through FastAPI REST and WebSocket endpoints. Persists analytical sessions in PostgreSQL, projects configuration updates via the Configuration Security Twin, executes closed-loop validation on the strongSwan testbed, compiles publication-quality PDF reports, powers grounded RAG queries, and renders an interactive Next.js PWA interface.
-
----
-
-## 11. IPsec Testbed Architecture
-
-To satisfy Pillar A (`PS-LAB-001` through `PS-LAB-017`) and establish absolute ground-truth for machine learning and remediation, TunnelTrace AI incorporates an automated, containerized IPsec network testbed:
-
-```mermaid
-graph LR
-    subgraph HostA ["Namespace: netns_alice (Client & Gateway A)"]
-        GEN_A["Synthetic Workload Generator<br/>(VoIP, Chat, Web, Video, ICMP)"]
-        SWAN_A["strongSwan 5.9+ (charon)<br/>swanctl / VICI Controller"]
-        GEN_A --> SWAN_A
-    end
-
-    subgraph WAN ["WAN Transit Emulation (tc / netem)"]
-        NETEM["Linux Traffic Control (tc)<br/>Impairment: Latency, Jitter, Loss"]
-        CAP_POINT["Encrypted WAN Sniffer<br/>tcpdump / libpcap (Capture Point)"]
-        NETEM --- CAP_POINT
-    end
-
-    subgraph HostB ["Namespace: netns_bob (Gateway B & Server)"]
-        SWAN_B["strongSwan 5.9+ (charon)<br/>swanctl / VICI Controller"]
-        SRV_B["Application Echo Servers<br/>(SIP, HTTP, SMTP, Video Sinks)"]
-        SWAN_B --> SRV_B
-    end
-
-    SWAN_A -->|Encrypted IPsec Tunnel| NETEM
-    NETEM -->|Encrypted IPsec Tunnel| SWAN_B
-```
-
-### Testbed Engineering & Capabilities
-* **Operating Platform:** Linux Kernel 5.15+/6.x utilizing lightweight Linux Network Namespaces (`ip netns`) ensuring zero virtualization overhead and microsecond-level process isolation.
-* **VPN Engine:** strongSwan 5.9.8+ utilizing modern `swanctl` and Versatile IKE Control Interface (VICI) socket APIs for automated configuration reloads.
-* **Kernel IPsec Stack:** Native Linux XFRM framework managing Security Association Databases (SAD) and Security Policy Databases (SPD).
-* **Controlled Network Impairments:** Emulated using Linux Traffic Control (`tc qdisc`) and `netem`:
-  * Configurable latency: 0ms to 200ms.
-  * Jitter injection: normal and Pareto distributions.
-  * Packet loss simulation: 0.1% to 5.0%.
-  * MTU manipulation: enforcing wire fragmentation.
-* **Ground-Truth Data Generation:** Workload generators bind to virtual Ethernet pairs inside `netns_alice`, injecting known application workloads into the tunnel while recording exact application timestamps and parameters. Simultaneously, the WAN capture point records the resulting encrypted ESP frames, establishing an unbreakable ground-truth mapping.
-
----
-
-## 12. Capture and Protocol Forensics Pipeline
-
-TunnelTrace AI ingests network traces through an asynchronous, high-throughput pipeline designed to handle large forensic traces without memory exhaustion:
-
-```mermaid
-graph LR
-    INPUT["Input: PCAP / Live Wire"] --> INGEST["Ingestion & SHA-256 Hashing"]
-    INGEST --> MEM_GUARD["Memory & Size Bounding (RLIMIT_AS)"]
-    MEM_GUARD --> TSHARK["TShark Dissector (Child Process: -T ek)"]
-    TSHARK --> STREAM["NDJSON Line Stream Parser"]
-    STREAM --> DTO["Pydantic Frame Normalizer"]
-    DTO --> FACTS["Normalized Protocol Facts Repository"]
-```
-
-### Pipeline Design Principles
-1. **Never Rebuild Wireshark:** The platform leverages TShark 4.x as a child process. Decades of engineering and edge-case dissection logic in Wireshark are utilized directly rather than reimplementing fragile protocol decoders.
-2. **Safe Subprocess Execution:** TShark runs under restricted user privileges with strictly tokenized arguments: `subprocess.Popen(["tshark", "-r", safe_path, "-T", "ek"])`. Shell interpolation is prohibited, mitigating command injection vulnerabilities.
-3. **Resource-Bounded Execution:** Processing pipelines enforce POSIX resource limits (`RLIMIT_AS` capped at 1GB, execution timeout at 120 seconds) to guard against malformed packet decompression bombs.
-4. **Streaming Deserialization:** Output is ingested line-by-line via Elastic Common Schema (EK) JSON streams, preventing out-of-memory errors on multi-gigabyte captures.
-
----
-
-## 13. Security Association Reconstruction
-
-A major differentiator of TunnelTrace AI is the stateful reconstruction of Security Associations into an intuitive, topological entity graph:
+TUNNEL TRACE AI bridges the gap between passive reporting and active operational validation through its **Closed-Loop Remediation** pipeline:
 
 ```mermaid
 graph TD
-    CAP["Forensic Packet Stream"] --> IKE_SESS["IKE Session Entity"]
-    IKE_SESS --> IKE_SA["IKE SA (Parent Control Channel)<br/>• Initiator & Responder SPIs<br/>• IKE Version (IKEv1 / IKEv2)<br/>• Negotiated Transforms (ENC, INT, PRF, DH)<br/>• Rekey Events & Lifetimes"]
-    IKE_SA --> CHILD_SA1["Child SA #1 (Inbound ESP Channel)<br/>• Inbound SPI (32-bit hex)<br/>• Operational Mode (Tunnel / Transport)<br/>• Encryption & Integrity Ciphers<br/>• Traffic Selectors (Local/Remote Subnets)"]
-    IKE_SA --> CHILD_SA2["Child SA #2 (Outbound ESP Channel)<br/>• Outbound SPI (32-bit hex)<br/>• Operational Mode (Tunnel / Transport)<br/>• Sequence Number Tracking<br/>• Replay Window Verification"]
-    CHILD_SA1 --> FLOW["Bidirectional ESP Flow Entity"]
-    CHILD_SA2 --> FLOW
+    A["Policy Engine Identifies Vulnerability (e.g., Insecure 3DES / DH2)"] --> B["Generate Hardened Configuration (swanctl.conf)"]
+    B --> C["Analyst Reviews Diff & Approves Testbed Deployment"]
+    C --> D["Privileged Agent Applies Config to strongSwan Lab Gateway"]
+    D --> E["Automated Daemon Reload & IPsec Tunnel Re-Negotiation"]
+    E --> F["Automated Workload Generator Runs Baseline Traffic"]
+    F --> G["Live Interface Tap Captures Recaptured WAN PCAP"]
+    G --> H["Forensics & Policy Engines Execute Secondary Audit"]
+    H --> I{"Did the New Configuration Eliminate Findings?"}
+    I -->|"YES: Verified Pass"| J["Mark Finding as REMEDIATION VERIFIED (Display Proof)"]
+    I -->|"NO: Issue Persists"| K["Mark as REMEDIATION FAILED (Flag Regression)"]
 ```
+``
 
-### Extracted SA Parameters
-* **SPI Tracking:** Correlates 32-bit hex Security Parameter Indexes across inbound and outbound channels.
-* **Transform Proposals:** Extracts active encryption ciphers, key sizes, integrity mechanisms, and PRF algorithms.
-* **Mode Determination:** Classifies operational mode as Tunnel Mode (new outer IP header encapsulating inner IP datagram) or Transport Mode (outer IP header preserved, ESP payload header inserted).
-* **Traffic Selectors:** Extracts negotiated local and remote subnet policies (e.g., `10.0.1.0/24 <-> 10.0.2.0/24`).
-* **PFS Observation:** Inspects Child SA rekeying frames to verify whether new Diffie-Hellman Key Exchange payloads (`KEi`/`KEr`) were exchanged.
+### Safety & Automation Boundaries
+To protect operational infrastructure:
+- **Restricted Target:** Automated remediation execution is strictly restricted to the local strongSwan testbed environment.
+- **No Production Automation:** The platform does not push configuration changes to production firewalls or third-party appliances (Cisco, FortiGate, pfSense). Support for third-party systems is strictly limited to generating exportable configuration diffs.
 
 ---
 
-## 14. Encrypted Traffic Machine Learning Engine
+## 41. Reporting System
 
-The primary supervised machine learning objective in TunnelTrace AI is **Encrypted Traffic Classification**: inferring the broad application workload running inside an IPsec tunnel without decrypting ESP ciphertext.
+The platform automatically compiles two distinct, formal report formats:
+
+### 1. Executive Summary Report
+- **Target Audience:** Chief Information Security Officers (CISOs), compliance managers, and executive leadership.
+- **Contents:** High-level Security Posture Score (0–100), overall risk categorization, compliance status across regulatory baselines (NIST, IETF), summary of critical vulnerabilities, and strategic remediation milestones.
+
+### 2. Technical Audit & Forensic Report
+- **Target Audience:** Network security engineers, SOC analysts, and incident responders.
+- **Contents:** Full forensic provenance (PCAP SHA-256, tool versions), detailed IKE exchange timeline, complete Security Association tables (SPIs, transforms, lifetimes), encrypted ESP flow classifications with calibrated confidence, SHAP feature attributions, exact packet frame evidence links, and copy-pasteable configuration remediation diffs.
+
+---
+
+## 42. Grounded AI Analyst (RAG Pipeline)
+
+To assist analysts in interpreting complex cryptographic findings without introducing artificial hallucinations, TUNNEL TRACE AI incorporates a **Grounded Retrieval-Augmented Generation (RAG)** assistant:
 
 ```mermaid
 graph TD
-    ESP["Reconstructed Bidirectional ESP Flow"] --> FEAT_ENG["Flow Metadata Feature Extractor"]
+    A["Analyst Natural Language Query: 'Why did my tunnel fail NIST compliance?'"] --> B["Query Embedding Model"]
+    B --> C["Semantic Search across pgvector Vector Store"]
     
-    FEAT_ENG -->|Statistical Aggregations| VEC["24 Tabular Flow Features<br/>(Sizes, Inter-Arrival Times, Bursts, Direction Ratios)"]
-    FEAT_ENG -->|Early Packet Window| TENS["Sequential Tensor (3 x N)<br/>[Packet Direction, Length, Delta-Time]"]
-    
-    VEC --> MODEL_A["Model A: XGBoost 2.0<br/>(Tabular Gradient Boosting)"]
-    TENS --> MODEL_B["Model B: PyTorch 1D-CNN<br/>(Temporal Sequence Convolution)"]
-    
-    MODEL_A --> PROB_A["Raw Class Probabilities (A)"]
-    MODEL_B --> PROB_B["Raw Class Probabilities (B)"]
-    
-    PROB_A --> FUSION["Ensemble Fusion Layer<br/>(Weighted Softmax Averaging)"]
-    PROB_B --> FUSION
-    
-    FUSION --> CALIB["Platt Temperature Scaling Calibration"]
-    
-    CALIB --> GATE["OOD & Uncertainty Rejection Gate"]
-    GATE -->|Predictive Entropy > Threshold| UNK["Class: UNKNOWN / UNSEEN TRAFFIC"]
-    GATE -->|Calibrated Confidence >= Threshold| PRED["Predicted Application Class<br/>(Web, Video, VoIP, Chat, Email, File, ICMP)"]
-    
-    MODEL_A --> SHAP["TreeSHAP Explainability Engine"]
-    SHAP --> EXP_PANEL["Feature Attribution Explanations"]
+    subgraph GROUNDED_CONTEXT["Authoritative Knowledge Sources"]
+        D["Verified Session Facts & SA Parameters"]
+        E["Deterministic Policy Findings for Current Analysis Run"]
+        F["Packet-Level Frame References & Evidence Records"]
+        G["Indexed Standards Documentation: NIST SP 800-77, RFC 8221, RFC 7296"]
+    end
+
+    C --> GROUNDED_CONTEXT
+    GROUNDED_CONTEXT --> H["Structured Context Assembly (Strict System Prompt)"]
+    H --> I["Local / Managed Large Language Model (e.g., Llama-3 / Gemini)"]
+    I --> J["Evidence-Grounded Explanation with Direct Document Citations"]
 ```
+``
 
-### Model Architectures & Responsibilities
-1. **Model A (XGBoost 2.0):** Gradient-boosted decision trees trained on 24 tabular flow statistics (mean/std packet length, forward/reverse packet count ratios, inter-arrival time quantiles, burst volume). Offers rapid inference, robustness to feature scaling, and native TreeSHAP compatibility.
-2. **Model B (Lightweight PyTorch 1D-CNN):** Convolutional neural network operating on the early packet sequence tensor ($3 \times N$, capturing direction, wire length, and inter-packet arrival time for the first $N$ packets of a flow; candidate sequence lengths $N \in \{32, 64, 128\}$ evaluated empirically). Captures early protocol handshakes and spatial traffic signatures.
-3. **Ensemble Fusion:** Combines probabilistic outputs of Model A and Model B via weighted softmax averaging. Exact fusion weights and layer hyperparameters will be finalized through empirical validation.
-
-### Target Workload Taxonomy
-* **Web Browsing:** Asymmetric, bursty HTTP/HTTPS transactions.
-* **Video Streaming:** High-bitrate, downstream-dominant flows with sustained throughput.
-* **VoIP Telephony:** Low-latency, symmetric bidirectional streams with small, fixed-cadence packets.
-* **Chat / Messaging:** Sporadic, low-volume bursts separated by extended idle intervals.
-* **E-mail:** Semi-regular synchronization bursts with moderate payload size variability.
-* **File Transfer:** Monolithic, high-throughput unidirectional data floods.
-* **ICMP Diagnostic:** Low-frequency, uniform echo request/reply pairs.
-* **Unknown / Unseen:** Out-of-Distribution flows failing confidence or entropy thresholds.
-
-> **WhatsApp Classification Note:** In strict compliance with scientific integrity, WhatsApp traffic is categorized within the general **Chat / Messaging** class unless real, controlled WhatsApp application traces are specifically captured and validated within the testbed. TunnelTrace AI never claims generic synthetic chat data is WhatsApp.
+### Absolute Governance Constraints
+- The LLM is strictly an **explanatory interface**.
+- The LLM is technically barred from asserting protocol facts, generating security findings, modifying security scores, or determining compliance states.
+- If the RAG service or LLM endpoint is offline, 100% of core platform capabilities (forensics, classification, policy evaluation, reporting, and remediation) remain fully operational.
 
 ---
 
-## 15. AI Confidence Calibration, OOD Detection & Explainability
+## 43. Product & UI Modules
 
-### 15.1 Confidence Calibration
-Standard neural networks and tree ensembles frequently produce overconfident probabilities (e.g., predicting 99% probability on misclassified instances). TunnelTrace AI enforces post-hoc **Probability Calibration**:
-* **Temperature Scaling (Platt Scaling):** Learns a single scalar parameter $T > 0$ on a held-out validation set to rescale logit distributions: $\hat{p}_i = \frac{e^{z_i / T}}{\sum_j e^{z_j / T}}$.
-* **Evaluation Metrics:** Evaluated rigorously using Expected Calibration Error (ECE), Brier Score, and visual Reliability Diagrams.
+The user interface of TUNNEL TRACE AI is structured into fourteen specialized operational modules designed for high-density, low-latency cybersecurity investigation:
 
-### 15.2 Out-of-Distribution (OOD) and Anomaly Detection
-To prevent the model from hallucinating labels on novel application protocols or malware tunneling:
-* **Predictive Entropy Gate:** Measures Shannon entropy across the calibrated probability distribution: $H(p) = -\sum_i p_i \log_2 p_i$. If $H(p) > H_{\text{threshold}}$, the flow is labeled `UNKNOWN / UNSEEN TRAFFIC`.
-* **Isolation Forest Baseline:** Computes anomaly isolation depth on tabular feature vectors to identify statistical outliers independent of supervised class boundaries.
-* **Core Principle:** Anomaly $\neq$ Attack. Anomalies are flagged as unusual behavioral deviations, never falsely marketed as an automated zero-day intrusion detection system.
+**USER INTERFACE MODULE MATRIX**
 
-### 15.3 Explainable AI via TreeSHAP
-For every classification produced by Model A, TunnelTrace AI generates local feature attributions using **TreeSHAP** (SHapley Additive exPlanations):
-* Explains *why* a flow was classified as Video Streaming (e.g., +0.42 contribution from `downstream_bytes_ratio > 0.85`, +0.28 contribution from `packet_length_std < 120`).
-* Provides defensible, game-theoretic explanations presented directly to SOC analysts, eliminating the "black-box" nature of deep learning.
+| Module Name | Operational Purpose & User Capabilities |
+| :--- | :--- |
+| 1. Command Center | Unified SOC overview displaying security score, active alerts, and quick-stats |
+| 2. Analyze Hub | Drag-and-drop PCAP upload, live capture initialization, and run management |
+| 3. Protocol Intel | Detailed IKE exchange timeline, transform breakdowns, and packet-level decode |
+| 4. SA Explorer | Interactive React Flow graph visualizing IKE SAs, Child SAs, SPIs, and flows |
+| 5. Traffic Intel | Encrypted flow classification dashboard, confidence meters, and volume graphs |
+| 6. Security Audit | Interactive findings table filterable by severity, rule ID, and impact |
+| 7. Compliance Hub | Regulatory compliance checklist tracking adherence to NIST and RFC standards |
+| 8. Threat Matrix | Visual mapping of vulnerabilities to threat actors, likelihood, and severity |
+| 9. Evidence Browser | Frame-by-frame packet inspection tying findings directly to raw hex decodes |
+| 10. Security Twin | What-if configuration simulator modeling score changes before deployment |
+| 11. Remediation | Side-by-side configuration diff viewer and automated lab re-test trigger |
+| 12. Report Engine | One-click export of Executive and Technical audit reports in PDF / JSON format |
+| 13. AI Analyst | Grounded conversational assistant answering forensic and standards questions |
+| 14. Testbed Lab | Topology manager to configure, run, and capture traffic across strongSwan lab |
+
+### Design Standards
+- **Color Theme:** Clean Light Mode default engineered for high-contrast visibility during daytime audits; Dark Mode toggle supported.
+- **Responsive Architecture:** Desktop-first SOC workstation layout; adaptive layouts for tablet and mobile PWA monitoring.
 
 ---
 
-## 16. Comprehensive Dataset Strategy
+## 44. Data Architecture Summary
 
-A defensible machine learning platform requires an unassailable data governance strategy. TunnelTrace AI utilizes two distinct data sources, clearly delineating their roles:
+The storage architecture cleanly separates structured analytical entities from raw binary capture files:
 
-```mermaid
-graph TD
-    subgraph Primary ["PRIMARY DATA SOURCE: IPsec-Native Testbed Dataset"]
-        T1["Controlled strongSwan Linux Testbed"] --> T2["Dual-Point Captures (Plaintext & ESP WAN)"]
-        T2 --> T3["Automated Cryptographic & Network Impairment Permutations"]
-        T3 --> T4["Absolute Ground-Truth Metadata Manifests"]
-        T4 --> T5["Training, Calibration & Testing of TunnelTrace AI Models"]
-    end
+**DATA STORAGE ARCHITECTURE**
 
-    subgraph Supporting ["SUPPORTING DATA SOURCE: UNB/CIC ISCXVPN2016"]
-        U1["Official Public Benchmark (ISCXVPN2016)"] --> U2["OpenVPN Traffic Traces (TLS-Based)"]
-        U2 --> U3["Methodology Benchmarking & Feature Extraction Research"]
-        U3 --> U4["Strict Domain Isolation (Never Mixed into Native IPsec Models)"]
-    end
-```
-
-### Dataset Strategy Comparison Matrix
-
-| Attribute | Primary Dataset: IPsec-Native Lab | Supporting Dataset: UNB/CIC ISCXVPN2016 |
+| Storage Tier | Technology | Stored Data Entities |
 | :--- | :--- | :--- |
-| **VPN Protocol** | **IPsec ESP (RFC 4303) over raw IP & UDP 4500** | **OpenVPN over TLS / UDP / TCP** |
-| **Origin / Source** | Controlled strongSwan Linux Namespace Testbed | University of New Brunswick (ISCX / CIC) |
-| **Operational Role** | **PRIMARY Core Dataset** | **SUPPORTING Research Benchmark** |
-| **Platform Usage** | Training, validation, and testing of production ML models | Methodology baseline, feature comparison research |
-| **Ground Truth** | 100% verified via synchronized pre-encapsulation logging | Documented application trace labels |
-| **Domain Limitations** | Controlled synthetic testbed environment | **Domain Shift:** OpenVPN encapsulation differs fundamentally from IPsec ESP |
-| **Status / Exact Sizes** | Generated continuously across configuration matrices | *TBD — Verify downloaded UNB/CIC archive filename and exact size* |
+| Relational DB | PostgreSQL 16+ | Analysis jobs, reconstructed SAs, flows, |
+|  |  | policy findings, risk scores, audit logs |
+| Vector Store | pgvector extension | RFC standards text, NIST guidelines, and local |
+|  |  | documentation embeddings for RAG retrieval |
+| File / Object Store | Local Volume / MinIO | Raw PCAP/PCAPNG files, generated PDF audit |
+|  |  | reports, raw ML model artifacts |
+| Cache & Message Bus | Redis (Optional / Async) | Real-time background job state, WebSocket push |
+|  |  | queues for live analysis streaming |
 
-### Locally Downloaded UNB/CIC Archive Register
-The team has acquired two VPN-related archives from the UNB/CIC repository for exploratory methodology benchmarking:
+*Data Storage Rule:* Raw multi-gigabyte PCAP binaries are never stored directly within PostgreSQL database tables; they reside in managed object storage referenced by SHA-256 hashes.
 
-| Archive Record | Recorded / Recalled Size | Archive File Type | Encapsulation | Status / Verification Note |
+---
+
+## 45. Technology Stack
+
+The platform is constructed using an enterprise-grade, maintainable open-source technology stack:
+
+**TECHNOLOGY STACK MATRIX**
+
+| Architectural Layer | Selected Technology | Technical Selection Rationale |
+| :--- | :--- | :--- |
+| Frontend Framework | Next.js 14+ (React / TS) | High-performance SSR/SSG, type safety, modular |
+| Styling & UI Tokens | Tailwind CSS (Vanilla CSS) | Lightweight, predictable design system |
+| Graph Visualization | React Flow | Native node-edge visualization for SA Explorer |
+| Analytics Charting | Apache ECharts | High-performance canvas rendering for flows |
+| Backend API Server | Python 3.11+ / FastAPI | Asynchronous throughput, native ML integration |
+| Network Parsing | TShark / PyShark / libpcap | Industry-standard, robust protocol dissectors |
+| Testbed Environment | Linux / strongSwan 5.9+ | Reference enterprise open-source IPsec gateway |
+| Impairment Engine | Linux iproute2 (tc netem) | Kernel-level latency, jitter, and loss injection |
+| Tabular ML Model | XGBoost | Fast, robust, gradient-boosted decision trees |
+| Sequence ML Model | PyTorch (1D-CNN) | Flexible temporal deep learning on early packets |
+| Explainable AI | SHAP (TreeSHAP) | Mathematically rigorous feature attribution |
+| Anomaly Detection | scikit-learn (Isolation F.) | Lightweight, unsupervised outlier identification |
+| Policy Engine | Python / PyYAML | Declarative, human-readable Policy-as-Code rules |
+| Database & Vector | PostgreSQL 16+ / pgvector | Unified ACID relational and semantic search |
+| Containerization | Docker / Docker Compose | Reproducible, cross-platform deployment |
+
+---
+
+## 46. Deployment Architecture
+
+TUNNEL TRACE AI implements a local-first deployment model running through Docker Compose, ensuring sensitive network captures remain within the security perimeter:
+
+```mermaid
+graph TD
+    subgraph USER_SPACE["Standard Application Execution Plane (Unprivileged)"]
+        UI["Next.js Web Application (Port 3000)"]
+        API["FastAPI Backend Services (Port 8000)"]
+        DB[(PostgreSQL 16 + pgvector)]
+        REDIS[(Redis Message Broker)]
+        UI --- API
+        API --- DB
+        API --- REDIS
+    end
+
+    subgraph PRIVILEGED_SPACE["Privileged Network Plane (Linux Host Required)"]
+        TAP["Live Capture Daemon (tcpdump / libpcap: NET_ADMIN)"]
+        LAB["strongSwan Network Namespace Testbed (SYS_ADMIN)"]
+        NETEM["tc netem Traffic Controller"]
+        TAP --- API
+        LAB --- API
+        NETEM --- LAB
+    end
+```
+``
+
+---
+
+## 47. Privileged Network Boundary
+
+A fundamental architectural distinction exists between unprivileged web services and privileged network daemons:
+- **Unprivileged Plane:** Web UI, API servers, machine learning inference workers, policy engines, and database containers run under standard, non-root user namespaces.
+- **Privileged Plane:** Live network packet capturing (`libpcap`), network namespace orchestration (`ip netns`), IPsec cryptographic policy configuration (`setkey` / XFRM), and network impairment injection (`tc netem`) require Linux kernel capabilities (`CAP_NET_ADMIN`, `CAP_NET_RAW`, `CAP_SYS_ADMIN`).
+- **Isolation Guarantee:** Browser environments and serverless runtimes can never directly execute raw socket operations. All privileged actions are mediated through authenticated backend worker services.
+
+---
+
+## 48. Testing & Validation Approach
+
+Validation within TUNNEL TRACE AI is structured across distinct technical layers, avoiding artificial performance claims:
+
+**TESTING & VALIDATION MATRIX**
+
+| Subsystem | Target Assessment Metric | Validation Methodology |
+| :--- | :--- | :--- |
+| Protocol Engine | 100% Parsing Accuracy | Evaluated against golden strongSwan testbed PCAPs |
+|  | on Known IKE / ESP Fields | with known ground-truth cryptographic transforms |
+| ML Flow Classifier | Macro-F1, Precision, | Evaluated exclusively on held-out, session-level |
+|  | Per-Class Recall | isolated test splits (GroupKFold by Session ID) |
+| Model Calibration | Expected Calibration Error | Evaluated via Reliability Diagrams and Brier |
+|  | (ECE) & Brier Score | Scores before and after post-hoc calibration |
+| OOD Detection | False Positive Rate on | Evaluated by injecting completely unseen network |
+|  | Unseen Traffic Classes | protocols (e.g., BitTorrent, Tor) into pipeline |
+| Policy Engine | Zero Logic Regressions | Positive, negative, and edge-case unit test |
+|  | on Regulatory Baselines | fixtures validating RFC and NIST compliance rules |
+| Remediation Engine | Deterministic Risk Delta | Before-and-after testbed re-captures verifying |
+|  | Verification | eradication of target security findings |
+
+---
+
+## 49. Implementation Roadmap
+
+The engineering execution plan is divided into eleven sequential, verifiable phases:
+
+```mermaid
+graph TD
+    P1["Phase 1: Linux Namespace & strongSwan Lab Setup"] --> P2["Phase 2: Protocol Forensics Engine (TShark Parser)"]
+    P2 --> P3["Phase 3: SA & ESP Flow Reconstruction Pipeline"]
+    P3 --> P4["Phase 4: Testbed Workload Automation & Dataset Factory"]
+    P4 --> P5["Phase 5: Tabular Baseline Classifier (XGBoost)"]
+    P5 --> P6["Phase 6: Sequential Deep Learning (1D-CNN) & Calibration"]
+    P6 --> P7["Phase 7: Policy-as-Code Engine & Compliance Rules"]
+    P7 --> P8["Phase 8: Full-Stack Integration (FastAPI + Next.js)"]
+    P8 --> P9["Phase 9: Configuration Twin & Closed-Loop Remediation"]
+    P9 --> P10["Phase 10: Grounded AI Analyst (pgvector + RAG)"]
+    P10 --> P11["Phase 11: End-to-End Hardening & SIH Demo Rehearsal"]
+```
+``
+
+---
+
+## 50. Main Innovations
+
+**KEY INNOVATION MATRIX**
+
+| Innovation Pillar | Technical Impact & Competitive Advancement |
+| :--- | :--- |
+| 1. Hybrid Engine | Decouples deterministic protocol facts from probabilistic ML flow inference |
+| 2. Zero Decryption | Identifies applications inside ESP via side-channel metadata without keys |
+| 3. Dataset Factory | Programmatically generates native IPsec captures with synchronized ground truth |
+| 4. OOD Gatekeeper | Rejects unseen applications as UNKNOWN rather than hallucinating wrong labels |
+| 5. Evidence Provenance | Maps every finding directly to raw packet frames, byte offsets, and RFC specs |
+| 6. Security Twin | Models the security score impact of proposed configuration changes in advance |
+| 7. Closed-Loop Lab | Applies configuration fixes to active gateways and verifies them via re-test |
+| 8. Grounded RAG | Explains cryptographic standards without allowing the LLM to invent findings |
+
+---
+
+## 51. Requirement-to-Solution Mapping
+
+This matrix explicitly demonstrates how TUNNEL TRACE AI satisfies every mandatory provision of SIH Problem Statement 26160:
+
+**REQUIREMENT-TO-SOLUTION MAPPING**
+
+| Official PS Requirement | Solution Subsystem | Technical Mechanism | Status |
+| :--- | :--- | :--- | :--- |
+| Tunnel & Transport Modes | Testbed + Forensics Engine | Linux XFRM + TShark | PLANNED / VALID |
+| AES-128, AES-256, GCM | Testbed + Forensics Engine | strongSwan Transforms | PLANNED / VALID |
+| CBC + HMAC Ciphers | Testbed + Forensics Engine | strongSwan Transforms | PLANNED / VALID |
+| DH / Key Exchange Groups | Testbed + Forensics Engine | IKE Transform Parser | PLANNED / VALID |
+| PFS Enabled vs Disabled | Testbed + Policy Engine | Child SA Rekey Audit | PLANNED / VALID |
+| IPv4 & IPv6 Compatibility | Testbed + Ingestion Engine | Dual-Stack Netns | PLANNED / VALID |
+| VoIP, WhatsApp, Streaming | Testbed Workloads + ML Engine | Application Scripts | PLANNED / VALID |
+| Offline PCAP & Live Tap | Ingestion & Capture Engine | libpcap + TShark | PLANNED / VALID |
+| Identify Transforms & SAs | Forensics & SA Tracker | State Machine Parser | PLANNED / VALID |
+| Traffic Prediction in ESP | Encrypted ML Intelligence | XGBoost + 1D-CNN | PLANNED / VALID |
+| Cryptographic Compliance | Security Policy Engine | NIST / RFC Rules | PLANNED / VALID |
+| Security & Risk Scoring | Security Score & Threat Matrix | Deductive Scoring | PLANNED / VALID |
+| Comprehensive Reporting | Executive & Technical Exporters | PDF / JSON Generator | PLANNED / VALID |
+| Grounded Explanation | AI Analyst Engine | pgvector + RAG LLM | PLANNED / VALID |
+
+---
+
+## 52. SIH Golden Demo Flow
+
+The live demonstration of TUNNEL TRACE AI for the SIH evaluation panel follows a seamless, 28-step operational script:
+
+```mermaid
+graph TD
+    A["1. Launch strongSwan Testbed with Vulnerable Config (3DES, DH2, No PFS)"] --> B["2. Generate Mixed Workload (Video, VoIP, Web, Messaging)"]
+    B --> C["3. Live-Capture Network Traffic into TUNNEL TRACE AI"]
+    C --> D["4. System Detects IPsec, Reconstructs IKE Session & Child SAs"]
+    D --> E["5. Display SA Explorer Graph & Reconstructed SPI Mappings"]
+    E --> F["6. Show Encrypted Flow Predictions (VoIP, Video) Without Decryption"]
+    F --> G["7. Demonstrate Calibrated AI Confidence & SHAP Feature Importance"]
+    G --> H["8. Highlight Critical Policy Failures (NIST SP 800-77 Non-Compliance)"]
+    H --> I["9. Display Deductive Security Score: 42/100 (HIGH RISK)"]
+    I --> J["10. Click Vulnerability & Trace Directly to Frame Hex in Evidence Explorer"]
+    J --> K["11. Open Configuration Security Twin & Load Hardened Profile"]
+    K --> L["12. Display Projected Security Score Improvement: 95/100"]
+    L --> M["13. Click Authorize Remediation (Deploys AES-256-GCM + DH19 to Lab)"]
+    M --> N["14. Gateway Re-Negotiates; Testbed Recaptures New Traffic Stream"]
+    N --> O["15. Secondary Audit Executes: Zero Critical Findings Detected"]
+    O --> P["16. System Displays REMEDIATION VERIFIED Badge & Exports Final Audit PDF"]
+```
+``
+
+---
+
+## 53. Demo Fallback Strategy
+
+To guarantee an uninterrupted presentation regardless of venue connectivity or hardware constraints, the team maintains a three-tiered fallback plan:
+- **Level 1 (Primary Live Demo):** Real-time execution across the automated local strongSwan testbed with live traffic generation and dynamic remediation.
+- **Level 2 (Pre-Captured Lab Fixtures):** Instant replay of pre-recorded, multi-scenario PCAP captures generated directly from the identical testbed environment.
+- **Level 3 (Deterministic Offline Mode):** Completely disconnected local execution using pre-computed vector indices, cached model artifacts, and pre-rendered reporting templates. The core platform does not require external internet or cloud LLM availability.
+
+---
+
+## 54. Major Technical Risks & Mitigation
+
+**TECHNICAL RISK MATRIX**
+
+| Identified Risk | Severity / Impact | Engineering Mitigation Strategy |
+| :--- | :--- | :--- |
+| Testbed Overfitting | High / Poor real-world | Inject synthetic jitter, loss, and latency via tc |
+|  | generalization | netem; execute cross-configuration hold-out validation |
+| OpenVPN Shift | High / Model failure | Explicitly restrict UNB/CIC data to secondary research |
+|  | on native IPsec ESP | Primary model training uses native testbed IPsec data |
+| Incomplete Handshake | Med / Missing crypto | Gracefully degrade to UNKNOWN states; infer flow |
+| Ingestion | parameters in capture | dynamics without hallucinating missing transform facts |
+| Model Overconfidenc | Med / False certainty | Enforce post-hoc calibration (ECE) and explicit |
+|  | on ambiguous flows | predictive entropy gating (flag as UNKNOWN / UNSEEN) |
+| Memory Consumption | Med / Host crashes | Stream packets through TShark using chunked iterators; |
+| on Large PCAPs | during large analysis | avoid loading raw capture files entirely into memory |
+| Privileged Boundary | Med / Container breach | Strictly isolate privileged network capabilities |
+| Violation | or system instability | to dedicated background workers; drop root on API |
+
+---
+
+## 55. Known System Limitations
+
+1. **Passive Observability Limits:** A passive network capture cannot observe parameters never transmitted over the wire (e.g., local gateway memory state, internal pre-shared key text, or private RSA keys).
+2. **Incomplete Captures:** If a capture commences after the initial IKE handshake has completed, negotiated transform proposals cannot be recovered. The system accurately marks these transforms as `UNKNOWN` rather than guessing.
+3. **Probabilistic Traffic Classification:** Classifying encrypted traffic without payload access is inherently statistical. While calibrated confidence mitigates false certainty, classification cannot achieve 100% mathematical certainty under extreme network shaping or padding.
+4. **Remediation Target Scope:** Automated remediation execution is currently engineered and validated exclusively for the Linux strongSwan testbed. Support for commercial hardware appliances remains a future roadmap objective.
+5. **Score Definition:** The Security Score is an analytical, product-defined index derived from published standards; it is not an official government certification score issued by NIST or NTRO.
+
+---
+
+## 56. Architecture Component Matrix
+
+**ARCHITECTURE COMPONENT MATRIX**
+
+| Component Name | Domain | Core Purpose | Primary Inputs | Primary Output / Tech |
 | :--- | :--- | :--- | :--- | :--- |
-| **Archive Part 1** | ~600+ MB (Recalled) | Compressed Archive | OpenVPN | *TBD — Verify downloaded UNB/CIC archive filename and exact size* |
-| **Archive Part 2** | ~1.8+ GB (Recalled) | Compressed Archive | OpenVPN | *TBD — Verify downloaded UNB/CIC archive filename and exact size* |
-
-> **Scientific Integrity Note on Public Data:** The complete UNB/CIC ISCXVPN2016 dataset is documented at ~28 GB. The locally downloaded archives represent specific compressed subsets. Crucially, because ISCXVPN2016 encapsulates traffic via **OpenVPN (TLS-based user-space tunnels)** rather than **IPsec ESP (kernel-space network-layer encapsulation)**, public OpenVPN data must **never** be blindly combined with native IPsec data. TunnelTrace AI models are developed and validated primarily on native IPsec traffic.
-
-### Non-Negotiable Dataset Splitting Rule: Session-Level Isolation
-A pervasive flaw in published network machine learning research is *packet-level* or *flow-level* random splitting, where flows from the same VPN session appear in both training and test sets. This leads to catastrophic data leakage (the model memorizes IP headers, exact timing drift, or ephemeral port artifacts).
-* **Session-Level Splitting:** TunnelTrace AI enforces strict `GroupKFold` partitioning based on unique `session_id`. All packets and flows generated by a specific VPN session exist exclusively within either the training split or the evaluation split.
-* **Cross-Configuration Evaluation:** Models will be evaluated across unseen configurations (e.g., trained on AES-GCM, evaluated on AES-CBC; trained on low latency, evaluated on high jitter) to verify robust generalization.
-
----
-
-## 17. Security, Compliance & Threat Modeling Engine
-
-TunnelTrace AI evaluates VPN security configurations deterministically through an extensible **Policy-as-Code Engine**:
-
-```mermaid
-graph LR
-    FACTS["Normalized Protocol Facts (Layer 1)"] --> POL_ENG["Policy-as-Code Engine"]
-    YAML["Versioned YAML Rules Repository<br/>(NIST SP 800-77, RFC 8221, RFC 8247)"] --> POL_ENG
-    
-    POL_ENG --> AUDIT["Evaluation State:<br/>PASS | FAIL | UNKNOWN | NOT_APPLICABLE"]
-    AUDIT --> FINDINGS["Structured Security Findings Inventory"]
-    FINDINGS --> SCORE["0-100 Security Posture Score"]
-    FINDINGS --> THREAT["STRIDE-Mapped Threat Matrix"]
-    FINDINGS --> REMED_LOOKUP["Deterministic Remediation Mapping"]
-```
-
-### Authoritative Governance Baselines
-All policy assertions map directly to authoritative standards:
-* **NIST SP 800-77 Rev. 1:** *Guide to IPsec VPNs* (cryptographic algorithm recommendations, mode restrictions, minimum DH group sizes).
-* **NIST SP 800-57 Part 1 Rev. 5:** *Recommendation for Key Management* (bit-strength equivalencies: 1024-bit MODP = 80-bit strength [DISALLOWED]; 2048-bit MODP = 112-bit strength [LEGACY]; ECP-256 = 128-bit strength [APPROVED]).
-* **RFC 8221:** *Cryptographic Algorithm Implementation Requirements for ESP and AH*.
-* **RFC 8247:** *Cryptographic Algorithm Implementation Requirements for IKEv2*.
-* **RFC 9395:** *Deprecation of 3DES across IETF Protocols*.
-
-### Policy Structure Sample (YAML)
-```yaml
-rule_id: "POL-NIST-004"
-standard_reference: "NIST SP 800-77 Rev. 1, Section 5.1.2"
-title: "Mandate Diffie-Hellman Groups with Security Strength >= 112 bits"
-severity: "HIGH"
-deduction_points: 20
-evaluation:
-  target: "ike_sa.transforms.diffie_hellman_group"
-  disallowed_values: [1, 2, 5]  # MODP-768, MODP-1024, MODP-1536
-  remediation_directive: "ike = aes256gcm16-prfsha256-ecp256!"
-```
-
-### Quantitative Security Posture Score (0–100)
-The overall Security Posture Score is calculated via an itemized deduction model starting from a clean baseline of 100:
-$$\text{Security Posture Score} = \max\left(0, 100 - \sum \text{Deduction Points}\right)$$
-* Every deduction links to an active finding backed by a verified policy failure.
-* The exact weights, deduction points, and category normalizations are currently defined as **TBD — Requires implementation / empirical validation**.
-* The score is explicitly marketed as a *TunnelTrace AI Security Posture Index*, never falsely labeled as an official government metric.
-
-### Dynamic Threat Matrix
-Structured findings map directly to operational threat scenarios, detailing Threat Title, Affected SA, STRIDE Classification, Exploitation Likelihood, Operational Impact, and Remediation Directives.
+| Testbed Manager | Dom. 1 | Automated Lab Setup | Topology Config | Linux Netns / strongSwan |
+| Ingestion Engine | Dom. 1 | Packet Stream Ingest | PCAP / Live Tap | Validated Packet Stream |
+| Protocol Forensics | Dom. 1 | Packet Dissection | Raw Frames | Normalized JSON Facts |
+| SA Tracker | Dom. 1 | Reconstruct SAs | IKE / ESP Headers | SA Graph & SPI Table |
+| Flow Engine | Dom. 1 | Assemble ESP Flows | ESP Packets | Bi-directional Flows |
+| Feature Extractor | Dom. 1 | Feature Engineering | Assembled Flows | Tabular & Sequence Mats |
+| XGBoost Classifier | Dom. 2 | Tabular Flow ML | Flow Statistics | Class Probability Vector |
+| 1D-CNN Classifier | Dom. 2 | Sequential Packet ML | Early Packet Seq | Sequence Probabilities |
+| Calibration & OOD | Dom. 2 | Reliability & Gating | Raw Model Output | Calibrated Label / OOD |
+| SHAP Explainer | Dom. 2 | Feature Attribution | Model & Flow Vector | SHAP Feature Values |
+| Isolation Forest | Dom. 2 | Anomaly Detection | Flow Features | Outlier Anomaly Flags |
+| Policy Engine | Dom. 2 | Compliance Audit | Protocol Facts | Compliance Audit States |
+| Scoring Engine | Dom. 2 | Posture Calculation | Policy Findings | Security Score & Risk |
+| Provenance Graph | Dom. 2 | Forensic Evidence | Facts & Findings | Relational Evidence Map |
+| Backend API | Dom. 3 | Platform Services | Worker Results | FastAPI Endpoints |
+| Database & Vector | Dom. 3 | Persistent Storage | Structured Records | PostgreSQL / pgvector |
+| Interactive UI | Dom. 3 | SOC Visual Dashboard | API Endpoints | Next.js / React Flow |
+| Security Twin | Dom. 3 | Policy Simulation | Proposed Config | Projected Posture Diff |
+| Remediation Engine | Dom. 3 | Closed-Loop Validate | Approved Fix | Verified Testbed State |
+| AI Analyst (RAG) | Dom. 3 | Grounded Explanation | User Queries | Contextual Explanations |
 
 ---
 
-## 18. Metadata Fingerprintability Index
+## 57. Open Decisions & TBD Matrix
 
-Even when payload confidentiality is perfectly preserved by AES-GCM-256, an eavesdropper observing packet lengths, transmission bursts, and directionality can often infer the active application workload.
+To preserve scientific rigor, TUNNEL TRACE AI explicitly itemizes design parameters currently designated as frozen versus those subject to ongoing empirical validation:
 
-To measure this attack surface, TunnelTrace AI introduces the **Metadata Fingerprintability Index**:
-* **Purpose:** Quantifies the side-channel exposure of an IPsec tunnel based on the distinctiveness of its encrypted flow patterns.
-* **Mathematical Signals:** Incorporates classifier confidence, entropy distributions, burst asymmetry, and packet size clustering.
-* **Analyst Interpretation:** A high fingerprintability index indicates that the tunnel carries highly distinguishable traffic (e.g., unpadded VoIP or video streams) that can be easily fingerprinted by external adversaries.
-* **Safeguard:** The index measures side-channel distinguishability. It does **not** mean plaintext data has leaked. The final formula remains **TBD — Requires empirical validation**.
+**FROZEN VS TBD DESIGN MATRIX**
 
----
-
-## 19. Forensic Evidence Graph and Provenance
-
-Every conclusion emitted by TunnelTrace AI must be defensible in a court of law or formal cybersecurity audit. The platform constructs an immutable **Forensic Evidence Graph**:
-
-```mermaid
-graph TD
-    PCAP["Raw PCAP File<br/>(SHA-256: 8f91c...b4d)"] --> FRAME["Frame #14<br/>(Wire Byte Offset: 0x0042)"]
-    FRAME --> HEX["Hex Data: 00 02 00 00<br/>(Raw Payload Bytes)"]
-    HEX --> FACT["Protocol Fact: Transform ID = DH Group 2<br/>(Evidence State: VERIFIED)"]
-    FACT --> RULE["Policy Rule: POL-NIST-004<br/>(NIST SP 800-77 Rev. 1 Sec 5.1.2)"]
-    RULE --> FINDING["Security Finding: FIND-2026-0042<br/>(Insecure Diffie-Hellman Group)"]
-    FINDING --> SCORE["Score Deduction: -20 Points<br/>(Posture Impact: 45/100)"]
-    FINDING --> TWIN["Twin Recommendation:<br/>Upgrade to DH Group 19 (ECP-256)"]
-```
-
-### Complete Provenance Tracking
-Every analytical record stores complete provenance metadata: Capture File SHA-256 Checksum, Analysis Session UUID, Parser Version, Feature Schema Version, Model Artifact Checksums, Policy Rule Bundle Version, and Execution Timestamps.
-
----
-
-## 20. Configuration Security Twin and Closed-Loop Remediation
-
-Rather than merely reporting vulnerabilities, TunnelTrace AI empowers operators to simulate and validate remediation actions:
-
-```mermaid
-graph LR
-    FINDING["Security Findings Inventory<br/>(Score: 42/100 [CRITICAL])"] --> TWIN["Configuration Security Twin<br/>(What-If Simulation Engine)"]
-    TWIN --> PROPOSAL["Proposed Hardened Configuration<br/>(IKEv2, AES-GCM-256, DH Group 19, PFS ON)"]
-    PROPOSAL --> SIM_RES["Simulated Posture Uplift<br/>(Projected Score: 100/100 [PASS])"]
-    
-    SIM_RES --> AUTH_GATE["Operator Review & Explicit Authorization Gate"]
-    AUTH_GATE -->|Authorized| APPLY["Apply Configuration to strongSwan Lab<br/>(VICI Socket Daemon Reload)"]
-    APPLY --> RECAPTURE["Establish Tunnel & Recapture Wire Traffic"]
-    RECAPTURE --> REANALYZE["Automated Re-Analysis Pipeline"]
-    REANALYZE --> VERIF_CARD["Verification Evidence Card:<br/>Findings RESOLVED | Validated Clean Score"]
-```
-
-### Closed-Loop Validation Boundaries
-* **Virtual Twin Simulation:** Re-evaluates proposed configurations against the Policy Engine without touching real infrastructure, displaying projected score uplift.
-* **Controlled Lab Execution:** Automated remediation deployment is strictly restricted to the controlled strongSwan testbed container. TunnelTrace AI does **not** attempt automated production pushes to unvalidated commercial appliances (Cisco, Fortinet, Palo Alto), ensuring zero risk of production network outages.
-
----
-
-## 21. Grounded Local AI Analyst (RAG)
-
-TunnelTrace AI incorporates an interactive natural-language assistant engineered to assist SOC operators while maintaining absolute factual grounding:
-
-```mermaid
-graph TD
-    QUERY["Operator Natural-Language Query"] --> EMBED["Query Embedding Generator"]
-    EMBED --> VEC_SEARCH["PostgreSQL pgvector Semantic Search"]
-    
-    subgraph KnowledgeSources ["Authoritative Grounding Sources"]
-        KS1["Active Session Protocol Facts"]
-        KS2["Itemized Security Findings & Evidence"]
-        KS3["Indexed NIST SP 800-77 & RFC Text"]
-    end
-    
-    KnowledgeSources --> VEC_SEARCH
-    VEC_SEARCH --> CONTEXT["Sanitized Context Window"]
-    QUERY --> LLM["Local / Hosted LLM Engine"]
-    CONTEXT --> LLM
-    LLM --> RESPONSE["Grounded Natural-Language Explanation<br/>(Strictly Citing Frame Numbers & Standards)"]
-```
-
-### Factual Grounding Safeguards
-* **No Speculative Hallucination:** The LLM is forbidden from inventing protocol facts, altering security scores, or evaluating compliance. All analytical metrics are pre-computed deterministically.
-* **Privacy-Preserving:** Raw capture bytes never leave the local environment; the LLM receives only structured, sanitized entity summaries.
-* **Strict Evidence Citations:** Answers explicitly cite the exact frame numbers, byte offsets, and standard document paragraphs backing each statement.
-
----
-
-## 22. Major Product Features
-
-The complete product scope of TunnelTrace AI comprises 25 integrated technical capabilities:
-
-| # | Feature Name | Core Operational Purpose | PS Mapping | Processing Tier | Innovation Level | Status / Implementation |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1** | **Offline Trace Ingestion** | Multi-gigabyte PCAP/PCAPNG parsing | `PS-CAP-005` | Layer 1 | High Reliability | Implemented Baseline |
-| **2** | **Live Wire Capture** | Real-time packet interception on local NICs | `PS-CAP-006` | Layer 1 | Privileged Core | Implemented Baseline |
-| **3** | **IPsec Auto-Detection** | Instant identification of IKE, ESP, and AH | `PS-PROTO-001` | Layer 1 | Core Standard | Implemented Baseline |
-| **4** | **IKE Protocol Intelligence** | Dissects IKEv1/IKEv2 handshakes & exchanges | `PS-PROTO-002` | Layer 1 | Core Standard | Implemented Baseline |
-| **5** | **SA Topology Builder** | Correlates dynamic SPIs into parent/child graphs | `PS-PROTO-008` | Layer 1 | Architectural | Implemented Baseline |
-| **6** | **Interactive SA Explorer** | Visual node graph of tunnels and child SAs | `PS-PROTO-008` | UI / UX | Differentiator | Implemented Baseline |
-| **7** | **Encrypted Traffic ML** | Classifies application traffic inside ESP | `PS-PROTO-009` | Layer 2 | Core Mandate | Model Baseline Designed |
-| **8** | **Confidence Calibration** | Rescales probabilities via Platt temperature scaling| `PS-OUT-008` | Layer 2 | High Assurance | Designed / TBD Validation |
-| **9** | **OOD / Unknown Detector** | Rejects unrepresented flows via predictive entropy | `PS-OUT-008` | Layer 2 | High Assurance | Designed / TBD Validation |
-| **10**| **TreeSHAP Explainability** | Exposes local feature attributions per flow | `PS-PROTO-009` | Layer 2 | Differentiator | Designed / TBD Validation |
-| **11**| **Behavioral Anomaly Engine**| Detects volume/burst outliers via Isolation Forest| `PS-SEC-008` | Layer 2 | High Assurance | Designed / TBD Validation |
-| **12**| **Security Assessment** | Audits cryptography against NIST standards | `PS-SEC-001` | Layer 3 | Core Mandate | Implemented Baseline |
-| **13**| **Compliance Scorecard** | Pass/fail compliance checks against RFC/NIST | `PS-SEC-002` | Layer 3 | Core Mandate | Implemented Baseline |
-| **14**| **Security Posture Score** | Quantitative 0–100 posture calculation | `PS-OUT-001` | Layer 3 | Core Mandate | Implemented Baseline |
-| **15**| **Categorized Risk Score** | Maps findings to standardized risk ratings | `PS-OUT-006` | Layer 3 | Core Mandate | Implemented Baseline |
-| **16**| **Dynamic Threat Matrix** | STRIDE/CVE threat catalog linked to findings | `PS-OUT-007` | Layer 3 | Core Mandate | Implemented Baseline |
-| **17**| **Metadata Fingerprintability**| Quantifies side-channel traffic distinguishability | `PS-SEC-008` | Layer 2 | Differentiator | Metric Formulation TBD |
-| **18**| **Evidence Explorer Graph** | Links every finding to frame offset & hex bytes | `PS-SEC-001` | Layer 3 | Differentiator | Implemented Baseline |
-| **19**| **Configuration Twin** | Projects posture impact of proposed changes | `PS-DEL-003` | Layer 3 | Innovation | Implemented Baseline |
-| **20**| **Closed-Loop Lab Remediation**| Deploys, recaptures, and verifies fixes in lab | `PS-DEL-001` | Testbed | Innovation | Implemented Baseline |
-| **21**| **Executive Summary Report** | Publication-grade PDF report for leadership | `PS-OUT-004` | Reporting | Core Mandate | Implemented Baseline |
-| **22**| **Technical Audit Report** | Deep-dive audit report with packet traces | `PS-OUT-005` | Reporting | Core Mandate | Implemented Baseline |
-| **23**| **Grounded AI Analyst** | RAG assistant answering analyst queries | `PS-DEL-003` | Layer 4 | Differentiator | Implemented Baseline |
-| **24**| **Automated IPsec Testbed** | strongSwan multi-configuration lab orchestrator| `PS-LAB-001` | Testbed | Core Mandate | Implemented Baseline |
-| **25**| **IPsec Dataset Factory** | Scripts generating annotated native IPsec data | `PS-DEL-007` | Dataset | Core Mandate | In Progress |
-
----
-
-## 23. Main User Interface Modules
-
-The user experience is delivered via an editorial, high-density Next.js Progressive Web Application (PWA). The interface uses **Light Theme as Default** with complete dark mode support, strict 0px border radiuses, and zero decorative animations:
-
-```mermaid
-graph TD
-    SHELL["TunnelTrace AI Application Shell"]
-    SHELL --> M01["1. Command Center (Executive Overview & Triage)"]
-    SHELL --> M02["2. Ingestion & Capture (Dropzone & Live Sniffer)"]
-    SHELL --> M03["3. Protocol Intelligence (IKE/ESP Handshake Inspector)"]
-    SHELL --> M04["4. SA Explorer (Interactive Node Graph of SAs)"]
-    SHELL --> M05["5. Traffic Intelligence (ML Class Distribution & SHAP)"]
-    SHELL --> M06["6. Security Assessment (Itemized Findings & Vulnerabilities)"]
-    SHELL --> M07["7. Compliance Scorecard (NIST SP 800-77 Audit Grid)"]
-    SHELL --> M08["8. Threat Matrix (STRIDE & Attack Consequence Mappings)"]
-    SHELL --> M09["9. Evidence Explorer (Hex Byte & Frame Offset Inspector)"]
-    SHELL --> M10["10. Configuration Security Twin (What-If Simulator)"]
-    SHELL --> M11["11. Remediation Verification (Before vs. After Validation Card)"]
-    SHELL --> M12["12. Reports Exporter (Executive & Technical PDF Generation)"]
-    SHELL --> M13["13. AI Analyst Console (Grounded RAG Conversational Drawer)"]
-    SHELL --> M14["14. Testbed Manager (Multi-Scenario Traffic & Crypto Lab)"]
-```
-
----
-
-## 24. Technology Stack Baseline
-
-The technology stack is selected strictly for high-throughput network engineering, mathematical reproducibility, and deployment simplicity:
-
-| Layer / Domain | Component & Technology | Selected Version | Specific Purpose & Architectural Justification |
-| :--- | :--- | :--- | :--- |
-| **Frontend Framework** | Next.js (App Router) | `14.2+` | React Server Components, high performance, strict TypeScript support |
-| **Frontend Styling** | Vanilla CSS + Tailwind CSS | `3.4+` | Custom 0px brutalist design system; **no third-party UI kits (no shadcn/ui)** |
-| **Data Visualization** | Apache ECharts & React Flow | `5.5+` / `11.11+` | Canvas/WebGL radar & distribution charts; interactive SA node topologies |
-| **Client Shell** | Progressive Web App (PWA) | Service Worker API | Desktop-first analyst workstation; offline caching of analytical reports |
-| **Backend API Core** | FastAPI | `0.110+` | Asynchronous Python ASGI core; OpenAPI 3.1 contract generation; WebSockets |
-| **Data Validation** | Pydantic | `v2.6+` | Strict schema validation; immutable Data Transfer Objects (DTOs) |
-| **Relational Database** | PostgreSQL | `15.x` | Strongly typed relational storage for sessions, SAs, findings, and evidence |
-| **Vector Database** | pgvector Extension | `0.6+` | In-database vector storage for RAG embeddings; eliminates duplicate vector stores |
-| **Protocol Dissection** | TShark (Wireshark Suite) | `4.2+` | Industrial-grade network packet dissection; output streamed via JSON (`-T ek`) |
-| **Python Dissection Wrapper**| PyShark | `0.6+` | Pythonic wrapper for TShark event loop integration |
-| **Packet Crafting (Lab)**| Scapy | `2.5+` | Synthetic traffic injection in lab only; strictly forbidden for dissection |
-| **Tabular Machine Learning**| XGBoost | `2.0+` | High-accuracy gradient-boosted trees for flow metadata classification |
-| **Sequential Deep Learning**| PyTorch | `2.2+` | Lightweight 1D-CNN operating on early packet sequence tensors |
-| **Baseline & Anomaly ML**| scikit-learn | `1.4+` | Random Forest baseline classifier and Isolation Forest anomaly detector |
-| **Model Explainability** | SHAP | `0.44+` | Local game-theoretic feature attributions via TreeExplainer |
-| **PDF Report Synthesis** | WeasyPrint & Jinja2 | `61.x` / `3.1+` | Headless HTML-to-PDF compilation generating publication-grade reports |
-| **IPsec VPN Daemon** | strongSwan | `5.9.8+` | Authoritative Linux IPsec daemon managing IKEv1/IKEv2 charon engine |
-| **Network Isolation** | Linux Network Namespaces | Linux Kernel 5.15+ | Pure OS-level network stack virtualization (`ip netns`) |
-| **Traffic Conditioning** | Linux Traffic Control (`tc`) | `iproute2` | Kernel-level latency, jitter, and packet loss emulation (`netem`) |
-| **Container Runtime** | Docker & Docker Compose | `24.x+` / `v2.24+` | Single-command full-stack container orchestration |
-
----
-
-## 25. Deployment Architecture and Privilege Separation
-
-Security software analyzing untrusted network traffic must maintain ironclad privilege separation. TunnelTrace AI establishes two strictly partitioned execution planes:
-
-```mermaid
-graph TD
-    subgraph UntrustedZone ["Untrusted Network & User Zone"]
-        CLIENT["Web Browser / Analyst Workstation"]
-        PCAP_SRC["Untrusted PCAP / PCAPNG Files"]
-    end
-
-    subgraph AppPlane ["Standard Application Plane (Unprivileged: UID 10001)"]
-        FE["Next.js 14 Web Frontend"]
-        API_GW["FastAPI Core Application"]
-        WORKER["Background Processing Worker"]
-        DB[(PostgreSQL 15 + pgvector)]
-        
-        FE --- API_GW
-        API_GW --- DB
-        API_GW --- WORKER
-        WORKER --- DB
-    end
-
-    subgraph PrivPlane ["Privileged Network Plane (Dedicated Host / Root Agent)"]
-        AGENT["Privileged Network Agent<br/>(CAP_NET_ADMIN, CAP_NET_RAW)"]
-        SWAN["strongSwan VPN Engine (charon)"]
-        NETNS["Linux Network Namespaces & tc/netem"]
-        SNIFF["Wire Packet Interceptor (tcpdump)"]
-
-        AGENT --- SWAN
-        AGENT --- NETNS
-        AGENT --- SNIFF
-    end
-
-    CLIENT -->|HTTPS / WSS| FE
-    PCAP_SRC -->|File Upload| API_GW
-    API_GW -->|Restricted UNIX Socket / mTLS IPC| AGENT
-```
-
-### Architectural Security Guarantees
-* **Standard Application Plane (Class A):** Runs entirely as an unprivileged user (`UID 10001`). Contains the web frontend, API endpoints, machine learning inference engines, database persistence, and PDF report generators. Even in the event of an application vulnerability, the process possesses zero host administration rights.
-* **Privileged Network Plane (Class B):** Confined to a standalone Linux network agent possessing only the specific kernel capabilities required for network management (`CAP_NET_ADMIN`, `CAP_NET_RAW`). Executes inside dedicated Linux hosts or development VMs.
-* **Parameterized IPC Gateway:** Communication between the unprivileged API and privileged agent occurs strictly across a local UNIX domain socket or mutual-TLS channel governed by rigid JSON schemas and command whitelists. Arbitrary shell command execution is architecturally impossible.
-
----
-
-## 26. Practical Implementation Roadmap
-
-The end-to-end engineering execution of TunnelTrace AI is divided into 13 logical, sequential development phases:
-
-```mermaid
-graph LR
-    P1["Phase 1: Testbed Foundation"] --> P2["Phase 2: Protocol Engine"]
-    P2 --> P3["Phase 3: SA Reconstruction"]
-    P3 --> P4["Phase 4: Dataset Factory"]
-    P4 --> P5["Phase 5: ML Baseline (XGBoost)"]
-    P5 --> P6["Phase 6: Sequential ML (1D-CNN)"]
-    P6 --> P7["Phase 7: Calibration & OOD"]
-    P7 --> P8["Phase 8: Security & Policy Engine"]
-    P8 --> P9["Phase 9: Evidence & API Core"]
-    P9 --> P10["Phase 10: Next.js PWA Dashboard"]
-    P10 --> P11["Phase 11: Twin & Remediation"]
-    P11 --> P12["Phase 12: Reports & AI Analyst"]
-    P12 --> P13["Phase 13: SIH Demo Hardening"]
-```
-
-| Phase | Milestone Name | Key Technical Deliverables | Verification Milestone |
-| :--- | :--- | :--- | :--- |
-| **Phase 1** | Testbed Foundation | strongSwan lab in Linux `netns`; Tunnel & Transport modes; traffic injection scripts | Verified IKE/ESP packet generation |
-| **Phase 2** | Capture & Protocol Engine | PCAP ingestion; streaming TShark parser; deterministic protocol fact extractor | 100% extraction match on known lab ciphers |
-| **Phase 3** | SA & Flow Reconstruction | IKE session correlating engine; SPI pair tracking; bidirectional ESP flow builder | Verified SA topology graph |
-| **Phase 4** | Dataset Factory | Multi-configuration lab matrix automation; ground-truth metadata logger | Structured, session-isolated IPsec dataset |
-| **Phase 5** | Tabular ML Baseline | 24-feature flow metadata extractor; XGBoost classification model | Baseline Macro-F1 benchmarked |
-| **Phase 6** | Sequential Deep Learning | Sequence tensor extractor; PyTorch 1D-CNN; model fusion layer | Comparison of XGBoost vs. CNN vs. Ensemble |
-| **Phase 7** | Reliability & Explainability| Platt temperature scaling; predictive entropy gate; TreeSHAP explanations | ECE reduction; OOD rejection verified |
-| **Phase 8** | Security & Policy Engine | Python + YAML Policy-as-Code; NIST SP 800-77 rules; posture score & threat matrix | Verified finding generation on weak fixtures |
-| **Phase 9** | Evidence & API Core | Forensic Evidence Graph; PostgreSQL schemas; FastAPI REST & WebSocket routes | Automated contract test suite passing |
-| **Phase 10**| Next.js PWA Dashboard | Command Center, SA Explorer, Traffic Visualizer, Evidence Inspector | End-to-end web triage interface functional |
-| **Phase 11**| Twin & Remediation | Configuration Security Twin; strongSwan lab config reload via VICI; re-analysis | Closed-loop before/after score validation |
-| **Phase 12**| Reports & AI Analyst | WeasyPrint executive/technical PDF exporter; pgvector RAG query engine | Publication-quality PDF; grounded Q&A |
-| **Phase 13**| SIH Demo Hardening | Scripted live demonstration runbook; edge-case failure testing; rehearsal | Flawless execution of Golden SIH Demo |
-
----
-
-## 27. Testing and Validation Strategy
-
-To ensure zero software failures during judging, TunnelTrace AI implements a multi-tier verification methodology:
-
-```mermaid
-graph LR
-    REQ["Requirement (PRD / RTM)"] --> TEST["Test Case Specification"]
-    TEST --> HARNESS["Controlled Lab Harness"]
-    HARNESS --> EVIDENCE["Cryptographic Evidence Package"]
-    EVIDENCE --> EVAL["Deterministic Evaluation Assertion"]
-    EVAL --> TRACE["Bidirectional Traceability Matrix"]
-```
-
-1. **Protocol Forensics Testing:** Tested against known strongSwan configuration files. Observable transforms, versions, and SPIs must match ground-truth configuration directives with 100% precision.
-2. **Machine Learning Evaluation:** Evaluated on held-out testbed sessions with zero session overlap (`GroupKFold`). Metrics tracked include Macro-F1, Precision, Recall, Expected Calibration Error (ECE), and Brier Score.
-3. **Out-of-Distribution Validation:** Evaluated by injecting unseen application workloads (e.g., BitTorrent or custom synthetic traffic); verified that the system rejects the flow as `UNKNOWN / UNSEEN` rather than assigning a false label.
-4. **Security Policy Rule Testing:** Validated against a repository of positive (secure AES-GCM-256 / DH19), negative (insecure 3DES / DH2), and truncated (missing handshake) PCAP fixtures, verifying that findings trigger deterministically.
-5. **Evidence Linkage Auditing:** Every emitted finding must programmatically resolve to an exact frame number and wire byte offset in the underlying PCAP file.
-6. **Remediation Verification Testing:** Proves that deploying a generated remediation patch resolves the active finding upon wire recapture and re-analysis.
-
----
-
-## 28. Golden SIH Demonstration Workflow
-
-During Smart India Hackathon 2026 evaluation, TunnelTrace AI will prove its technical capabilities through an unbroken, 23-step live operational demonstration:
-
-```mermaid
-graph TD
-    S01["1. Start strongSwan Testbed with Intentionally Weak Configuration<br/>(IKEv1, 3DES-CBC, HMAC-SHA1, DH Group 2, No PFS, Tunnel Mode)"] --> S02["2. Inject Active VoIP and Bulk File Transfer Workloads"]
-    S02 --> S03["3. Capture Real Wire Traffic & Ingest PCAP via Web Dropzone"]
-    S03 --> S04["4. Dashboard Computes File SHA-256 & Dissects Frames Instantaneously"]
-    S04 --> S05["5. Display Verified Facts: IKEv1, Tunnel Mode, 3DES-CBC, DH Group 2, SPIs"]
-    S05 --> S06["6. Render Interactive SA Topology Graph in SA Explorer"]
-    S06 --> S07["7. ML Engine Infers Inner Workloads: VoIP (88% Conf) & File Transfer (92% Conf)"]
-    S07 --> S08["8. Open TreeSHAP Panel Explaining Packet Timing & Size Feature Contributions"]
-    S08 --> S09["9. Policy Engine Emits Critical Findings (3DES Deprecation, Weak DH2, Missing PFS)"]
-    S09 --> S10["10. Display Compliance Scorecard (35.7% NIST Compliance) & Low Posture Score (42/100)"]
-    S10 --> S11["11. Render STRIDE-Mapped Threat Matrix (Sweet32 & Logjam Attack Warnings)"]
-    S11 --> S12["12. Display High Metadata Fingerprintability Index Warning"]
-    S12 --> S13["13. Click Finding: Evidence Explorer Highlights Frame #14 Byte Offset 0x0042 in Hex"]
-    S13 --> S14["14. Open Configuration Security Twin Simulator"]
-    S14 --> S15["15. Propose Hardened Profile (IKEv2, AES-GCM-256, DH Group 19 Curve25519, PFS ON)"]
-    S15 --> S16["16. Twin Projects 100/100 Posture Score & Resolution of All 4 Critical Findings"]
-    S16 --> S17["17. Click 'Apply & Validate in Lab' (Requires Operator Authorization)"]
-    S17 --> S18["18. Platform Pushes Hardened Config to strongSwan Lab & Re-establishes VPN"]
-    S18 --> S19["19. Automated Re-Capture of Remediated Wire Traffic"]
-    S19 --> S20["20. Automated Re-Analysis Displays Verification Evidence Card (All Deficiencies Resolved)"]
-    S20 --> S21["21. Export Publication-Grade Executive and Technical Audit PDF Reports"]
-    S21 --> S22["22. Query Grounded AI Analyst: 'Why was our initial DH configuration marked Critical?'"]
-    S22 --> S23["23. AI Analyst Returns Accurate, Grounded Response Citing NIST SP 800-77 and Frame #14"]
-```
-
----
-
-## 29. Key Differentiators and Architectural Innovations
-
-TunnelTrace AI introduces 12 distinct engineering innovations that elevate the platform beyond conventional packet decoders:
-
-```mermaid
-graph LR
-    subgraph Differentiators ["Key Platform Differentiators"]
-        IN1["1. Automated IPsec-Native Testbed & Dataset Factory"]
-        IN2["2. Hybrid Deterministic + ML + Policy + RAG Architecture"]
-        IN3["3. Explainable Encrypted Traffic Classification (SHAP)"]
-        IN4["4. Unknown / Out-of-Distribution Rejection Gate"]
-        IN5["5. Cross-Configuration Robustness Testing"]
-        IN6["6. Quantitative Metadata Fingerprintability Index"]
-        IN7["7. Forensic Evidence Graph (Finding-to-Byte Traceability)"]
-        IN8["8. Configuration Security Twin (What-If Simulation)"]
-        IN9["9. Closed-Loop Lab Remediation Verification"]
-        IN10["10. Strict Privilege Separation & Privacy-First Design"]
-        IN11["11. Full Cryptographic Provenance & Version Tracking"]
-        IN12["12. Interactive Dynamic SA Explorer Graph"]
-    end
-```
-
-### Why TunnelTrace AI Is More Than a Packet Analyzer
-
-| Comparison Dimension | Traditional Packet Analyzers (Wireshark / TShark) | TunnelTrace AI Platform |
+| Architectural Decision / Parameter | Engineering Status | Validation Path |
 | :--- | :--- | :--- |
-| **Operational Goal** | Granular protocol packet decoding and hex inspection | Holistic, explainable VPN security intelligence & remediation |
-| **Topology Visibility** | Isolated individual frames; no stateful correlation | Reconstructs complete IKE and Child SA topology graph |
-| **Encrypted ESP Payload**| Completely opaque stream of encrypted hex bytes | Infers application workload classes via calibrated ML |
-| **Compliance Auditing**| None; requires manual RFC/NIST cross-referencing | Automated Policy-as-Code auditing against NIST SP 800-77 |
-| **Posture Scoring** | None | Quantitative 0–100 posture scoring with itemized deductions |
-| **Forensic Evidence** | Manual packet filtering | Immutable Evidence Graph linking findings to wire byte offsets |
-| **Remediation Support** | None | Proposes hardened configs; projects impact in Security Twin |
-| **Remediation Validation**| None | Closed-loop validation via controlled strongSwan re-testing |
-| **Reporting Capabilities**| Basic raw packet summary exports | Publication-grade Executive and Technical Audit PDF reports |
-| **AI Integration** | None | Grounded local RAG analyst strictly anchored to verified facts |
+| Core Product Positioning | FROZEN | Architectural Baseline |
+| Four-Layer Intelligence Separation | FROZEN | Architectural Baseline |
+| Model A Selection: XGBoost | FROZEN | Empirical Tabular Baseline |
+| Model B Selection: PyTorch 1D-CNN | FROZEN | Sequence Modeling Baseline |
+| Own IPsec Testbed as Primary Data | FROZEN | Protocol-Native Necessity |
+| UNB/CIC Data as Secondary Bench. | FROZEN | Protocol-Domain Boundary |
+| Session-Level Data Splitting | FROZEN | Data Leakage Prevention |
+| Policy-as-Code Engine via YAML | FROZEN | Deterministic Compliance |
+| Closed-Loop strongSwan Remediation | FROZEN | Verifiable Prototype Scope |
+| Local-First Desktop PWA Stack | FROZEN | Enterprise Privacy Default |
+| Sequence Length N (1D-CNN) | TBD - Requires Empirical Valid. | Benchmark 32 vs 64 vs 128 |
+| Model Ensemble Fusion Weights | TBD - Requires Empirical Valid. | Optimization on Val Split |
+| Calibration Method (Platt vs Temp) | TBD - Requires Empirical Valid. | Minimize ECE on Validation |
+| OOD Entropy Cutoff Threshold | TBD - Requires Empirical Valid. | Test with Unseen Datasets |
+| Isolation Forest Anomaly Cutoff | TBD - Requires Empirical Valid. | Contamination Tuning |
+| Exact Security Score Weights | TBD - Requires Empirical Valid. | Mentor & Standards Review |
+| Metadata Fingerprintability Form. | TBD - Requires Empirical Valid. | Feature Information Metric |
+| Exact Downloaded UNB Archive Spec | TBD - Requires Local File Verify | Inspect Local Archives |
 
 ---
 
-## 30. Limitations and Honest Technical Boundaries
+## 58. Mentor Review Summary
 
-In strict adherence to scientific rigor, TunnelTrace AI explicitly documents its operational boundaries:
-1. **Passive Capture Visibility Limits:** Passive packet analysis can only audit parameters observable on the wire. Settings that do not emit wire artifacts (e.g., internal host filesystem permissions, pre-shared key complexity, or private key storage mechanisms) cannot be inspected passively.
-2. **Truncated Trace Limitations:** If a capture starts after IKE negotiation has completed and contains only ESP frames, handshake transforms remain unobservable. The system assigns status `UNKNOWN` rather than fabricating configuration parameters.
-3. **Probabilistic Nature of ML:** Encrypted traffic classification is inherently probabilistic. High accuracy on testbed sessions does not guarantee identical performance on novel enterprise traffic under extreme padding or network-layer obfuscation.
-4. **Remediation Safety Bounds:** Automated remediation execution is supported exclusively within the controlled strongSwan testbed container. TunnelTrace AI does not support automated production deployment to commercial enterprise firewalls (e.g., Cisco ASA, Palo Alto PAN-OS).
-5. **Explanatory Role of LLM:** The AI Analyst is strictly an explanatory and document-synthesizing utility. It does not perform autonomous cryptanalysis, discovery of novel zero-day vulnerabilities, or unconstrained security scoring.
+To facilitate an efficient review with project mentors, faculty advisors, and technical evaluators, this summary synthesizes the essence of TUNNEL TRACE AI:
 
----
-
-## 31. Current Frozen Architecture vs. TBD Engineering Register
-
-To maintain full transparency with academic mentors, the platform's architectural choices are formally categorized into frozen baselines and empirical parameters:
-
-| Architectural Component | Engineering Status | Final Baseline Specification / Resolution Method |
-| :--- | :--- | :--- |
-| **Product Brand & Positioning** | **FROZEN** | **TunnelTrace AI**; explainable IPsec Security Intelligence Platform |
-| **Protocol Forensics Engine** | **FROZEN** | TShark 4.x streaming NDJSON (`-T ek`) + PyShark normalization |
-| **Primary Dataset Strategy** | **FROZEN** | Native strongSwan testbed generation with synchronized dual capture |
-| **Supporting Dataset Strategy**| **FROZEN** | UNB/CIC ISCXVPN2016 used strictly as OpenVPN supplementary research |
-| **Dataset Splitting Policy** | **FROZEN** | **Session-level isolation (`GroupKFold`) is mandatory; zero packet leakage** |
-| **ML Model Architectures** | **FROZEN** | XGBoost 2.0 (tabular flow statistics) + PyTorch 1D-CNN (packet sequence) |
-| **Model Explainability** | **FROZEN** | Local feature attributions via TreeSHAP |
-| **Security Policy Model** | **FROZEN** | Python + versioned YAML Policy-as-Code mapped to NIST SP 800-77 / RFCs |
-| **AI Analyst Architecture** | **FROZEN** | Local Retrieval-Augmented Generation (RAG) anchored to PostgreSQL pgvector |
-| **Application Tech Stack** | **FROZEN** | Next.js 14, Tailwind CSS (no shadcn/ui), FastAPI, PostgreSQL 15, Docker |
-| **Deployment Model** | **FROZEN** | Local-first containerized architecture with strict Class A/B privilege separation |
-| **UI Design System** | **FROZEN** | Editorial brutalist design; 0px radius; **Light Theme as Default** |
-| **Exact ML Fusion Weights** | **TBD** | Evaluated empirically during Phase 6 cross-validation |
-| **1D-CNN Sequence Length ($N$)**| **TBD** | Candidate lengths $N \in \{32, 64, 128\}$ tested empirically |
-| **Confidence Calibration Method**| **TBD** | Platt scaling vs. isotonic regression evaluated via ECE |
-| **Predictive Entropy Threshold**| **TBD** | Threshold $H_{\text{threshold}}$ calibrated against held-out OOD test splits |
-| **Isolation Forest Contamination**| **TBD** | Hyperparameter tuned on baseline traffic distributions |
-| **Posture Score Penalty Weights**| **TBD** | Deduction points calibrated against NIST severity hierarchies |
-| **Metadata Index Formula** | **TBD** | Mathematical formula refined during Phase 7 validation |
-| **UNB/CIC Local Archive Records**| **TBD** | Exact archive filenames and byte counts verified upon local inspection |
+1. **What We Are Building:** An automated, explainable security intelligence platform that inspects IPsec VPN traffic, audits cryptographic posture against official standards, classifies encrypted application flows without decryption, and verifies configuration remediation in a controlled lab.
+2. **Why This Approach:** Traditional packet analyzers display raw bytes but require manual interpretation. Pure machine learning systems hallucinate when predicting observable protocol facts. TUNNEL TRACE AI uses a hybrid architecture: direct facts are parsed deterministically, encrypted flows are classified via ML, compliance is scored via Policy-as-Code, and human explanations are grounded via RAG.
+3. **Where Data Comes From:** The primary dataset is generated programmatically within our own multi-namespace Linux strongSwan testbed, guaranteeing native IPsec ESP ground truth. Public UNB/CIC datasets are utilized strictly as secondary comparative benchmarks due to protocol domain shift.
+4. **How Security Is Assessed:** Evaluated deterministically against NIST SP 800-77 Rev. 1, RFC 8221, and RFC 8247 using declarative YAML policies. Every score deduction traces directly to specific packet frame numbers and byte offsets.
+5. **How We Prove It Works:** We demonstrate an end-to-end operational loop: start with a vulnerable tunnel, identify vulnerabilities, infer encrypted application traffic, simulate hardening in a Configuration Security Twin, apply the fix to the testbed, re-capture traffic, and verify that the security findings are resolved.
 
 ---
 
-## 32. Mentor Review Questions
+## 59. Areas for Mentor Feedback & Guidance
 
-We solicit specific feedback from faculty mentors on the following architectural considerations:
+The engineering team welcomes specific guidance from technical mentors on the following architectural items:
 
-| # | Review Topic | Current Working Proposal | Feedback Objective / Open Question |
-| :--- | :--- | :--- | :--- |
-| **1** | **Scope vs. Depth for SIH** | Focus on deep IPsec/IKE analysis rather than superficial multi-protocol support | Does the mentor agree that dominating IPsec/IKE deeply is superior to shallow multi-VPN coverage? |
-| **2** | **ML Traffic Taxonomy** | 7 discrete classes: Web, Video, VoIP, Chat, Email, File, ICMP + Unknown | Is this application taxonomy sufficiently representative for defense hackathon evaluation? |
-| **3** | **Dataset Defensibility** | Primary native testbed data + secondary OpenVPN public data | Does the mentor support our strict separation of native IPsec data from OpenVPN public data? |
-| **4** | **Remediation Safety Bounds** | Automated apply limited to controlled strongSwan lab | Does the mentor agree that restricting auto-remediation to the lab is the only defensible safety posture? |
-| **5** | **Evaluation Scenarios** | 3DES, DH2, Missing PFS, Weak Lifetimes, Network Impairments | Are there specific real-world cryptanalytic failure scenarios the mentor recommends adding? |
+**MENTOR DISCUSSION TOPICS**
+
+| No. | Strategic Architecture & Validation Question |
+| :--- | :--- |
+| 1. | Does the scope of the Linux strongSwan testbed sufficiently cover the evaluation scenarios |
+|  | expected by the NTRO technical panel, or should additional edge cases be prioritized? |
+| 2. | What specific weighting distribution across cryptographic strength vs. metadata exposure |
+|  | would best align with government compliance expectations for the Security Score? |
+| 3. | Are there specific legacy enterprise ciphers (e.g., Camellia, SEED, or proprietary DH groups) |
+|  | that should be explicitly incorporated into our negative test fixtures? |
+| 4. | Does the proposed session-level dataset splitting methodology adequately satisfy defense |
+|  | evaluation standards for machine learning validity? |
+| 5. | What additional side-channel traffic features would provide the strongest mathematical value |
+|  | for refining the Metadata Fingerprintability Index? |
 
 ---
 
-## 33. Conclusion and References
+## 60. References
 
-**TunnelTrace AI** establishes an industrial-grade, scientifically rigorous solution to Smart India Hackathon Problem Statement 26160. By rejecting black-box generative assumptions in favor of a **Four-Layer Hybrid Intelligence Architecture**, the platform provides deep, deterministic protocol forensics where truth is observable, robust machine learning where encryption obscures visibility, auditable Policy-as-Code where compliance is mandated, and grounded AI assistance where human explanation is required.
-
-With an automated IPsec testbed delivering verified ground truth, a closed-loop remediation verification engine, an immutable Forensic Evidence Graph, and an editorial, high-performance PWA dashboard, TunnelTrace AI provides a world-class security intelligence framework for safeguarding national IPsec communications.
-
-### Authoritative References
-1. **NIST SP 800-77 Rev. 1:** *Guide to IPsec VPNs*, National Institute of Standards and Technology, 2020.
-2. **NIST SP 800-57 Part 1 Rev. 5:** *Recommendation for Key Management*, NIST, 2020.
-3. **RFC 7296:** *Internet Key Exchange Protocol Version 2 (IKEv2)*, Internet Engineering Task Force, 2014.
-4. **RFC 8221:** *Cryptographic Algorithm Implementation Requirements and Usage Guidance for ESP and AH*, IETF, 2017.
-5. **RFC 8247:** *Cryptographic Algorithm Implementation Requirements for IKEv2*, IETF, 2017.
+1. **NIST Special Publication 800-77 Revision 1:** *Guide to IPsec VPNs*, National Institute of Standards and Technology, 2020.
+2. **NIST Special Publication 800-57 Part 1 Revision 5:** *Recommendation for Key Management*, National Institute of Standards and Technology, 2020.
+3. **RFC 7296:** *Internet Key Exchange Protocol Version 2 (IKEv2)*, Internet Engineering Task Force (IETF), 2014.
+4. **RFC 8221:** *Cryptographic Algorithm Implementation Requirements and Usage Guidance for Encapsulating Security Payload (ESP) and Authentication Header (AH)*, IETF, 2017.
+5. **RFC 8247:** *Cryptographic Algorithm Implementation Requirements and Usage Guidance for IKEv2*, IETF, 2017.
 6. **RFC 4301:** *Security Architecture for the Internet Protocol*, IETF, 2005.
 7. **RFC 4303:** *IP Encapsulating Security Payload (ESP)*, IETF, 2005.
-8. **RFC 9395:** *Deprecation of Triple-DES (3DES) across all IETF Protocols*, IETF, 2023.
-9. **IANA:** *Internet Key Exchange Version 2 (IKEv2) Parameters Registries*, IANA, 2024.
-10. **UNB/CIC:** *ISCXVPN2016 Dataset Documentation*, Canadian Institute for Cybersecurity, University of New Brunswick.
-11. **NTRO Problem Statement 26160:** *AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework*, Smart India Hackathon 2026.
+8. **UNB/CIC ISCXVPN2016 Dataset:** *Characterization of Encrypted Traffic with a Comprehensive Analysis of VPN and non-VPN Traffic*, University of New Brunswick, Canadian Institute for Cybersecurity, 2016.
+9. **strongSwan Documentation:** *strongSwan IPsec Architecture & Configuration Reference*, strongSwan Project, 2024.
+10. **Lundberg, S. M., & Lee, S.-I.:** *A Unified Approach to Interpreting Model Predictions (SHAP)*, Advances in Neural Information Processing Systems (NeurIPS), 2017.
+11. **Guo, C., Pleiss, G., Sun, Y., & Weinberger, K. Q.:** *On Calibration of Modern Neural Networks*, International Conference on Machine Learning (ICML), 2017.
