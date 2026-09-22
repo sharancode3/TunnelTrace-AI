@@ -1,0 +1,54 @@
+# System & OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE & Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python & Virtual Environments
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.env.local
+.venv/
+env/
+venv/
+ENV/
+
+# Node & Next.js
+node_modules/
+.next/
+out/
+build/
+dist/
+.npm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database & Storage Mounts
+data/postgres/
+data/redis/
+data/minio/
+*.sqlite3
+*.db
+
+# Packet Captures & Temp Artifacts (Except Golden Fixtures)
+scratch/
+tmp/
+/captures/*
+!/captures/golden/
+!/captures/.gitkeep
+
+# ML Model Artifacts & Weights (Binary blobs)
+models/weights/*.bin
+models/weights/*.pth
+models/weights/*.onnx
+!models/weights/.gitkeep
