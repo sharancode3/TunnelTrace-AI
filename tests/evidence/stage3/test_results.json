@@ -1,0 +1,125 @@
+{
+  "stage": 3,
+  "stage_name": "CAPTURE_INGESTION_AND_PROTOCOL_FORENSICS",
+  "executed_at": "2026-09-24T00:02:40+05:30",
+  "test_runner": "pytest-8.4.2",
+  "python_version": "3.10.11",
+  "platform": "win32 (Windows host running TShark 4.6.4 inside WSL2 Ubuntu 6.18.33.2-microsoft-standard-WSL2)",
+  "summary": {
+    "total": 73,
+    "passed": 73,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "duration_seconds": 5.89
+  },
+  "test_suites": [
+    {
+      "suite": "tests/unit",
+      "scope": "Lab Testbed Manifest, Safety Boundaries, Scenarios, StrongSwan Config",
+      "count": 17,
+      "passed": 17,
+      "failed": 0
+    },
+    {
+      "suite": "backend/tests/unit",
+      "scope": "API Captures & Analyses, Capture Validation, Config, Container Security, Errors, Logging, Privileged Agent, Protocol Normalization, Storage, TShark Process Runner",
+      "count": 49,
+      "passed": 49,
+      "failed": 0
+    },
+    {
+      "suite": "tests/integration/test_stage3_protocol_forensics.py",
+      "scope": "Real Stage 2 Artifact Ground-Truth Verification (Run 01 GCM, Plaintext, IPv6, NAT-T, PCAPNG, ESP-only, Reproducibility)",
+      "count": 7,
+      "passed": 7,
+      "failed": 0,
+      "tests": [
+        {
+          "test_name": "test_real_stage2_run01_tunnel_gcm_pfs",
+          "target": "storage/lab/runs/tt-1790185654-25c4bc/captures/wan_encrypted.pcap",
+          "sha256": "0eca936dffea9c38d0cedadd51f2a36084b3f7f03aa6fff9ef1fe58a988c70a9",
+          "outcome": "SUCCESS",
+          "ipsec_detected": true,
+          "packet_counts": { "ike": 4, "esp": 8, "ah": 0, "total": 12 },
+          "crypto_facts": {
+            "encryption": "AES-GCM-16-256",
+            "prf": "PRF_HMAC_SHA2_256",
+            "dh_group": "ECP-256 (DH19)"
+          },
+          "result": "PASSED"
+        },
+        {
+          "test_name": "test_real_stage2_run01_plaintext_no_ipsec",
+          "target": "storage/lab/runs/tt-1790185654-25c4bc/captures/client_plaintext.pcap",
+          "outcome": "NO_IPSEC_FOUND",
+          "ipsec_detected": false,
+          "packet_counts": { "ike": 0, "esp": 0, "ah": 0 },
+          "result": "PASSED"
+        },
+        {
+          "test_name": "test_real_stage2_run04_ipv6",
+          "target": "storage/lab/runs/tt-1790185891-f96398/captures/wan_encrypted.pcap",
+          "outcome": "SUCCESS",
+          "ipsec_detected": true,
+          "ip_versions": ["IPv6"],
+          "result": "PASSED"
+        },
+        {
+          "test_name": "test_real_stage2_run06_natt",
+          "target": "storage/lab/runs/tt-1790185927-b1d8f6/captures/wan_encrypted.pcap",
+          "outcome": "SUCCESS",
+          "ipsec_detected": true,
+          "natt_observed": true,
+          "result": "PASSED"
+        },
+        {
+          "test_name": "test_real_pcapng_ingestion_and_forensics",
+          "target": "tests/fixtures/captures/real_tunnel_gcm.pcapng",
+          "format": "PCAPNG",
+          "magic": "PCAPNG_SHB",
+          "outcome": "SUCCESS",
+          "packet_counts": { "ike": 4, "esp": 8 },
+          "result": "PASSED"
+        },
+        {
+          "test_name": "test_real_partial_esp_only",
+          "target": "tests/fixtures/captures/real_esp_only.pcap",
+          "outcome": "SUCCESS",
+          "ipsec_detected": true,
+          "protocols_observed": ["ESP"],
+          "packet_counts": { "ike": 0, "esp": 8 },
+          "crypto_observations_count": 0,
+          "ike_versions_observed_count": 0,
+          "result": "PASSED"
+        },
+        {
+          "test_name": "test_analysis_reproducibility",
+          "target": "storage/lab/runs/tt-1790185654-25c4bc/captures/wan_encrypted.pcap",
+          "outcome": "SUCCESS",
+          "runs_evaluated": 2,
+          "hashes_identical": true,
+          "observations_identical": true,
+          "result": "PASSED"
+        }
+      ]
+    }
+  ],
+  "toolchain": {
+    "tshark_version": "4.6.4 (Git commit 469c8c7)",
+    "capinfos_version": "4.6.4 (Git commit 469c8c7)",
+    "editcap_version": "4.6.4 (Git commit 469c8c7)",
+    "wsl_kernel": "Linux 6.18.33.2-microsoft-standard-WSL2 x86_64",
+    "unprivileged_execution": true,
+    "user_id": 1000,
+    "root_privileges_in_dissector": false
+  },
+  "security_invariants": {
+    "zero_payload_decryption": true,
+    "zero_fake_ml_inference": true,
+    "zero_unredacted_secrets": true,
+    "path_traversal_protection": true,
+    "bpf_strict_allowlist": true,
+    "protected_host_interfaces_shielded": true
+  }
+}

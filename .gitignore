@@ -15,12 +15,21 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.env
-.env.local
 .venv/
 env/
 venv/
 ENV/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Environment Files (Do not commit secrets)
+.env
+.env.*
+!.env.example
 
 # Node & Next.js
 node_modules/
@@ -34,9 +43,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # Database & Storage Mounts
-data/postgres/
-data/redis/
-data/minio/
+data/
+storage/
+var/
 *.sqlite3
 *.db
 
@@ -46,6 +55,12 @@ tmp/
 /captures/*
 !/captures/golden/
 !/captures/.gitkeep
+lab/runtime/
+lab/logs/
+lab/generated/
+storage/lab/runs/
+*.lock
+
 
 # ML Model Artifacts & Weights (Binary blobs)
 models/weights/*.bin

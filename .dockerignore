@@ -1,0 +1,47 @@
+# Git
+.git
+.gitignore
+
+# Documentation & Scratch
+docs/
+scratch/
+*.md
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.venv/
+venv/
+ENV/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Node
+node_modules/
+.next/
+
+# Environment and Secrets
+.env
+.env.*
+!.env.example
+
+# Local storage and database volumes
+data/
+storage/
+var/
+tmp/
+*.db
+*.sqlite3
+
+# Large captures and models
+captures/*
+!captures/golden/
+models/weights/*
+!models/weights/.gitkeep

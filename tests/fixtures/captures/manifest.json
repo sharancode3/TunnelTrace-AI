@@ -1,0 +1,104 @@
+{
+  "fixtures": [
+    {
+      "fixture_id": "FIX-STAGE2-RUN01-WAN",
+      "filename": "wan_encrypted.pcap",
+      "path": "storage/lab/runs/tt-1790185654-25c4bc/captures/wan_encrypted.pcap",
+      "format": "PCAP",
+      "sha256": "0eca936dffea9c38d0cedadd51f2a36084b3f7f03aa6fff9ef1fe58a988c70a9",
+      "file_size_bytes": 2774,
+      "packet_count": 12,
+      "scenario": "scn-01-tunnel-v4-gcm-pfs",
+      "expected_facts": {
+        "ipsec_detected": true,
+        "protocols": ["ESP", "IKEv2"],
+        "ip_version": "IPv4",
+        "natt_observed": false,
+        "ike_version": "IKEv2",
+        "transforms": ["AES-GCM-16-256", "PRF_HMAC_SHA2_256", "ECP-256 (DH19)"],
+        "initiator_spi": "3b9b84844fa6b437",
+        "responder_spi": "f7624483b42b91ad",
+        "esp_spis": ["0xc4f6f980", "0xc9535e6a"]
+      }
+    },
+    {
+      "fixture_id": "FIX-STAGE2-RUN01-PLAINTEXT-NO-IPSEC",
+      "filename": "client_plaintext.pcap",
+      "path": "storage/lab/runs/tt-1790185654-25c4bc/captures/client_plaintext.pcap",
+      "format": "PCAP",
+      "sha256": "b37aa527dd51c80a1b003cc305f56bc77f53ba44da0ec3d4144fc29efb1ad61c",
+      "file_size_bytes": 1108,
+      "packet_count": 10,
+      "scenario": "scn-01-client-plaintext-icmp",
+      "expected_facts": {
+        "ipsec_detected": false,
+        "outcome": "NO_IPSEC_FOUND",
+        "ike_packet_count": 0,
+        "esp_packet_count": 0
+      }
+    },
+    {
+      "fixture_id": "FIX-STAGE2-RUN04-IPV6",
+      "filename": "wan_encrypted.pcap",
+      "path": "storage/lab/runs/tt-1790185891-f96398/captures/wan_encrypted.pcap",
+      "format": "PCAP",
+      "sha256": "09e98faba82d2c299c8fba5e80fa9e7feae0c1c875d697e3a9856fdbba1a3c75",
+      "file_size_bytes": 3294,
+      "packet_count": 12,
+      "scenario": "scn-04-tunnel-v6-gcm-pfs",
+      "expected_facts": {
+        "ipsec_detected": true,
+        "ip_version": "IPv6",
+        "src_ip": "fd00:ba::1",
+        "dst_ip": "fd00:ba::2",
+        "esp_spis": ["0xc1f68049", "0xc4cf085d"]
+      }
+    },
+    {
+      "fixture_id": "FIX-STAGE2-RUN06-NATT",
+      "filename": "wan_encrypted.pcap",
+      "path": "storage/lab/runs/tt-1790185927-b1d8f6/captures/wan_encrypted.pcap",
+      "format": "PCAP",
+      "sha256": "7b63a0fd455202ac0fa83c3167b57bf08e001859664c1e4599a9a3b632903513",
+      "file_size_bytes": 2838,
+      "packet_count": 12,
+      "scenario": "scn-06-tunnel-v4-natt",
+      "expected_facts": {
+        "ipsec_detected": true,
+        "natt_observed": true,
+        "udp_port": 4500,
+        "esp_encapsulation": "UDP_ENCAPSULATED_ESP"
+      }
+    },
+    {
+      "fixture_id": "FIX-PCAPNG-01",
+      "filename": "real_tunnel_gcm.pcapng",
+      "path": "tests/fixtures/captures/real_tunnel_gcm.pcapng",
+      "format": "PCAPNG",
+      "sha256": "949531329196d1fbc836ee0685efe8a204c68d6d8da5a5b75ecaa0128c59e04d",
+      "file_size_bytes": 3048,
+      "packet_count": 12,
+      "scenario": "pcapng-conversion-from-run01",
+      "expected_facts": {
+        "format": "PCAPNG",
+        "ipsec_detected": true
+      }
+    },
+    {
+      "fixture_id": "FIX-ESP-ONLY-01",
+      "filename": "real_esp_only.pcap",
+      "path": "tests/fixtures/captures/real_esp_only.pcap",
+      "format": "PCAP",
+      "sha256": "76b74be5fc6e60d931c1bcf959360c84b59d7f70bada30b46af8938bff339bdd",
+      "file_size_bytes": 1588,
+      "packet_count": 8,
+      "scenario": "partial-esp-only-frames-5-12",
+      "expected_facts": {
+        "ipsec_detected": true,
+        "ike_packet_count": 0,
+        "esp_packet_count": 8,
+        "crypto_observations_count": 0
+      }
+    }
+  ]
+}

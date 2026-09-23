@@ -1,0 +1,182 @@
+{
+  "stage": "STAGE_4_IKE_SA_FLOW_RECONSTRUCTION",
+  "total_tests": 21,
+  "passed": 21,
+  "failed": 0,
+  "tests": [
+    {
+      "name": "test_initial_request_responder_spi_upgrade",
+      "classname": "backend.tests.unit.test_ike_correlator",
+      "time": 0.03,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_retransmission_detection",
+      "classname": "backend.tests.unit.test_ike_correlator",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_natt_port_continuation",
+      "classname": "backend.tests.unit.test_ike_correlator",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_partial_session_handling",
+      "classname": "backend.tests.unit.test_ike_correlator",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_parent_ike_sa_selected_vs_proposed",
+      "classname": "backend.tests.unit.test_sa_reconstruction",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_proposals_only_keeps_transforms_unknown",
+      "classname": "backend.tests.unit.test_sa_reconstruction",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_mode_resolution_explicit_transport",
+      "classname": "backend.tests.unit.test_sa_reconstruction",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_mode_resolution_unknown_when_absent",
+      "classname": "backend.tests.unit.test_sa_reconstruction",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_orphan_child_sa_esp_only",
+      "classname": "backend.tests.unit.test_sa_reconstruction",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_directional_stream_and_bidirectional_pairing",
+      "classname": "backend.tests.unit.test_flow_aggregator",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_idle_timeout_splits_streams",
+      "classname": "backend.tests.unit.test_flow_aggregator",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_unpaired_unidirectional_stream",
+      "classname": "backend.tests.unit.test_flow_aggregator",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_ipv6_and_natt_flow_detection",
+      "classname": "backend.tests.unit.test_flow_aggregator",
+      "time": 0.001,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_reconstruction_api_lifecycle",
+      "classname": "backend.tests.unit.test_api_reconstruction",
+      "time": 0.215,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_real_stage2_run01_tunnel_gcm_reconstruction",
+      "classname": "tests.integration.test_stage4_reconstruction",
+      "time": 5.712,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_real_stage2_run03_transport_reconstruction",
+      "classname": "tests.integration.test_stage4_reconstruction",
+      "time": 0.677,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_real_stage2_run04_ipv6_reconstruction",
+      "classname": "tests.integration.test_stage4_reconstruction",
+      "time": 0.55,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_real_stage2_run06_natt_reconstruction",
+      "classname": "tests.integration.test_stage4_reconstruction",
+      "time": 0.577,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_real_esp_only_orphan_reconstruction",
+      "classname": "tests.integration.test_stage4_reconstruction",
+      "time": 0.528,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_non_ipsec_reconstruction",
+      "classname": "tests.integration.test_stage4_reconstruction",
+      "time": 0.627,
+      "status": "PASSED"
+    },
+    {
+      "name": "test_reconstruction_idempotency_and_reproducibility",
+      "classname": "tests.integration.test_stage4_reconstruction",
+      "time": 0.548,
+      "status": "PASSED"
+    }
+  ],
+  "oracle_verified_captures": [
+    {
+      "id": "Run 01",
+      "profile": "Tunnel IPv4 AES-GCM + PFS",
+      "initiator_spi": "3b9b84844fa6b437",
+      "ike_ciphers": "AES-GCM-16-256",
+      "child_mode": "UNKNOWN",
+      "child_pfs": "UNKNOWN",
+      "packets": 8,
+      "result": "VERIFIED"
+    },
+    {
+      "id": "Run 03",
+      "profile": "Transport Mode IPv4",
+      "initiator_spi": "536063b4feac21a7",
+      "child_mode": "TRANSPORT",
+      "mode_evidence": "VERIFIED",
+      "packets": 8,
+      "result": "VERIFIED"
+    },
+    {
+      "id": "Run 04",
+      "profile": "IPv6 ESP Tunnel Mode",
+      "child_mode": "UNKNOWN",
+      "packets": 8,
+      "result": "VERIFIED"
+    },
+    {
+      "id": "Run 06",
+      "profile": "NAT-T UDP-encapsulated ESP",
+      "child_mode": "UNKNOWN",
+      "nat_t_detected": true,
+      "packets": 8,
+      "result": "VERIFIED"
+    },
+    {
+      "id": "Orphan",
+      "profile": "Raw ESP-only PCAP",
+      "child_sas": 2,
+      "association": "ORPHAN_SYNTHESIZED",
+      "flows": 1,
+      "result": "VERIFIED"
+    }
+  ],
+  "total_repository_tests": 101,
+  "total_repository_passed": 101,
+  "total_stage4_tests": 22,
+  "stage4_passed": 22
+}

@@ -1,0 +1,22 @@
+scenario_id: "scn-05-tunnel-v4-netem"
+scenario_version: "1.0"
+description: "Tunnel Mode IPv4 with WAN traffic impairment injected via Linux tc/netem (40ms delay, 10ms jitter, 2% loss)."
+
+topology: "TUNNEL_SITE_TO_SITE"
+ip_version: "IPV4"
+ike_version: "IKEV2"
+crypto_profile: "IKEV2_AES256GCM_DH19_PFS"
+pfs: "ENABLED"
+encapsulation: "NATIVE_ESP"
+capture: "BOTH"
+
+netem:
+  delay_ms: 40.0
+  jitter_ms: 10.0
+  loss_pct: 2.0
+  rate_kbit: 50000
+
+traffic_probe:
+  packet_count: 5
+  interval_sec: 0.2
+  payload_size_bytes: 64

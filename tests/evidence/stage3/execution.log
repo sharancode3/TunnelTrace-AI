@@ -1,0 +1,91 @@
+============================= test session starts =============================
+platform win32 -- Python 3.10.11, pytest-8.4.2, pluggy-1.6.0 -- C:\Users\tms10\AppData\Local\Programs\Python\Python310\python.exe
+cachedir: .pytest_cache
+rootdir: C:\SHARAN PROJECTS\TunnelTrace AI
+configfile: pytest.ini
+plugins: anyio-4.13.0, asyncio-0.26.0
+asyncio: mode=auto, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 73 items
+
+tests/unit/test_lab_manifest.py::TestManifest::test_manifest_creation_and_serialization PASSED [  1%]
+tests/unit/test_lab_safety_and_runner.py::TestSafetyAndRunner::test_rejection_of_physical_interfaces PASSED [  2%]
+tests/unit/test_lab_safety_and_runner.py::TestSafetyAndRunner::test_acceptance_of_lab_interfaces PASSED [  4%]
+tests/unit/test_lab_safety_and_runner.py::TestSafetyAndRunner::test_secret_scrubbing PASSED [  5%]
+tests/unit/test_lab_scenarios.py::TestScenarioSchema::test_valid_scenario_creation PASSED [  6%]
+tests/unit/test_lab_scenarios.py::TestScenarioSchema::test_invalid_scenario_id_characters PASSED [  8%]
+tests/unit/test_lab_scenarios.py::TestScenarioSchema::test_invalid_scenario_id_length PASSED [  9%]
+tests/unit/test_lab_scenarios.py::TestScenarioSchema::test_invalid_topology_rejection PASSED [ 10%]
+tests/unit/test_lab_scenarios.py::TestScenarioSchema::test_invalid_ip_version_rejection PASSED [ 12%]
+tests/unit/test_lab_scenarios.py::TestScenarioSchema::test_invalid_crypto_profile_rejection PASSED [ 13%]
+tests/unit/test_lab_scenarios.py::TestScenarioSchema::test_netem_boundaries_and_jitter_validation PASSED [ 15%]
+tests/unit/test_lab_scenarios.py::TestScenarioLoader::test_load_all_built_in_profiles PASSED [ 16%]
+tests/unit/test_lab_scenarios.py::TestScenarioLoader::test_loader_nonexistent_file PASSED [ 17%]
+tests/unit/test_lab_scenarios.py::TestScenarioLoader::test_loader_malformed_yaml PASSED [ 19%]
+tests/unit/test_lab_strongswan_config.py::TestStrongSwanConfigGenerator::test_crypto_proposal_mapper_aes_gcm_pfs PASSED [ 20%]
+tests/unit/test_lab_strongswan_config.py::TestStrongSwanConfigGenerator::test_crypto_proposal_mapper_aes_cbc_nopfs PASSED [ 21%]
+tests/unit/test_lab_strongswan_config.py::TestStrongSwanConfigGenerator::test_tunnel_config_rendering PASSED [ 23%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_upload_valid_pcap PASSED [ 24%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_upload_empty_capture_rejected PASSED [ 26%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_upload_invalid_magic_rejected PASSED [ 27%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_upload_path_traversal_filename_safe PASSED [ 28%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_get_capture_metadata PASSED [ 30%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_get_capture_not_found PASSED [ 31%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_create_and_query_analysis PASSED [ 32%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_analysis_target_not_found PASSED [ 34%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_live_captures_list_interfaces PASSED [ 35%]
+backend/tests/unit/test_api_captures_and_analyses.py::test_live_captures_reject_unauthorized_interface PASSED [ 36%]
+backend/tests/unit/test_capture_validation.py::test_validate_pcap_microsecond_le PASSED [ 38%]
+backend/tests/unit/test_capture_validation.py::test_validate_pcap_microsecond_be PASSED [ 39%]
+backend/tests/unit/test_capture_validation.py::test_validate_pcap_nanosecond_le PASSED [ 41%]
+backend/tests/unit/test_capture_validation.py::test_validate_pcap_nanosecond_be PASSED [ 42%]
+backend/tests/unit/test_capture_validation.py::test_validate_pcapng_shb PASSED [ 43%]
+backend/tests/unit/test_capture_validation.py::test_validate_empty_file_rejected PASSED [ 45%]
+backend/tests/unit/test_capture_validation.py::test_validate_truncated_header_rejected PASSED [ 46%]
+backend/tests/unit/test_capture_validation.py::test_validate_unknown_magic_rejected PASSED [ 47%]
+backend/tests/unit/test_capture_validation.py::test_validate_truncated_pcap_global_header PASSED [ 49%]
+backend/tests/unit/test_capture_validation.py::test_sanitize_filename_prevents_traversal PASSED [ 50%]
+backend/tests/unit/test_config.py::test_default_settings_instantiation PASSED [ 52%]
+backend/tests/unit/test_config.py::test_masked_secrets PASSED            [ 53%]
+backend/tests/unit/test_config.py::test_cors_origins_parsing PASSED      [ 54%]
+backend/tests/unit/test_config.py::test_env_override PASSED              [ 56%]
+backend/tests/unit/test_container_security.py::test_dockerfile_security_boundaries PASSED [ 57%]
+backend/tests/unit/test_container_security.py::test_docker_compose_security_boundaries PASSED [ 58%]
+backend/tests/unit/test_errors.py::test_error_envelope_structure PASSED  [ 60%]
+backend/tests/unit/test_errors.py::test_exception_status_codes PASSED    [ 61%]
+backend/tests/unit/test_logging.py::test_secret_redaction_filter PASSED  [ 63%]
+backend/tests/unit/test_logging.py::test_request_context_variable PASSED [ 64%]
+backend/tests/unit/test_privileged_agent.py::test_privileged_agent_boundary_not_configured PASSED [ 65%]
+backend/tests/unit/test_privileged_agent.py::test_privileged_agent_command_execution_rejected PASSED [ 67%]
+backend/tests/unit/test_protocol_normalization.py::test_normalize_transform_encr PASSED [ 68%]
+backend/tests/unit/test_protocol_normalization.py::test_normalize_transform_dh PASSED [ 69%]
+backend/tests/unit/test_protocol_normalization.py::test_normalize_unknown_transform PASSED [ 71%]
+backend/tests/unit/test_protocol_normalization.py::test_parse_ike_layer_synthetic PASSED [ 72%]
+backend/tests/unit/test_protocol_normalization.py::test_parse_esp_layer_synthetic PASSED [ 73%]
+backend/tests/unit/test_protocol_normalization.py::test_parse_esp_natt_layer PASSED [ 75%]
+backend/tests/unit/test_protocol_normalization.py::test_parse_ah_layer_synthetic PASSED [ 76%]
+backend/tests/unit/test_protocol_normalization.py::test_parse_ip_layer_ipv4_and_natt PASSED [ 78%]
+backend/tests/unit/test_protocol_normalization.py::test_parse_ip_layer_ipv6 PASSED [ 79%]
+backend/tests/unit/test_storage.py::test_storage_initialization_and_directories PASSED [ 80%]
+backend/tests/unit/test_storage.py::test_path_traversal_rejection PASSED [ 82%]
+backend/tests/unit/test_storage.py::test_storage_write_read_delete PASSED [ 83%]
+backend/tests/unit/test_storage.py::test_storage_writability_probe PASSED [ 84%]
+backend/tests/unit/test_tshark_runner.py::test_toolchain_version_discovery PASSED [ 86%]
+backend/tests/unit/test_tshark_runner.py::test_toolchain_to_wsl_path_conversion PASSED [ 87%]
+backend/tests/unit/test_tshark_runner.py::test_tshark_runner_nonexistent_file_raises PASSED [ 89%]
+backend/tests/unit/test_tshark_runner.py::test_tshark_runner_safe_command_vector PASSED [ 90%]
+tests/integration/test_stage3_protocol_forensics.py::test_real_stage2_run01_tunnel_gcm_pfs PASSED [ 91%]
+tests/integration/test_stage3_protocol_forensics.py::test_real_stage2_run01_plaintext_no_ipsec PASSED [ 93%]
+tests/integration/test_stage3_protocol_forensics.py::test_real_stage2_run04_ipv6 PASSED [ 94%]
+tests/integration/test_stage3_protocol_forensics.py::test_real_stage2_run06_natt PASSED [ 95%]
+tests/integration/test_stage3_protocol_forensics.py::test_real_pcapng_ingestion_and_forensics PASSED [ 97%]
+tests/integration/test_stage3_protocol_forensics.py::test_real_partial_esp_only PASSED [ 98%]
+tests/integration/test_stage3_protocol_forensics.py::test_analysis_reproducibility PASSED [100%]
+
+============================== warnings summary ===============================
+..\..\Users\tms10\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\testclient.py:1
+  C:\Users\tms10\AppData\Local\Programs\Python\Python310\lib\site-packages\fastapi\testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================== 73 passed, 1 warning in 5.89s ========================
+

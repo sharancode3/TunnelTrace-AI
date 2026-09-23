@@ -1,0 +1,16 @@
+scenario_id: "scn-06-tunnel-v4-natt"
+scenario_version: "1.0"
+description: "Tunnel Mode IPv4 with UDP port 4500 encapsulation for NAT-Traversal simulation."
+
+topology: "TUNNEL_SITE_TO_SITE"
+ip_version: "IPV4"
+ike_version: "IKEV2"
+crypto_profile: "IKEV2_AES256GCM_DH19_PFS"
+pfs: "ENABLED"
+encapsulation: "NAT_T"
+capture: "WAN"
+
+traffic_probe:
+  packet_count: 5
+  interval_sec: 0.2
+  payload_size_bytes: 64

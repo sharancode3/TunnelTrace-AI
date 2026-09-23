@@ -1,0 +1,183 @@
+# ==============================================================================
+# TunnelTrace AI — Local-First Execution Class A Docker Compose Runtime
+# Smart India Hackathon 2026 | NTRO Problem Statement 26160
+# ==============================================================================
+# Execution Class A is strictly UNPRIVILEGED:
+# - No root execution (UID 10001)
+# - No Linux capabilities (cap_drop: ALL)
+# - No Docker socket mounts
+# - Loopback-only host bindings (127.0.0.1)
+# ==============================================================================
+
+
+networks:
+  tunneltrace_internal:
+    driver: bridge
+    internal: false
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  storage_data:
+    driver: local
+
+services:
+  # ----------------------------------------------------------------------------
+  # PostgreSQL 15+ with pgvector support
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: pgvector/pgvector:pg15
+    container_name: tunneltrace_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tunneltrace_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tunneltrace_dev_password}
+      POSTGRES_DB: ${POSTGRES_DB:-tunneltrace_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - tunneltrace_internal
+    ports:
+      # Bound strictly to 127.0.0.1 for local developer debugging; not public
+      - "127.0.0.1:5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tunneltrace_user} -d ${POSTGRES_DB:-tunneltrace_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    security_opt:
+      - no-new-privileges:true
+
+  # ----------------------------------------------------------------------------
+  # Redis 7 (Transient Caching & Background Queue Broker)
+  # ----------------------------------------------------------------------------
+  redis:
+    image: redis:7-alpine
+    container_name: tunneltrace_redis
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    volumes:
+      - redis_data:/data
+    networks:
+      - tunneltrace_internal
+    ports:
+      # Bound strictly to 127.0.0.1 for local debugging; not public
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 3s
+    security_opt:
+      - no-new-privileges:true
+
+  # ----------------------------------------------------------------------------
+  # One-Shot Database Migrations (Alembic)
+  # ----------------------------------------------------------------------------
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tunneltrace_migrate
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-tunneltrace_user}:${POSTGRES_PASSWORD:-tunneltrace_dev_password}@postgres:5432/${POSTGRES_DB:-tunneltrace_db}
+      STORAGE_ROOT: /var/lib/tunneltrace/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - tunneltrace_internal
+    user: "10001:10001"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+
+  # ----------------------------------------------------------------------------
+  # FastAPI Application Backend Service (Unprivileged Class A)
+  # ----------------------------------------------------------------------------
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tunneltrace_api
+    restart: unless-stopped
+    command: ["uvicorn", "app.main:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]
+    environment:
+      APP_NAME: "TunnelTrace AI"
+      APP_ENV: ${APP_ENV:-development}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-tunneltrace_user}:${POSTGRES_PASSWORD:-tunneltrace_dev_password}@postgres:5432/${POSTGRES_DB:-tunneltrace_db}
+      REDIS_URL: redis://redis:6379/0
+      STORAGE_ROOT: /var/lib/tunneltrace/storage
+      CORS_ALLOWED_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000"]'
+      NETAGENT_ENABLED: "false"
+    volumes:
+      - storage_data:/var/lib/tunneltrace/storage
+    ports:
+      # Exposed locally on 127.0.0.1 for local-first host access
+      - "127.0.0.1:8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - tunneltrace_internal
+    user: "10001:10001"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/system/health/live').read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ----------------------------------------------------------------------------
+  # Celery Asynchronous Background Worker (Unprivileged Class A)
+  # ----------------------------------------------------------------------------
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: tunneltrace_worker
+    restart: unless-stopped
+    command: ["celery", "-A", "app.workers.celery_app", "worker", "--loglevel=INFO", "--concurrency=2"]
+    environment:
+      APP_NAME: "TunnelTrace AI Worker"
+      APP_ENV: ${APP_ENV:-development}
+      APP_LOG_LEVEL: ${APP_LOG_LEVEL:-INFO}
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-tunneltrace_user}:${POSTGRES_PASSWORD:-tunneltrace_dev_password}@postgres:5432/${POSTGRES_DB:-tunneltrace_db}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      STORAGE_ROOT: /var/lib/tunneltrace/storage
+      NETAGENT_ENABLED: "false"
+    volumes:
+      - storage_data:/var/lib/tunneltrace/storage
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    networks:
+      - tunneltrace_internal
+    user: "10001:10001"
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

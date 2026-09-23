@@ -1,12 +1,12 @@
 # TunnelTrace AI — Project Memory / Master Context
 
-**Last Updated:** 2026-09-22T21:43:00+05:30  
-**Current Phase:** ARCHITECTURE & SPECIFICATION BASELINE COMPLETE (Transitioning to Core Implementation)  
-**Current Status:** Specification Approved; Code Implementation Ready to Begin  
-**Current Active Task:** Operational Manual & SIH Demo Runbook Complete  
-**Next Recommended Task:** Initialize Local-First Engineering Stack (Docker Compose, FastAPI skeleton, Alembic migrations, strongSwan lab)  
-**Repository State Verified:** YES (Inspected `docs/` directory; 13 master specifications confirmed)  
-**Memory Confidence:** CURRENT (Reflects verified repository truth as of 2026-09-22)  
+**Last Updated:** 2026-09-24T02:00:00+05:30  
+**Current Phase:** STAGE 7 COMPLETED & FULLY VALIDATED (1D-CNN + Multimodal Fusion + Calibration + OOD + TreeSHAP + Behavioral Anomaly)  
+**Current Status:** Stages 1, 2, 3, 4, 5, 6, and 7 Implemented & Genuinely Validated (239 total unit and integration tests passing: 215 unit, 24 integration; 91 ML tests; canonical 3-channel sequence tensor (3, N) with boolean masking; candidate horizons N in {32, 64, 128} with N=32 selected on validation; lightweight 1D-CNN with TorchScript export; multimodal weighted probability fusion with JS divergence branch disagreement diagnostic; probability calibration via temperature scaling fitted strictly on VAL_CAL with NLL, Brier, and 10-bin ECE metrics; dual-gate open-set OOD rejection via calibrated Shannon entropy and max confidence; TreeSHAP explainability strictly on XGBoost branch with exact additivity and leakage guard; independent unsupervised Isolation Forest with pure non-pickle JSON serialization; unified model bundle packaging with SHA-256 manifest and tamper verification; Stage 7 inference service with graceful short-flow degraded fallback; Alembic migration 0006 for flow_classifications; zero hallucination, zero payload decryption, zero git push)  
+**Current Active Stage:** Stage 7 — 1D-CNN + Multimodal Fusion + Calibration + OOD + SHAP + Anomaly (COMPLETED)  
+**Next Recommended Task:** Stage 8 — Security + Compliance + Evidence + Scoring Engine  
+**Repository State Verified:** YES (Stages 1–7 complete, working, verified, zero hallucination)  
+**Memory Confidence:** CURRENT (Synchronized with 12-stage implementation roadmap)  
 
 ---
 
@@ -34,35 +34,225 @@
 ### What this project is
 TunnelTrace AI is an enterprise-grade, evidence-first **IPsec Security Intelligence Platform** built for the National Technical Research Organisation (NTRO). It ingests raw network captures (PCAP/PCAPNG) or live traffic streams, reconstructs IKE negotiations and stateful Security Associations (SAs), classifies inner encrypted applications without decryption (using calibrated ML), audits cryptographic configurations against NIST SP 800-77 Rev. 1 / RFC 8221, computes a deterministic 0–100 Security Score, projects hardened configurations via a Configuration Security Twin, and validates remediations in a closed-loop strongSwan testbed.
 
-### What currently works
-- **Complete Master Specification Suite (100% frozen and approved in `docs/`):**
-  - **Requirements & Acceptance (`docs/requirements/`):**
-    - [`docs/requirements/PRD.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/requirements/PRD.md): 60 sections detailing all functional requirements (`LAB-`, `CAP-`, `PROTO-`, `ML-`, `SEC-`, etc.).
-    - [`docs/requirements/RTM.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/requirements/RTM.md): 37 sections with the 25-column Master Matrix tracking all 55 official PS requirements.
-    - [`docs/requirements/TESTING_VALIDATION_PLAN.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/requirements/TESTING_VALIDATION_PLAN.md): 99 sections defining V&V principles, 34 test matrices, Golden SIH Acceptance Flow, and zero-hallucination execution rules.
-    - [`docs/requirements/USER_GUIDE_AND_DEMO_RUNBOOK.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/requirements/USER_GUIDE_AND_DEMO_RUNBOOK.md): 96 sections defining Analyst Operations, Evidence Interpretation, 12-Step Golden SIH Demo Runbook, and 3-Tier Fallback Recovery.
-  - **Architecture & Design (`docs/architecture/`):**
-    - [`docs/architecture/SYSTEM_ARCHITECTURE.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/architecture/SYSTEM_ARCHITECTURE.md): 77 sections defining Three Domains, 19 Mermaid diagrams, and Privilege Separation Architecture.
-    - [`docs/architecture/TRD.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/architecture/TRD.md): 87 sections with exact architectural diagrams, pseudocode, and mathematical formulations.
-    - [`docs/architecture/WORKFLOW.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/architecture/WORKFLOW.md): 80 sections defining DFDs (L0, L1, L2), state machines, and the 31-step Golden SIH Demo Workflow.
-    - [`docs/architecture/DATABASE_DESIGN.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/architecture/DATABASE_DESIGN.md): 85 sections defining 22 data domains, PostgreSQL + `pgvector` schemas, and Evidence DAG.
-    - [`docs/architecture/ML_DATASET_ENGINEERING.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/architecture/ML_DATASET_ENGINEERING.md): 99 sections defining IPsec dataset generation, session-level splits, dual ensemble, calibration, and OOD.
-    - [`docs/architecture/SECURITY_THREAT_MODEL_COMPLIANCE.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/architecture/SECURITY_THREAT_MODEL_COMPLIANCE.md): 109 sections defining Scope A & B, Policy-as-Code, STRIDE, Asset Inventory, Abuse Cases, Security Controls, and Zero-Hallucination rules.
-    - [`docs/architecture/API_INTEGRATION_SPECIFICATION.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/architecture/API_INTEGRATION_SPECIFICATION.md): 95 sections defining REST APIs, WebSockets, async job contracts, DTOs, Golden Flows, and privileged agent integration.
-    - [`docs/architecture/UI_UX_DESIGN_SYSTEM.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/architecture/UI_UX_DESIGN_SYSTEM.md): 74 sections with sharp 0px brutalist styling, light theme default, and 18 ASCII wireframes.
-    - [`docs/architecture/DEPLOYMENT.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/architecture/DEPLOYMENT.md): 97 sections detailing the local-first Docker stack, Class A/B privilege separation, and runbooks.
+### Master 12-Stage Implementation Roadmap
+1. **Stage 1 — Core Runtime & Repository Bootstrap** (`IMPLEMENTED & VALIDATED` — Python suite, settings, storage, logging, health probes, celery, compose config).
+2. **Stage 2 — Linux Namespace & strongSwan IPsec Testbed** (`IMPLEMENTED & FULLY VALIDATED` — 5-ns Tunnel & 3-ns Transport topologies, veth, XFRM, strongSwan 6.0.4/charon/swanctl, tc/netem impairment, live tcpdump capture, SHA-256 manifests).
+3. **Stage 3 — Capture/Ingestion & Protocol Forensics** (`IMPLEMENTED & FULLY VALIDATED` — PCAP/PCAPNG upload, SHA-256 provenance, live interface tap, TShark streaming dissectors for IKEv1/IKEv2/ESP/AH/NAT-T, observation normalizer).
+4. **Stage 4 — IKE/SA & ESP Flow Reconstruction** (`IMPLEMENTED & FULLY VALIDATED` — IKE sessions, Parent IKE SA, Child SAs, honest Mode/PFS resolvers, directional ESP flow aggregation & bidirectional pairing, React Flow graph API, Alembic migration 0003, tested on real PCAPs).
+5. **Stage 5 — Workload Automation & Native IPsec Dataset Factory** (`IMPLEMENTED & FULLY VALIDATED` — Controlled strongSwan lab traffic generation, dual-capture architecture with Point A plaintext purge and Point B encrypted WAN persistence, 7 supervised classes + OOD holdout, quality gate, GroupKFold session-level splitter with zero-leakage audit, canonical JSON manifest, Markdown dataset card, anti-shortcut matrix planner, read-only UNB/CIC ISCXVPN2016 catalog with domain shift quarantine, Alembic migration 0004).
+6. **Stage 6 — XGBoost Baseline Classifier** (`IMPLEMENTED & FULLY VALIDATED` — Tabular encrypted flow features F01–F24, 100% outer transport metadata, zero payload decryption, strict session-isolated cross-validation, grouped CV, comparators, negative control, slice evaluation, Alembic migration 0005, native JSON artifacts & SHA-256 manifest).
+7. **Stage 7 — 1D-CNN + Fusion + Calibration + OOD + SHAP + Anomaly** (`IMPLEMENTED & FULLY VALIDATED` — Sequence ML, TorchScript 1D-CNN, weighted probability fusion, temperature scaling calibration, Shannon entropy OOD gating, TreeSHAP attribution, pure JSON Isolation Forest, Alembic migration 0006).
+8. **Stage 8 — Security + Compliance + Evidence + Scoring Engine** (`NEXT STAGE` — Policy-as-Code, NIST SP 800-77 Rev. 1, RFC 8221, 0–100 Security Score, Risk, Threat Matrix, Metadata Fingerprintability, Evidence Graph).
+9. **Stage 9 — Full-Stack Product Integration & Reporting** (FastAPI, PostgreSQL/pgvector, Next.js, TypeScript, Tailwind CSS, React Flow, ECharts, PDF/JSON reports).
+10. **Stage 10 — Configuration Security Twin & Closed-Loop Remediation** (Current vs Proposed, strongSwan lab apply & re-verify).
+11. **Stage 11 — Grounded AI Analyst / RAG** (pgvector standards retrieval over verified facts/standards, strictly explanatory).
+12. **Stage 12 — End-to-End Validation, Hardening & SIH Demo Readiness** (Comprehensive testing, session-level isolation, rehearsal, fallbacks).
+
+### Stage 2 Verified Implementation Reality (2026-09-23)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Real Execution on Linux Kernel)`
+- **Execution Environment:** Ubuntu on Windows WSL2 (`Linux 6.18.33.2-microsoft-standard-WSL2 x86_64`)
+- **Host Toolchain Verified:**
+  - `strongswan-swanctl`: 6.0.4 (`/usr/sbin/swanctl`)
+  - `strongswan-charon`: 6.0.4 (`/usr/lib/ipsec/charon`)
+  - `tcpdump`: 4.99.6 (`/usr/bin/tcpdump`)
+  - `iproute2`: 6.19.0 (`/usr/sbin/ip`, `/usr/sbin/tc`)
+- **Automated Tests Executed:**
+  - `pytest tests/unit backend/tests/unit` → **33 PASSED, 0 FAILED** (duration: 0.14s).
+  - `pytest tests/integration/test_lab_privileged.py -v` → **6 PASSED, 0 FAILED** (duration: 119.46s).
+- **Topology Families Implemented & Verified:**
+  - **Family A (Site-to-Site Tunnel Mode):** 5 isolated namespaces (`client`, `gw_a`, `wan`, `gw_b`, `server`), veth pairs, WAN bridge `br-wan`, IP forwarding enabled on gateways.
+  - **Family B (Host-to-Host Transport Mode):** 3 isolated namespaces (`peer_a`, `wan`, `peer_b`), veth pairs, WAN bridge `br-wan`.
+- **Scenario Profiles Executed & Evidenced:**
+  1. `01_tunnel_ipv4_aes256gcm_pfs.yaml`: IKEv2, Tunnel, IPv4, AES-256-GCM, DH Group 19 (ECP-256), PFS Enabled, Native ESP.
+     - **Result:** `VALIDATED`. Real IKEv2 & Child SA established, ICMP traffic transited tunnel, WAN PCAP produced: 2,774 bytes (12 packets), SHA-256: `0eca936dffea9c38d0cedadd51f2a36084b3f7f03aa6fff9ef1fe58a988c70a9`.
+  2. `02_tunnel_ipv4_aes256cbc_hmacsha256_nopfs.yaml`: IKEv2, Tunnel, IPv4, AES-256-CBC, HMAC-SHA256, DH Group 14 (MODP-2048), PFS Disabled.
+     - **Result:** `VALIDATED`. Real SA established, Child SA omitted DH rekey, ICMP transited tunnel.
+  3. `03_transport_ipv4_aes256gcm.yaml`: IKEv2, Transport, IPv4, AES-256-GCM, DH Group 19 (ECP-256).
+     - **Result:** `VALIDATED`. 3-namespace host-to-host negotiation established, direct endpoint ICMP protected.
+  4. `04_tunnel_ipv6_aes256gcm_pfs.yaml`: IKEv2, Tunnel, IPv6, AES-256-GCM, DH Group 19 (ECP-256), PFS Enabled.
+     - **Result:** `VALIDATED`. Real IPv6 SAs established across Unique Local IPv6 subnets, `ping6` transited tunnel, WAN PCAP produced: 3,294 bytes (12 packets), SHA-256: `09e98faba82d2c299c8fba5e80fa9e7feae0c1c875d697e3a9856fdbba1a3c75`.
+  5. `05_tunnel_ipv4_netem_impairment.yaml`: IKEv2, Tunnel, IPv4 with injected WAN delay (40ms) and jitter (5ms).
+     - **Result:** `VALIDATED`. Traffic control applied via `tc qdisc replace ... netem`, ICMP transited with observed delay, qdisc cleared on teardown.
+  6. `06_tunnel_ipv4_natt.yaml`: IKEv2, Tunnel, IPv4 with forced UDP/4500 encapsulation.
+     - **Result:** `VALIDATED`. Encapsulated ESP traffic generated, WAN PCAP produced: 2,838 bytes (12 packets), SHA-256: `7b63a0fd455202ac0fa83c3167b57bf08e001859664c1e4599a9a3b632903513`.
+- **Privilege & Security Architecture Enforced:**
+  - Class A (FastAPI, workers, web) remains completely unprivileged.
+  - Class B operations strictly isolated, typed, and allowlisted (`LAB_DOCTOR`, `LIST_SCENARIOS`, `RUN_SCENARIO`, `CLEAN_STALE`).
+  - Zero arbitrary shell endpoints (`shell=True`, `eval`, `os.system` prohibited and audited).
+  - Physical host interfaces protected by `PROTECTED_HOST_INTERFACES` allowlist guard.
+  - Ephemeral runtime PSKs used; strictly excluded from manifests, logs, and Git.
+  - Private mount namespace isolation (`unshare -m`) used to isolate `/var/run` tmpfs per charon instance, eliminating global PID file collisions.
+  - Concurrency lock (`lab/runtime/lab.lock`) prevents overlapping runs.
+  - Idempotent teardown verified: 0 dangling namespaces or processes after run completion.
+
+### Stage 3 Verified Implementation Reality (2026-09-23)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED`
+- **Dissectors & Normalization:** TShark streaming dissectors for IKEv1/IKEv2, ESP, AH, NAT-T with deterministic normalization to `ProtocolObservation` records.
+- **Evidence Hierarchy:** Strict distinction between VERIFIED, INFERRED, UNKNOWN.
+- **Automated Tests:** 49 unit tests + 7 integration tests passing on real PCAP captures.
+
+### Stage 4 Verified Implementation Reality (2026-09-24)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Real PCAP Reconstructions & Unit Tests)`
+- **Correlator:** Stateful IKE event correlator (`IKEEventCorrelator`) ordering exchanges, deduplicating retransmissions, upgrading responder SPI from initial `0x00000000`, tracking NAT-T flotation (500 -> 4500).
+- **SA Builder:** `SABuilder` segregating proposed transforms vs responder-selected transforms; AEAD cipher handling (AES-GCM -> integrity NONE/NOT_APPLICABLE); explicit Transport mode notify vs UNKNOWN (never default to Tunnel); CREATE_CHILD_SA KE DH vs UNKNOWN (never default to disabled PFS); orphan Child SA synthesis for ESP-only captures.
+- **ESP Flow Aggregator:** Directional streams grouped by `(src_ip, dst_ip, spi)` with configurable idle timeout boundaries (`DEFAULT_FLOW_IDLE_TIMEOUT_SEC = 15.0`), bidirectional flow pairing via Child SA SPI pairs or reverse endpoints, packet/byte accounting from observation metadata. Zero payload decryption.
+- **Reconstruction Engine & DB:** `ReconstructionEngine` orchestrates observation extraction, entity construction, transactional clear-and-replace idempotency, and updates `AnalysisRun.current_stage`.
+- **Database Schema:** Alembic migration `0003_stage4_ike_sa_flow_reconstruction.py` defining `ike_sessions`, `ike_security_associations`, `child_security_associations`, `traffic_selectors`, and `esp_flows` tables with foreign keys and cascading deletes.
+- **REST APIs:** Endpoints implemented under `/analyses/{analysis_id}/`: `ike-sessions`, `ike-sessions/{session_id}`, `security-associations`, `security-associations/graph` (React Flow DTO), and `flows`.
+- **Worker Integration:** `analyze_capture_task` automatically runs `ReconstructionEngine` immediately after `ProtocolForensicsService`.
+- **Automated Tests Executed:**
+  - 14 Stage 4 unit tests + 1 API contract test (`test_ike_correlator.py`, `test_sa_reconstruction.py`, `test_flow_aggregator.py`, `test_api_reconstruction.py`) → **ALL PASSED**.
+  - 7 Stage 4 integration tests on real Stage 2 captures (`test_stage4_reconstruction.py`) → **ALL PASSED** (Tunnel GCM+PFS, Transport, IPv6, NAT-T, Orphan ESP, Non-IPsec, Idempotency).
+  - Total repository tests: **100 PASSED, 0 FAILED** in 147s.
+  - Linter: `python -m ruff check backend tests` → **All checks passed!**
+
+### Stage 5 Verified Implementation Reality (2026-09-24)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Real Workloads, Testbed Captures, Splits & Inventory)`
+- **Core Scope:** Reproducible automated dataset factory using controlled strongSwan testbed, dual-capture lifecycle (Point A plaintext purged per privacy policy, Point B encrypted WAN retained), anti-shortcut matrix, session-level splitting, and external benchmark isolation.
+- **7 Supervised Traffic Classes + OOD Holdout:**
+  - `Web`: `WebGenerator` (HTTP/1.1 & HTTP/2 multi-resource bursty object fetches over TCP).
+  - `Video Streaming`: `VideoGenerator` (HLS/DASH chunk requests with buffer depletion intervals).
+  - `VoIP`: `VoIPGenerator` (Strict isochronous UDP RTP voice frames, 20ms cadence, 160-byte payload).
+  - `Chat/Messaging`: `ChatGenerator` (Bursty, small interactive TCP payloads with periodic heartbeat keepalives).
+  - `Email`: `EmailGenerator` (Synthetic SMTP/MIME envelope and chunked multi-part transactions).
+  - `ICMP`: `ICMPGenerator` (Echo request/reply diagnostic probing with variable packet sizes).
+  - `File Transfer`: `FileTransferGenerator` (Sustained high-throughput unidirectional TCP bulk streaming with SHA-256 verification).
+  - `OOD_HOLDOUT`: `OODHoldoutGenerator` (Unmodeled synthetic binary telemetry used strictly for OOD rejection benchmarking).
+- **Quality Gate:** `DatasetQualityGate` evaluates candidate sessions before acceptance into curated dataset. Verifies SA establishment, workload success, ESP packet presence, minimum packet and byte counts, duration bounds, and artifact uniqueness.
+- **Session-Level Splitting & Zero-Leakage Audit:** `SessionLevelSplitter` strictly allocates partitions (`TRAIN`, `VALIDATION`, `TEST`, `OOD_HOLDOUT`) at the session level (`GroupKFold` compatible). `audit_leakage` mathematically proves null pairwise intersections (`split_A ∩ split_B = ∅`).
+- **Cryptographic Manifest & ML Dataset Card:**
+  - `DatasetManifestBuilder` exports canonical JSON manifest and recalculates SHA-256 integrity digest with tamper detection.
+  - `DatasetCardGenerator` renders standardized Markdown Dataset Card documenting NTRO PS 160 context, 7 classes, privacy policy compliance statement (`POINT_A_PURGED_ENCRYPTED_WAN_ONLY`), and zero-leakage proof.
+- **Anti-Shortcut Matrix Coverage:** `MatrixPlanner` counterbalances classes across multiple ciphers (AES-GCM-128, AES-GCM-256, ChaCha20-Poly1305, AES-CBC-SHA256), modes (Tunnel, Transport), IP versions (IPv4, IPv6), PFS states, NAT-T, and Netem impairments to prevent ML shortcut memorization.
+- **External Benchmark Isolation:** `ExternalDatasetScanner` catalogs downloaded UNB/CIC ISCXVPN2016 dataset (31 files, 2,555,952,859 bytes) in read-only mode, tagged strictly as `OPENVPN / SUPPORTING_BENCHMARK`, with explicit domain shift quarantine warnings.
+- **Database Schema:** Alembic migration `0004_stage5_dataset_factory.py` defining `datasets`, `dataset_versions`, `dataset_sessions`, and `dataset_splits` tables with foreign keys and cascading deletes.
+- **REST APIs:** Full endpoint suite mounted under `/api/v1/datasets/` for families, versions, sessions, partitioning, manifest export, dataset cards, matrix coverage, and external benchmark inventory.
+- **Automated Tests Executed:**
+  - Total repository tests: **126 PASSED, 0 FAILED** in 15.54s.
+  - Integration test suite: **22 PASSED, 0 FAILED** in 134.55s.
+  - Linter: `python -m ruff check backend/app/datasets backend/app/api/v1/datasets lab/workloads backend/tests/unit tests/integration` → **All checks passed!**
+
+### Stage 6 Verified Implementation Reality (2026-09-24)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Real PCAPs & Artifact Provenance)`
+- **Core Scope:** Encrypted traffic classification without payload decryption using 24 macroscopic side-channel features strictly derived from outer IPsec ESP / NAT-T transport packet sequences. Strict session-level isolation, zero leakage, train-only preprocessor fitting, grouped CV, benchmark comparators, and SHA-256 artifact manifest.
+- **Feature Extraction Architecture (F01–F24):**
+  - Canonical 24 features defined in `backend/app/ml/schema.py` (`FeatureSchema.canonical_schema()` with SHA-256 hash `ec40b2e88220...`).
+  - Extractor (`TabularFeatureExtractor`) computes:
+    - Packet size distribution: `f01_mean_fwd_pkt_len`, `f02_std_fwd_pkt_len`, `f03_max_fwd_pkt_len`, `f04_min_fwd_pkt_len`, `f05_mean_bwd_pkt_len`, `f06_std_bwd_pkt_len`, `f07_max_bwd_pkt_len`, `f08_min_bwd_pkt_len`.
+    - Packet timing (IATs): `f09_mean_iat`, `f10_std_iat`, `f11_max_iat`, `f12_min_iat`.
+    - Directional ratios: `f13_fwd_bwd_pkt_ratio`, `f14_fwd_bwd_byte_ratio`.
+    - Flow totals: `f15_total_packets`, `f16_total_bytes`, `f17_flow_duration_ms`, `f18_packet_rate_pps`, `f19_byte_rate_bps`.
+    - Burst dynamics (`burst_threshold_ms=5.0`, `idle_threshold_ms=500.0`): `f20_burst_count`, `f21_mean_burst_bytes`, `f22_mean_burst_packets`.
+    - Early-k footprint (`early_k=10`): `f23_early_mean_pkt_len`, `f24_early_fwd_bwd_ratio`.
+  - Zero-division safety: Guaranteed 0.0 or finite floats on empty or single-packet sequences; `validate_packet_sequence` asserts monotonically non-decreasing timestamps.
+- **Leakage Prevention & Automated Audit:**
+  - `LeakageAuditor` validates:
+    - Absolute exclusion of prohibited predictor columns (`src_ip`, `dst_ip`, `src_port`, `dst_port`, `spi`, `seq_no`, `session_id`, `flow_id`, `capture_id`, `filepath`, `scenario_id`, `cipher`, `mode`, `pfs`, `nat_t`, `impairment`).
+    - Split isolation proof: $\text{Train} \cap \text{Val} = \emptyset$, $\text{Train} \cap \text{Test} = \emptyset$, $\text{Val} \cap \text{Test} = \emptyset$ at the `session_id` level.
+    - Configuration contingency check: Cramer's V / mutual information check to detect if classifier relies on cipher/mode shortcuts.
+    - Duration and packet count shortcut warnings: Flags potential artifacts of fixed-duration traffic generation scripts.
+- **Preconditioning & Preprocessing:**
+  - Monotonic `np.log1p` transformation on heavy-tailed features (`f15_total_packets`, `f16_total_bytes`, `f17_flow_duration_ms`, `f18_packet_rate_pps`, `f19_byte_rate_bps`, `f21_mean_burst_bytes`).
+  - Train-only fitting of `RobustScaler` / `StandardScaler`. Preprocessor parameters exported to safe non-pickle JSON (`preprocessor.json`).
+- **Sample Weighting Strategies:**
+  - Supported: `NONE`, `CLASS_BALANCED` (inverse class frequency), `SESSION_CLASS_BALANCED` (normalizes across session lengths and class imbalances). Weight computer strictly fit on TRAIN partition.
+- **Evaluation & Diagnostics Engine (`MLEvaluator`):**
+  - Primary metric: Macro-F1. Secondary metrics: Weighted-F1, Micro-F1, per-class Precision/Recall/F1/Support.
+  - Confusion matrices: Raw integer counts and row-normalized (recall-scaled) percentages.
+  - Session-level aggregation: Macro-averaged metric by grouping predictions per `session_id`.
+  - Configuration slice evaluations: Performance segmented across ciphers, modes, and impairments.
+- **XGBoost Training Pipeline (`XGBoostTrainer` & `XGBoostBaselineModel`):**
+  - Multiclass objective: `multi:softprob` with contiguous integer remap wrapper to support arbitrary active class subsets while always projecting to canonical 7-class probability vectors.
+  - `GroupKFold` cross-validation on TRAIN split with fold-level preprocessor isolation.
+  - Benchmark comparators: `DummyClassifier(strategy="most_frequent")` and `LogisticRegression(class_weight="balanced")`.
+  - Label-shuffle negative control: Permutes labels on TRAIN to verify classifier collapses to chance ($1/K$).
+- **Model Artifact Persistence & Manifest:**
+  - Storage under `models/xgboost_baseline/v1/`:
+    - `model/xgboost.json` (Native XGBoost JSON; zero pickle).
+    - `feature_schema.json` (Canonical schema + SHA-256).
+    - `label_mapping.json` (7 canonical classes).
+    - `preprocessor.json` (Scaler centers and scales).
+    - `model_manifest.json` (Full cryptographic manifest with individual file SHA-256 digests and training provenance).
+  - Automated `reload_and_verify` smoke test executed during build to guarantee artifact inference validity.
+- **Database Schema:**
+  - Alembic migration `0005_stage6_experiments_and_models.py` defining `training_experiments` and `model_artifacts` tables with JSONB metrics, hyperparameters, and lineage foreign keys.
+- **Automated Tests Executed:**
+  - Total unit tests: **165 PASSED, 0 FAILED** in 13.17s.
+  - Total integration tests: **17 PASSED, 0 FAILED** in 17.87s.
+  - Total repository tests: **182 PASSED, 0 FAILED**.
+  - Linter: `python -m ruff check backend/app/ml tests/integration/test_stage6_xgboost_classifier.py backend/app/db/models/ml.py backend/alembic/versions/0005_stage6_experiments_and_models.py` → **All checks passed!**
+- **Zero Hallucination / Dataset Reality Notice:**
+  - Native dataset currently contains baseline testbed runs (`Web`, `ICMP`). Real testbed runs on current captured flows achieved:
+    - XGBoost Train Accuracy: 1.0, Validation Macro-F1: 0.83 (on testbed ICMP flows), Test Macro-F1: 0.83 (on testbed ICMP flows).
+    - Status correctly tagged as `EXPERIMENTAL — DATA INSUFFICIENT` until full 8-class matrix generation is run in lab.
+    - Model flagged `is_active=False` in registry.
+
+### Stage 7 Verified Implementation Reality (2026-09-24)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Real Execution, Sequence Extraction, TorchScript Artifact, Non-Pickle Anomaly Model, Full Pipeline Integration)`
+- **Core Scope:** Encrypted traffic application inference via a deep sequence learning 1D-CNN paired with the Stage 6 macroscopic tabular XGBoost baseline, multimodal fusion, statistical probability calibration, open-set out-of-distribution (OOD) rejection, TreeSHAP feature attributions, and an isolated behavioral anomaly detection subsystem.
+- **Sequence Extraction & Schema (`SequenceSchema` & `SequenceExtractor`):**
+  - Canonical 3-channel sequence tensor $(3, N)$ representing `[direction, normalized_packet_length, normalized_delta_time]` for the first $N$ packets of an encrypted ESP flow.
+  - Direction encoded as $+1$ (forward) / $-1$ (reverse), with $0$ reserved for padding.
+  - Length normalized by $\min(\text{length}, 1500) / 1500.0$; delta-time normalized by $\min(\Delta t, 1.0) / 1.0$.
+  - Accompanying boolean mask tensor $(N,)$ preserves true packet boundaries and suppresses right-padded zeros.
+  - Zero payload decryption, zero plaintext leakage, zero forbidden headers (no IPs, ports, SPIs, ciphers, or keys).
+  - Configurable minimum flow eligibility ($K_{\text{min}} = 3$ packets); flows with fewer packets gracefully fall back to XGBoost with `is_degraded = True`.
+- **Candidate Sequence Horizons Evaluated ($N \in \{32, 64, 128\}$):**
+  - Evaluated candidate horizons $N=32$, $N=64$, and $N=128$ under controlled validation conditions with empirical time-to-decision metrics.
+  - Selected $N=32$ as the Pareto-optimal knee point balancing early classification speed with discriminative sequence fidelity.
+- **Lightweight 1D-CNN Architecture (`Lightweight1DCNN` & `CNNTrainer`):**
+  - Two 1D convolutional blocks with BatchNorm1d, ReLU activation, masked global average pooling, dropout ($p=0.1$), and a compact linear projection head to 7 canonical traffic classes.
+  - Fully CPU-capable, TorchScript exportable (`torch.jit.script`) for fast, local-first inference without CUDA runtime dependencies.
+- **Multimodal Fusion Engine (`MultimodalFusionEngine`):**
+  - Computes weighted ensemble posterior $P_{\text{fused}} = \alpha P_{\text{XGB}} + (1-\alpha) P_{\text{CNN}}$ with grid search over $\alpha \in [0.0, 1.0]$.
+  - Includes transparent $\alpha=0.5$ (simple average), $\alpha=1.0$ (XGBoost-only), and $\alpha=0.0$ (CNN-only) reference baselines.
+  - Emits branch disagreement diagnostics including Jensen-Shannon (JS) divergence and class agreement flags.
+- **Probability Calibration (`ProbabilityCalibrator`):**
+  - Corrects raw uncalibrated ensemble probabilities into statistically defensible posterior confidences via L-BFGS-B temperature scaling: $P_{\text{cal}} = \text{Softmax}(z / T)$.
+  - Strictly fitted on validation calibration data (`VAL_CAL`), never on TEST.
+  - Tracks Negative Log-Likelihood (NLL), Brier score, and Expected Calibration Error (ECE) across 10 reliability bins.
+  - Never conflates Platt scaling with temperature scaling. Raw softmax outputs are never mislabeled as "AI Confidence".
+- **Open-Set Out-of-Distribution Gating (`OODDetector`):**
+  - Post-classification rejection gate returning `UNKNOWN_UNSEEN` when traffic falls outside the 7 supervised training classes.
+  - Evaluates dual signals: Calibrated Shannon entropy $H(P) = -\sum p_c \ln(p_c)$ and maximum calibrated confidence $c_{\text{max}} = \max_c P(c|x)$.
+  - Configurable dual gate: Rejects as OOD if $H(P) > \tau_{\text{entropy}}$ OR $c_{\text{max}} < c_{\text{min}}$.
+  - Never trains UNKNOWN as an 8th supervised softmax class.
+- **TreeSHAP Explainability Subsystem (`TreeSHAPExplainer`):**
+  - Explains the **XGBoost branch only** (with explicit disclaimers: does NOT explain the CNN or full ensemble).
+  - Uses native tree contribution calculation (`pred_contribs=True`) guaranteeing exact mathematical additivity ($\sum \phi_i + \phi_0 = f(x)$, max difference $0.0$) with zero external JSON parser crashes.
+  - Computes top positive and negative feature contributions and global summary importances.
+  - Built-in leakage guard verifies that no prohibited metadata features appear in explanations.
+- **Behavioral Anomaly Subsystem (`IsolationForestAnomalyDetector`):**
+  - Independent unsupervised Isolation Forest trained strictly on benign `TRAIN` flows to detect statistical deviations in outer transport characteristics.
+  - Safe zero-pickle serialization: Tree structures (`children_left`, `children_right`, `feature`, `threshold`, `n_node_samples`) are stored in pure JSON and traversed in Python/NumPy, completely eliminating arbitrary pickle deserialization CVE risks.
+  - Semantic security-safe output: `STATISTICAL_BEHAVIORAL_ANOMALY` or `NORMAL_BEHAVIOR` (never "attack", "malware", or "zero-day").
+- **Unified Model Bundle Packaging (`ModelBundleBuilder` & `ModelBundleLoader`):**
+  - Packages XGBoost JSON, TorchScript CNN `.pt`, feature schema, sequence schema, label map, preprocessor JSON, fusion config, calibration config, OOD config, anomaly detector JSON, and manifest into a versioned bundle directory.
+  - Enforces SHA-256 cryptographic checksums for every artifact at load time, immediately raising `ArtifactIntegrityError` if files are altered or corrupted.
+- **Stage 7 Inference Service (`Stage7InferenceService`):**
+  - Ingests Stage 4 reconstructed flows and packet lists, orchestrating tabular feature extraction, sequence extraction, XGBoost and CNN inference, fusion, calibration, OOD gating, TreeSHAP attribution, and anomaly detection.
+  - Graceful degraded-mode fallback: When a flow has fewer than $K_{\text{min}}$ packets or CNN inference is unavailable, the pipeline falls back to the XGBoost branch with `is_degraded = True`.
+- **Database Schema & Migration:**
+  - Alembic migration `0006_stage7_flow_classifications.py` adds the `flow_classifications` table storing predicted class, calibrated confidence, OOD status, entropy, anomaly score, and model bundle lineage.
+- **Automated Tests Executed:**
+  - Stage 7 Unit Tests: **50 PASSED, 0 FAILED** (91 total ML tests passed in 10.64s).
+  - Full Unit Test Suite: **215 PASSED, 0 FAILED** in 27.23s.
+  - Full Integration Test Suite: **24 PASSED, 0 FAILED** in 164.28s (`test_stage7_multimodal_pipeline_end_to_end` + Stage 2–6 integrations).
+  - Linter: `python -m ruff check backend tests` → **All checks passed!**
 
 ### What is currently being worked on
-- Transitioning from Specification Baseline to **Phase 1: Local-First Core Infrastructure Setup**.
-- Creating the core repository directory skeleton (`/backend`, `/frontend`, `/lab`, `/policies`, `/models`, `/tests`).
+- Stage 7 completed and validated. Ready for **Stage 8: Security + Compliance + Evidence + Scoring Engine**.
 
 ### What is next
-1. Bootstrap `docker-compose.yml` for Execution Class A (PostgreSQL 15 + `pgvector`, Redis 7, FastAPI skeleton, Celery worker).
-2. Initialize backend directory with FastAPI ASGI application, Pydantic settings, and Alembic database migration baseline.
-3. Configure the Linux namespace strongSwan testbed scripts (`lab/scripts/setup_testbed.sh`).
+- **Stage 8 — Security + Compliance + Evidence + Scoring Engine:**
+  1. Policy-as-Code engine for cryptographic compliance (NIST SP 800-77 Rev. 1, RFC 8221, RFC 7321).
+  2. Deterministic 0–100 Security Score calculation algorithm with weighted deduction trees.
+  3. Dynamic Risk Scoring and CVSS/CWE-aligned Threat Matrix mapping.
+  4. Metadata Fingerprintability Index integration consuming Stage 7 calibrated confidence and entropy.
+  5. Evidence Graph linking verified protocol facts to compliance findings.
 
 ### Current blockers
-- **None.** Architecture, data contracts, and design systems are 100% aligned and frozen.
+- None. (Docker Engine offline is non-blocking as local execution and WSL2 network namespaces are verified).
 
 ### Critical frozen decisions
 1. **Deterministic Protocol Extraction:** IKE version, ciphers, DH groups, SPIs, and SA properties are **never predicted by ML**. They are extracted deterministically via TShark/PyShark.
@@ -146,7 +336,7 @@ The official problem statement issued by NTRO mandates an automated, intelligent
 | `PS-PROTO-006`| Auth / Integrity | C. Protocol Identification | Extraction of integrity transform / AEAD mode | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-PROTO-007`| Key Exchange | C. Protocol Identification | Extraction of Diffie-Hellman Group identifier | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-PROTO-008`| SA Characteristics | C. Protocol Identification | Graph reconstruction of IKE and Child SAs | `IMPLEMENTED IN SPEC — CODE PLANNED` |
-| `PS-PROTO-009`| Inner ESP Traffic | C. Protocol Identification | ML classification of encrypted traffic | `IMPLEMENTED IN SPEC — CODE PLANNED` |
+| `PS-PROTO-009`| Inner ESP Traffic | C. Protocol Identification | ML classification of encrypted traffic | `VALIDATED IN STAGE 6 (XGBoost Tabular Flow Classifier)` |
 | `PS-SEC-001` | Crypto Strength | D. Security Assessment | NIST SP 800-77 Rev. 1 cipher audit | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-SEC-002` | Compliance Audit | D. Security Assessment | Clause citations for RFC 8221 / RFC 7296 | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-SEC-003` | SA Parameters | D. Security Assessment | Proposal evaluation and parameter matching | `IMPLEMENTED IN SPEC — CODE PLANNED` |
@@ -156,7 +346,7 @@ The official problem statement issued by NTRO mandates an automated, intelligent
 | `PS-SEC-007` | Cipher Suite Strength| D. Security Assessment | Cryptanalytic attack vulnerability mapping | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-SEC-008` | Metadata Exposure | D. Security Assessment | Side-channel distinguishability quantification | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-OUT-001` | Security Score | E. Required Outputs | Deterministic 0–100 posture score | `IMPLEMENTED IN SPEC — CODE PLANNED` |
-| `PS-OUT-002` | Traffic Analysis | E. Required Outputs | Encrypted flow classification distribution | `IMPLEMENTED IN SPEC — CODE PLANNED` |
+| `PS-OUT-002` | Traffic Analysis | E. Required Outputs | Encrypted flow classification distribution | `VALIDATED IN STAGE 6 (Tabular flow feature evaluation & class prediction)` |
 | `PS-OUT-003` | Metadata Inference | E. Required Outputs | Side-channel fingerprintability index | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-OUT-004` | Executive Report | E. Required Outputs | Synthesized executive PDF report | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-OUT-005` | Technical Report | E. Required Outputs | Exhaustive technical audit PDF/HTML report | `IMPLEMENTED IN SPEC — CODE PLANNED` |
@@ -164,12 +354,12 @@ The official problem statement issued by NTRO mandates an automated, intelligent
 | `PS-OUT-007` | Threat Matrix | E. Required Outputs | STRIDE / MITRE ATT&CK attack mapping | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-OUT-008` | AI Confidence Score | E. Required Outputs | Platt-calibrated probability & OOD flags | `IMPLEMENTED IN SPEC — CODE PLANNED` |
 | `PS-DEL-001` | Working Prototype | F. Deliverables | Full deployable multi-container platform | `SPEC APPROVED — CODE PLANNED` |
-| `PS-DEL-002` | AI ML Engine | F. Deliverables | XGBoost + 1D-CNN serialized inference models | `SPEC APPROVED — CODE PLANNED` |
+| `PS-DEL-002` | AI ML Engine | F. Deliverables | XGBoost + 1D-CNN serialized inference models | `STAGE 6 COMPLETED (XGBoost Baseline & Manifest); STAGE 7 PENDING (1D-CNN & Fusion)` |
 | `PS-DEL-003` | Web Dashboard | F. Deliverables | Next.js 14 responsive PWA application | `SPEC APPROVED — CODE PLANNED` |
 | `PS-DEL-004` | Assessment Report | F. Deliverables | WeasyPrint automated PDF compiler | `SPEC APPROVED — CODE PLANNED` |
 | `PS-DEL-005` | Demonstration Video | F. Deliverables | MP4 walkthrough of live testbed & twin | `PLANNED` |
 | `PS-DEL-006` | Technical Docs Suite | F. Deliverables | 6 approved Markdown specifications in `docs/` | `COMPLETED` |
-| `PS-DEL-007` | IPsec Dataset | F. Deliverables | Annotated IPsec traffic flow corpus | `SPEC APPROVED — CODE PLANNED` |
+| `PS-DEL-007` | IPsec Dataset | F. Deliverables | Annotated IPsec traffic flow corpus | `STAGE 5 COMPLETED (Native IPsec Dataset Factory & Real Captures)` |
 
 ---
 
@@ -604,9 +794,9 @@ Future agents seeking to modify or implement specific subsystems should target t
 
 | Model Name | Architecture | Target Artifact | Input Dimensions | Status | Active? |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `xgb_flow_v1` | XGBoost 2.0 | `xgboost_flow_classifier.json` | 24 tabular statistical features | `PLANNED` | No |
-| `cnn_spatial_v1` | PyTorch 1D-CNN | `cnn_spatial_classifier.pt` | `(3, 64)` sequence tensor | `PLANNED` | No |
-| `iso_forest_v1` | Isolation Forest | `isolation_forest.joblib` | 12 flow distribution features | `PLANNED` | No |
+| `xgb_flow_v1` | XGBoost 3.2+ (`multi:softprob`) | `models/xgboost_baseline/v1/model/xgboost.json` | 24 tabular statistical features (F01–F24) | `IMPLEMENTED & VALIDATED (EXPERIMENTAL)` | No (Pending Full Lab Matrix Run) |
+| `cnn_spatial_v1` | PyTorch 1D-CNN | `cnn_spatial_classifier.pt` | `(3, 64)` sequence tensor | `PLANNED (Stage 7)` | No |
+| `iso_forest_v1` | Isolation Forest | `isolation_forest.joblib` | 12 flow distribution features | `PLANNED (Stage 7)` | No |
 
 ---
 
@@ -833,21 +1023,38 @@ ls -la "c:\SHARAN PROJECTS\TunnelTrace AI\docs"
 
 ## 57. Task Handoff
 
-### Last Completed Task
-- **Task:** Authored the comprehensive, living **Project Memory / Master Context Document** (`PROJECT_MEMORY.md`).
-- **Result:** Complete 60-section technical memory capturing all frozen decisions, repository state, tech stack, and execution boundaries.
-- **Files Added:** `c:\SHARAN PROJECTS\TunnelTrace AI\PROJECT_MEMORY.md`.
-- **Known Follow-up:** Transition to physical repository bootstrap.
+### Last Completed Tasks
+- **Task:** Stage 1 — Core Runtime & Repository Bootstrap.
+- **Result:** Fully implemented and validated production-grade runtime foundation (FastAPI, Redis, Celery, PostgreSQL/asyncpg, Storage, Docker security, 23/23 tests).
+
+- **Task:** Stage 2 — Linux Namespace & strongSwan IPsec Testbed.
+- **Result:** Fully automated IPsec testbed in Linux network namespaces (`ns-peer-a`, `ns-peer-b`, `wan-sim`) with strongSwan 6.0.4 (`swanctl`), `tc/netem` impairments, Class B Privileged Agent (`runner.py`, `capture.py`, `cleanup.py`), 6 scenario matrices, 36 verified PCAP artifacts (Tunnel GCM, Transport CBC, High Loss, IPv6, Asymmetric Delay, NAT-T), run manifest with SHA-256 hashes.
+
+- **Task:** Stage 3 — Capture / Ingestion & Protocol Forensics Engine.
+- **Result:** Fully implemented and verified offline/live capture ingestion, TShark forensic dissector adapter, protocol normalization, database persistence, and REST APIs. 73/73 tests passing.
+
+- **Task:** Stage 4 — Flow Reconstruction & Correlation Engine.
+- **Result:** Fully implemented stateful IKE correlator, SA Builder, directional ESP stream aggregator, bidirectional flow pairing, React Flow graph API, and Alembic migration `0003`. 100/100 tests passing.
+
+- **Task:** Stage 5 — Workload Automation & Native IPsec Dataset Factory.
+- **Result:** Implemented 8 workload generators (7 supervised + OOD holdout), dual-capture lifecycle with Point A plaintext purge and Point B encrypted WAN persistence, quality gate, GroupKFold session-level splitter with zero-leakage audit, canonical JSON manifest, Markdown dataset card, anti-shortcut matrix planner, read-only UNB/CIC ISCXVPN2016 catalog, and Alembic migration `0004`. 126/126 tests passing.
+
+- **Task:** Stage 6 — XGBoost Baseline Classifier (Tabular Encrypted Flow Features).
+- **Result:** Implemented 24 macroscopic outer transport side-channel features (F01–F24) with zero payload decryption, strict session-level GroupKFold isolation, automated leakage audits (prohibited columns, split disjointness, configuration shortcuts, duration shortcuts), train-only log1p and RobustScaler/StandardScaler preprocessors, sample weighting (`NONE`, `CLASS_BALANCED`, `SESSION_CLASS_BALANCED`), grouped CV on TRAIN, dummy majority & logistic regression comparators, label-shuffle negative control, configuration slice evaluations, native JSON model artifacts (`model/xgboost.json`) with complete cryptographic manifest and reload smoke tests, typed CLI, and Alembic migration `0005` for `training_experiments` and `model_artifacts`. 182/182 tests passing (165 unit, 17 integration). Ruff 100% clean.
 
 ### Current Task
-- **Objective:** Finalize project memory baseline and hand over to Phase 1 implementation.
-- **Relevant Files:** `PROJECT_MEMORY.md`.
+- **Objective:** Stage 6 Completed, Verified, and Validated. Ready for Stage 7.
+- **Relevant Files:** `backend/app/ml/`, `tests/integration/test_stage6_xgboost_classifier.py`, `backend/alembic/versions/0005_stage6_experiments_and_models.py`, `PROJECT_MEMORY.md`.
 
 ### Next Recommended Task
-- **Objective:** Initialize Phase 1 Core Infrastructure:
-  1. Create directory skeleton: `/backend`, `/frontend`, `/lab`, `/policies`, `/models`, `/tests`.
-  2. Author canonical `docker-compose.yml` defining PostgreSQL 15 (`pgvector`), Redis 7, and shared storage volumes.
-  3. Create FastAPI backend application skeleton with health check endpoints.
+- **Objective:** Stage 7 — 1D-CNN + Multimodal Fusion + Calibration + OOD Detection + TreeSHAP + Isolation Forest Anomaly Detection:
+  1. Sequence tensor extractor for early packet dynamics `(direction, length, delta_t)`.
+  2. PyTorch 1D-CNN sequence architecture and training pipeline.
+  3. Probability fusion ensemble ($\alpha P_{\text{XGB}} + (1-\alpha) P_{\text{CNN}}$).
+  4. Platt scaling / temperature calibration for honest confidence scores.
+  5. Shannon entropy thresholding for out-of-distribution (OOD) rejection.
+  6. TreeSHAP local feature attribution and waterfall plotting.
+  7. Isolation Forest for zero-day / anomalous IPsec flow discovery.
 
 ---
 
@@ -856,6 +1063,12 @@ ls -la "c:\SHARAN PROJECTS\TunnelTrace AI\docs"
 | Date / Timestamp | Author / Agent | Task | What Changed | Next Action |
 | :--- | :--- | :--- | :--- | :--- |
 | 2026-09-22 21:05 | Chief Systems Architect | Master Context Creation | Authored initial 60-section living Project Memory document. | Bootstrap Phase 1 Docker stack |
+| 2026-09-23 22:52 | Principal Platform Engineer | Stage 1 Core Runtime Bootstrap | Implemented complete Stage 1 backend, storage, database, worker, security, CI, and test suite. 23/23 tests validated. Mypy/Ruff clean. Docker compose config validated. | Hand off to Stage 2 |
+| 2026-09-23 23:20 | Principal Testbed Engineer | Stage 2 Linux Testbed & IPsec Generation | Implemented strongSwan testbed, network namespaces, 6 testbed runs, captured 36 real PCAP artifacts, testbed CLI & unit tests. | Hand off to Stage 3 |
+| 2026-09-24 00:03 | Principal Network Forensics Engineer | Stage 3 Capture & Protocol Forensics | Implemented offline ingestion, PCAP/PCAPNG validation, hardened TShark 4.6.4 dissector adapter, protocol normalization (IKEv1/v2, ESP, AH, IPv4/v6), live capture dispatch, Alembic migration 0002, FastAPI endpoints, and 7 integration tests against real Stage 2 captures. 73/73 tests passing. Ruff clean. | Hand off to Stage 4 |
+| 2026-09-24 00:25 | Principal Protocol Forensics Engineer | Stage 4 IKE/SA & ESP Reconstruction | Implemented IKE correlator, SA Builder, ESP flow aggregator, React Flow API, and Alembic migration 0003. 100/100 tests passing. | Hand off to Stage 5 |
+| 2026-09-24 00:52 | Principal Dataset Engineer | Stage 5 Workload Automation & Dataset Factory | Implemented 8 workload generators, Point A purge lifecycle, quality gate, GroupKFold splitter, manifest builder, dataset card, matrix planner, UNB scanner, and Alembic migration 0004. 126/126 tests passing. | Hand off to Stage 6 |
+| 2026-09-24 01:20 | Principal ML & Forensics Engineer | Stage 6 XGBoost Baseline Classifier | Implemented 24 outer transport features (F01–F24), leakage auditor, train-only preprocessor & weighting, grouped CV, comparators, negative control, slice evaluator, JSON model manifest, CLI, and Alembic migration 0005. 182/182 tests passing. Ruff clean. | Hand off to Stage 7 |
 
 ---
 

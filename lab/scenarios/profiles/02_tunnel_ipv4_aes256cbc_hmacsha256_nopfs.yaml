@@ -1,0 +1,16 @@
+scenario_id: "scn-02-tunnel-v4-cbc-nopfs"
+scenario_version: "1.0"
+description: "Tunnel Mode IPv4 with AES-256-CBC, HMAC-SHA256, DH Group 14 (MODP-2048), and PFS disabled."
+
+topology: "TUNNEL_SITE_TO_SITE"
+ip_version: "IPV4"
+ike_version: "IKEV2"
+crypto_profile: "IKEV2_AES256CBC_SHA256_DH14_NOPFS"
+pfs: "DISABLED"
+encapsulation: "NATIVE_ESP"
+capture: "BOTH"
+
+traffic_probe:
+  packet_count: 5
+  interval_sec: 0.2
+  payload_size_bytes: 64

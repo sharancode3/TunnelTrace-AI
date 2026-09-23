@@ -429,24 +429,44 @@ docker compose up -d
 ```
 *This initializes PostgreSQL 15 with pgvector, Redis 7, the FastAPI backend server, Celery asynchronous workers, and the Next.js frontend console.*
 
-### Step 4: Verify Subsystem Health
+### Stage 1 Developer Bootstrap & Verification
+
+#### Verified Commands (Tested & Validated in Local Python Environment)
+The following commands have been directly executed and verified in the local workspace:
+
 ```bash
-# Verify all containers are healthy
+# 1. Run full backend automated test suite (23 tests: settings, storage, logging, health probes, errors, celery)
+python -m pytest backend/tests -v
+
+# 2. Verify static type compliance across all 28 backend modules
+python -m mypy backend/app
+
+# 3. Verify code style and linting rules
+python -m ruff check backend
+python -m ruff format --check backend
+
+# 4. Validate Docker Compose Class A specification syntax
+docker compose config
+```
+
+#### Expected Container Runtime Commands (Requires Active Docker Engine)
+When Docker Desktop or the Linux Docker engine is running:
+
+```bash
+# 1. Build and launch Class A local services in the background
+docker compose up -d
+
+# 2. Check service status
 docker compose ps
 
-# Check API health endpoint
-curl -s http://localhost:8000/api/v1/health | jq .
-```
-Expected output:
-```json
-{
-  "status": "HEALTHY",
-  "version": "0.1.0-alpha",
-  "database": "CONNECTED",
-  "redis": "CONNECTED",
-  "worker_pool": "ACTIVE",
-  "privileged_agent": "CONNECTED"
-}
+# 3. Query process liveness probe
+curl -s http://127.0.0.1:8000/api/v1/system/health/live
+
+# 4. Query application readiness probe (verifies PostgreSQL, Redis, and Storage)
+curl -s http://127.0.0.1:8000/api/v1/system/health/ready
+
+# 5. Check migration head status
+docker compose exec api alembic current
 ```
 
 ### Step 5: (Optional) Initialize Privileged Testbed (Execution Class B)
