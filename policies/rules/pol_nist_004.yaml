@@ -1,0 +1,39 @@
+rule_id: "POL-NIST-004"
+rule_version: "1.0.0"
+title: "Mandatory Diffie-Hellman Group Strength (MODP-2048+ / ECP-256+)"
+description: "Diffie-Hellman groups providing less than 112 bits of security strength (e.g. MODP-1024 / Group 2) are susceptible to discrete logarithm precomputation attacks (Logjam). NIST SP 800-77 Rev. 1 mandates Group 14 or higher."
+category: "KEY_EXCHANGE"
+profile: "profile_nist_sp800_77"
+authority_tier: "NATIONAL_STANDARD"
+authoritative_reference:
+  source: "NIST SP 800-77 Rev. 1"
+  section: "Section 5.1.2"
+  url: "https://csrc.nist.gov/publications/detail/sp/800-77/rev-1/final"
+  normative_requirement: "Diffie-Hellman groups SHALL provide at least 112 bits of security (MODP Group 14+ or ECP Group 19+)."
+  verification_date: "2026-09-24T00:00:00Z"
+  verified_by: "NIST Standards Assurance Auditor"
+evidence_requirements:
+  - "ike_sa.diffie_hellman_group"
+applicability: null
+assertion:
+  target_field: "ike_sa.diffie_hellman_group"
+  operator: "in_set"
+  expected_value:
+    - 14
+    - 15
+    - 16
+    - 17
+    - 18
+    - 19
+    - 20
+    - 21
+    - 31
+severity: "HIGH"
+root_cause_key: "DH_GROUP_WEAK_LOGJAM"
+remediation:
+  summary: "Upgrade Diffie-Hellman group to MODP-2048 (Group 14) or ECP-256 (Group 19)."
+  strongswan_directive: "ike = aes256gcm16-prfsha256-ecp256!"
+  target_config_key: "ike"
+  guidance: "Configure dhgroup = ecp256 or modp2048 in swanctl.conf proposals."
+threat_mapping_id: "THR-001"
+status: "ACTIVE"

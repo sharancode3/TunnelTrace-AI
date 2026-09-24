@@ -31,6 +31,14 @@ def analyze_capture_task(self, analysis_id_str: str) -> dict[str, str]:
                 engine = ReconstructionEngine(db)
                 await engine.execute_reconstruction(analysis_id)
 
+                # Stage 8: Execute deterministic Policy-as-Code, Scoring & Evidence Graph
+                from app.api.v1.security.router import (
+                    _ensure_assessment_executed,
+                    get_security_service,
+                )
+                sec_service = get_security_service()
+                await _ensure_assessment_executed(analysis_id, db, sec_service)
+
     try:
         asyncio.run(_run())
         return {"status": "SUCCESS", "analysis_id": analysis_id_str}

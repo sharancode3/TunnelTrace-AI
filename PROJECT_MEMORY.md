@@ -1,11 +1,11 @@
 # TunnelTrace AI — Project Memory / Master Context
 
-**Last Updated:** 2026-09-24T02:00:00+05:30  
-**Current Phase:** STAGE 7 COMPLETED & FULLY VALIDATED (1D-CNN + Multimodal Fusion + Calibration + OOD + TreeSHAP + Behavioral Anomaly)  
-**Current Status:** Stages 1, 2, 3, 4, 5, 6, and 7 Implemented & Genuinely Validated (239 total unit and integration tests passing: 215 unit, 24 integration; 91 ML tests; canonical 3-channel sequence tensor (3, N) with boolean masking; candidate horizons N in {32, 64, 128} with N=32 selected on validation; lightweight 1D-CNN with TorchScript export; multimodal weighted probability fusion with JS divergence branch disagreement diagnostic; probability calibration via temperature scaling fitted strictly on VAL_CAL with NLL, Brier, and 10-bin ECE metrics; dual-gate open-set OOD rejection via calibrated Shannon entropy and max confidence; TreeSHAP explainability strictly on XGBoost branch with exact additivity and leakage guard; independent unsupervised Isolation Forest with pure non-pickle JSON serialization; unified model bundle packaging with SHA-256 manifest and tamper verification; Stage 7 inference service with graceful short-flow degraded fallback; Alembic migration 0006 for flow_classifications; zero hallucination, zero payload decryption, zero git push)  
-**Current Active Stage:** Stage 7 — 1D-CNN + Multimodal Fusion + Calibration + OOD + SHAP + Anomaly (COMPLETED)  
-**Next Recommended Task:** Stage 8 — Security + Compliance + Evidence + Scoring Engine  
-**Repository State Verified:** YES (Stages 1–7 complete, working, verified, zero hallucination)  
+**Last Updated:** 2026-09-24T03:55:00+05:30  
+**Current Phase:** STAGE 8 COMPLETED & FULLY VALIDATED (Security, Compliance, Evidence & Scoring Engine)  
+**Current Status:** Stages 1, 2, 3, 4, 5, 6, 7, and 8 Implemented & Genuinely Validated (276 total unit and integration tests passing: 247 unit, 29 integration; 37 Stage 8 security tests: pure 3-valued Kleene logic engine, safe allowlisted operators with strict bounds, 8 canonical declarative YAML rules across NIST SP 800-77 Rev. 1, RFC 7296, RFC 8221, RFC 4303, root-cause deduplicated 0-100 scoring engine with independent evidence coverage metric, deterministic risk engine, threat matrix mapped to verified threats THR-001 through THR-008, 6-component metadata fingerprintability engine with non-ML fallback, forensic evidence DAG with unbroken cryptographic lineage from PCAP to findings, SHA-256 tamper-evident assessment manifest, Alembic migration 0007, FastAPI REST endpoints, Celery worker integration; ZERO LLM security authority; ZERO git push/commit performed)  
+**Current Active Stage:** Stage 8 — Security + Compliance + Evidence + Scoring Engine (COMPLETED)  
+**Next Recommended Task:** Stage 9 — Full-Stack Product Integration & Reporting  
+**Repository State Verified:** YES (Stages 1–8 complete, working, verified, zero hallucination)  
 **Memory Confidence:** CURRENT (Synchronized with 12-stage implementation roadmap)  
 
 ---
@@ -42,7 +42,7 @@ TunnelTrace AI is an enterprise-grade, evidence-first **IPsec Security Intellige
 5. **Stage 5 — Workload Automation & Native IPsec Dataset Factory** (`IMPLEMENTED & FULLY VALIDATED` — Controlled strongSwan lab traffic generation, dual-capture architecture with Point A plaintext purge and Point B encrypted WAN persistence, 7 supervised classes + OOD holdout, quality gate, GroupKFold session-level splitter with zero-leakage audit, canonical JSON manifest, Markdown dataset card, anti-shortcut matrix planner, read-only UNB/CIC ISCXVPN2016 catalog with domain shift quarantine, Alembic migration 0004).
 6. **Stage 6 — XGBoost Baseline Classifier** (`IMPLEMENTED & FULLY VALIDATED` — Tabular encrypted flow features F01–F24, 100% outer transport metadata, zero payload decryption, strict session-isolated cross-validation, grouped CV, comparators, negative control, slice evaluation, Alembic migration 0005, native JSON artifacts & SHA-256 manifest).
 7. **Stage 7 — 1D-CNN + Fusion + Calibration + OOD + SHAP + Anomaly** (`IMPLEMENTED & FULLY VALIDATED` — Sequence ML, TorchScript 1D-CNN, weighted probability fusion, temperature scaling calibration, Shannon entropy OOD gating, TreeSHAP attribution, pure JSON Isolation Forest, Alembic migration 0006).
-8. **Stage 8 — Security + Compliance + Evidence + Scoring Engine** (`NEXT STAGE` — Policy-as-Code, NIST SP 800-77 Rev. 1, RFC 8221, 0–100 Security Score, Risk, Threat Matrix, Metadata Fingerprintability, Evidence Graph).
+8. **Stage 8 — Security + Compliance + Evidence + Scoring Engine** (`IMPLEMENTED & FULLY VALIDATED` — Pure 3-valued Kleene logic, safe YAML Policy-as-Code loader, NIST SP 800-77 Rev. 1 / RFC 7296 / RFC 8221 / RFC 4303 rules, root-cause deduplicated 0–100 scoring engine with independent evidence coverage metric, deterministic risk engine, threat matrix THR-001..THR-008, 6-component metadata fingerprintability engine with non-ML fallback, forensic provenance DAG, SHA-256 tamper-evident manifest, Alembic migration 0007, FastAPI REST endpoints, Celery worker pipeline).
 9. **Stage 9 — Full-Stack Product Integration & Reporting** (FastAPI, PostgreSQL/pgvector, Next.js, TypeScript, Tailwind CSS, React Flow, ECharts, PDF/JSON reports).
 10. **Stage 10 — Configuration Security Twin & Closed-Loop Remediation** (Current vs Proposed, strongSwan lab apply & re-verify).
 11. **Stage 11 — Grounded AI Analyst / RAG** (pgvector standards retrieval over verified facts/standards, strictly explanatory).
@@ -240,16 +240,78 @@ TunnelTrace AI is an enterprise-grade, evidence-first **IPsec Security Intellige
   - Full Integration Test Suite: **24 PASSED, 0 FAILED** in 164.28s (`test_stage7_multimodal_pipeline_end_to_end` + Stage 2–6 integrations).
   - Linter: `python -m ruff check backend tests` → **All checks passed!**
 
+### Stage 8 Verified Implementation Reality (2026-09-24)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Pure 3-Valued Kleene Logic, Safe Policy-as-Code Engine, Cryptographic Bit-Strength Registry, Root-Cause Deduplicated Scoring, Separate Evidence Coverage Metric, Deterministic Risk & Threat Engine THR-001..THR-008, 6-Metric Metadata Fingerprintability Engine, Forensic Provenance DAG, SHA-256 Manifest, Alembic Migration 0007, FastAPI REST & Celery Worker Integration)`
+- **Epistemic Invariants & Zero Hallucination Enforced:**
+  - Observable protocol facts $\to$ deterministic Policy-as-Code engine. Zero LLM security authority; zero ML crypto compliance authority.
+  - Pure 3-valued Kleene logic (`TRUE`, `FALSE`, `UNKNOWN`).
+  - Strict invariant: `UNKNOWN` is NOT a weakness; incurs exactly 0.0 score deduction and generates auditable `EvidenceGap` records.
+  - Strict separation between Security Posture Score ($0-100$) and independent `EvidenceCoverage` metric.
+  - Internal product assessment disclaimer: NOT an official NIST, government, FIPS, ISO, or Common Criteria certification.
+  - Git Safety Rule strictly honored: Zero commits, zero pushes. Working tree changes remain local.
+- **Fact Normalization & Schema (`backend/app/security/facts/`):**
+  - Canonical `SecurityFact` model with typed values (`string`, `integer`, `boolean`, `float`), derivation type (`DIRECT`, `DETERMINISTIC_DERIVATION`, `INFERENCE`), and evidence state (`VERIFIED`, `INFERRED`, `UNKNOWN`).
+  - Strict `FACT_FIELD_REGISTRY` covering IKE sessions, IKE SAs, Child SAs, and ESP flows.
+  - `SecurityFactNormalizer` extracts protocol facts from Stage 3 observations and Stage 4 reconstructed sessions/SAs/flows with direct frame number mapping. Supports implicit AEAD integrity derivation (`AEAD-INTEGRATED`) and DH group integer mapping.
+- **Policy-as-Code Engine (`backend/app/security/policy/`):**
+  - Pure 3-valued Kleene logic (`LogicalState`, `kleene_and`, `kleene_or`, `kleene_not`, `kleene_all`, `kleene_any`).
+  - Allowlisted safe operators (`equals`, `not_equals`, `in_set`, `not_in_set`, `greater_than`, `greater_than_or_equal`, `less_than`, `less_than_or_equal`, `exists`, `not_exists`, `contains`) with type-safe evaluation.
+  - Declarative Pydantic schemas (`PolicyRule`, `PolicyBundle`, `RuleAssertion`, `RuleApplicability`, `AuthoritativeReference`, `RemediationDirective`).
+  - `SafePolicyLoader`: Strictly enforces safe declarative YAML loading (`yaml.safe_load`), hard limits on file size (512 KB) and nesting depth (15), and canonical field verification against `FACT_FIELD_REGISTRY`.
+  - Cryptographic bit-strength registry (`crypto_registry.py`): Maps NIST SP 800-57 Table 2 bit strengths, weakest-link evaluator, and AEAD-aware integrity rules.
+  - `PolicyEvaluator`: Pure, deterministic evaluation of security facts against rules returning `EvaluationRecord` instances (`PASS`, `FAIL`, `UNKNOWN`, `NOT_APPLICABLE`).
+  - `PolicyRegistry`: Compiles, registers, and diffs bundles for profiles (`profile_ietf_baseline`, `profile_nist_sp800_77`, `profile_enterprise_strict`, `profile_custom_org`).
+- **Canonical Declarative Policy Rules (`policies/rules/`):**
+  - `pol_nist_001.yaml`: Disallow deprecated DES and 3DES ciphers (Sweet32 64-bit collision protection).
+  - `pol_nist_002.yaml`: Enforce minimum symmetric key length $\ge 128$ bits (AES-128 / AES-256).
+  - `pol_nist_003.yaml`: Disallow deprecated integrity hash algorithms (MD5 / SHA-1).
+  - `pol_nist_004.yaml`: Enforce minimum Diffie-Hellman Group $\ge 14$ (MODP-2048+ / ECP-256+ / X25519).
+  - `pol_rfc_7296_01.yaml`: Mandate modern IKEv2 protocol version for security association management.
+  - `pol_rfc_8221_01.yaml`: Disallow ESP NULL encryption (`ENCR_NULL`) on sensitive data plane flows.
+  - `pol_pfs_001.yaml`: Enforce Perfect Forward Secrecy (PFS) on Child SAs.
+  - `pol_replay_001.yaml`: Enforce strictly monotonic ESP sequence numbers for anti-replay protection.
+- **Findings & Evidence Gaps (`backend/app/security/findings/`):**
+  - `SecurityFinding`: Immutable finding produced strictly from `FAIL` evaluations with SHA-256 record hash and remediation directives.
+  - `EvidenceGap`: Auditable record produced strictly from `UNKNOWN` evaluations documenting missing facts with zero score penalty.
+  - `FindingGenerator`: Deterministically generates structured findings and evidence gaps without LLM hallucination.
+- **Security Scoring Engine (`backend/app/security/scoring/`):**
+  - Itemized score deduction model with category weighting (`CRYPTOGRAPHY: 35%`, `AUTHENTICATION_INTEGRITY: 25%`, `KEY_EXCHANGE_DH: 20%`, `PFS: 10%`, `ANTI_REPLAY: 10%`).
+  - Correlated root-cause deduplication: Multiple symptom findings sharing the same `root_cause_key` only deduct the maximum severity penalty once.
+  - Strict separation of Security Posture Score ($0-100$) from `EvidenceCoverage` ($0-100\%$).
+- **Deterministic Risk & Threat Matrix (`backend/app/security/risk/` & `backend/app/security/threats/`):**
+  - `DeterministicRiskEngine`: Deterministic mapping from finding severity, likelihood, impact, and evidence state to standard risk tiers (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `INFORMATIONAL`).
+  - Static verified threat catalog (`THREAT_CATALOG`): `THR-001` (IKEv1 Offline PSK Cracking), `THR-002` (Sweet32 Birthday Attack on 64-bit Ciphers), `THR-003` (Logjam DH Downgrade), `THR-004` (Deprecated Integrity Hash Collision), `THR-005` (Short Key Brute Force), `THR-006` (Child SA Compromise via Disabled PFS), `THR-007` (Anti-Replay Attack & Packet Injection), `THR-008` (ESP Cleartext Data Exposure via NULL Encryption).
+  - `ThreatMatrixEngine`: Maps findings to threat scenarios with concrete attack vectors and preconditions.
+- **Metadata Fingerprintability Engine (`backend/app/security/fingerprintability/`):**
+  - 6 independent side-channel leakage metrics: `classifier_distinguishability` (consuming Stage 7 calibrated confidence with uncalibrated failsafe), `predictive_entropy_complement` (consuming Stage 7 calibrated Shannon entropy), `packet_size_regularity`, `timing_regularity`, `directional_asymmetry`, `burst_distinguishability`.
+  - Composite MFI index ($[0, 100]$) with graceful non-ML fallback and strict disclaimer: Measures outer packet side-channel leakage risk without decrypting ESP; NOT plaintext leakage percentage.
+- **Forensic Evidence Graph & Provenance DAG (`backend/app/security/evidence/`):**
+  - Directed acyclic graph connecting `CAPTURE` (SHA-256 root anchor) $\to$ `FRAME` $\to$ `SECURITY_FACT` $\to$ `POLICY_RULE` $\to$ `SECURITY_FINDING` $\to$ `THREAT` $\to$ `SCORE_COMPONENT`.
+  - `EvidenceProvenanceResolver`: Resolves unbroken cryptographic lineage from any high-level finding back to exact packet frames and capture digest.
+  - Native React Flow graph export (`to_react_flow()`) with node and edge mappings for Stage 9 frontend.
+- **Tamper-Evident Assessment Manifest (`backend/app/security/manifest.py`):**
+  - `AssessmentManifest`: Computes SHA-256 cryptographic digest binding analysis ID, capture digest, engine version, bundle hashes, score, coverage, finding hashes, and fingerprintability index.
+- **Database Schema & Migration:**
+  - Alembic migration `0007_stage8_security_compliance_evidence.py` creating `compliance_assessments`, `compliance_evaluations`, `security_findings`, `evidence_gaps`, `risk_assessments`, `threat_instances`, `fingerprintability_assessments`, and `evidence_graph_nodes`/`edges` tables.
+- **REST Endpoints & Worker Integration:**
+  - `backend/app/api/v1/security/router.py`: REST endpoints for policy profiles, compliance evaluation, findings, security score, risk assessment, threat matrix, metadata fingerprintability, evidence graph, and manifest verification.
+  - Celery worker integration in `backend/app/workers/protocol_tasks.py`.
+- **Automated Tests Executed:**
+  - Stage 8 Security Tests: **37 PASSED, 0 FAILED** in 0.75s (Logic, Operators, Loader, Evaluator, Scoring Invariants, Risk, Threats, Fingerprintability, Evidence Graph, REST API, Pipeline Integration).
+  - Full Unit Test Suite: **247 PASSED, 0 FAILED**.
+  - Full Integration Test Suite: **29 PASSED, 0 FAILED** (Stage 3 Forensics, Stage 4 Reconstruction, Stage 5 Dataset, Stage 6 XGBoost, Stage 7 Ensemble, Health).
+  - Linter: `python -m ruff check backend/app/security backend/app/api/v1/security backend/app/db/models/security.py backend/tests/unit/test_security_*.py` → **All checks passed!**
+
 ### What is currently being worked on
-- Stage 7 completed and validated. Ready for **Stage 8: Security + Compliance + Evidence + Scoring Engine**.
+- Stage 8 completed and validated. Ready for **Stage 9: Full-Stack Product Integration & Reporting**.
 
 ### What is next
-- **Stage 8 — Security + Compliance + Evidence + Scoring Engine:**
-  1. Policy-as-Code engine for cryptographic compliance (NIST SP 800-77 Rev. 1, RFC 8221, RFC 7321).
-  2. Deterministic 0–100 Security Score calculation algorithm with weighted deduction trees.
-  3. Dynamic Risk Scoring and CVSS/CWE-aligned Threat Matrix mapping.
-  4. Metadata Fingerprintability Index integration consuming Stage 7 calibrated confidence and entropy.
-  5. Evidence Graph linking verified protocol facts to compliance findings.
+- **Stage 9 — Full-Stack Product Integration & Reporting:**
+  1. Next.js / TypeScript frontend application bootstrap.
+  2. Interactive Security Posture & Compliance Dashboard.
+  3. Interactive Forensic Evidence & Provenance Graph (React Flow).
+  4. Metadata Fingerprintability & Traffic Dissection visualizations (ECharts).
+  5. Executive & Technical Security Assessment PDF/JSON report generation.
 
 ### Current blockers
 - None. (Docker Engine offline is non-blocking as local execution and WSL2 network namespaces are verified).
@@ -1042,19 +1104,23 @@ ls -la "c:\SHARAN PROJECTS\TunnelTrace AI\docs"
 - **Task:** Stage 6 — XGBoost Baseline Classifier (Tabular Encrypted Flow Features).
 - **Result:** Implemented 24 macroscopic outer transport side-channel features (F01–F24) with zero payload decryption, strict session-level GroupKFold isolation, automated leakage audits (prohibited columns, split disjointness, configuration shortcuts, duration shortcuts), train-only log1p and RobustScaler/StandardScaler preprocessors, sample weighting (`NONE`, `CLASS_BALANCED`, `SESSION_CLASS_BALANCED`), grouped CV on TRAIN, dummy majority & logistic regression comparators, label-shuffle negative control, configuration slice evaluations, native JSON model artifacts (`model/xgboost.json`) with complete cryptographic manifest and reload smoke tests, typed CLI, and Alembic migration `0005` for `training_experiments` and `model_artifacts`. 182/182 tests passing (165 unit, 17 integration). Ruff 100% clean.
 
+-**Task:** Stage 7 — 1D-CNN + Multimodal Fusion + Calibration + OOD + SHAP + Anomaly.
+- **Result:** Fully implemented sequence tensor extractor, PyTorch 1D-CNN with TorchScript export, multimodal probability fusion, temperature scaling calibration on VAL_CAL, dual-gate OOD rejection via calibrated Shannon entropy, TreeSHAP explainability, JSON Isolation Forest anomaly detection, Alembic migration 0006. 239/239 tests passing.
+
+- **Task:** Stage 8 — Security, Compliance, Evidence & Scoring Engine.
+- **Result:** Fully implemented deterministic Policy-as-Code engine with pure 3-valued Kleene logic (`TRUE`, `FALSE`, `UNKNOWN`), safe allowlisted operators, 8 canonical declarative YAML rules (NIST SP 800-77 Rev. 1, RFC 7296, RFC 8221, RFC 4303), root-cause deduplicated 0–100 scoring engine with independent evidence coverage metric, deterministic risk engine, threat matrix mapped to verified threats THR-001 through THR-008, 6-component metadata fingerprintability engine with non-ML fallback, forensic provenance DAG with unbroken cryptographic lineage from PCAP to findings, SHA-256 tamper-evident assessment manifest, Alembic migration 0007, FastAPI REST endpoints, Celery worker integration. 37/37 Stage 8 tests passing, 276/276 repository tests passing. Ruff 100% clean. ZERO git commit/push performed.
+
 ### Current Task
-- **Objective:** Stage 6 Completed, Verified, and Validated. Ready for Stage 7.
-- **Relevant Files:** `backend/app/ml/`, `tests/integration/test_stage6_xgboost_classifier.py`, `backend/alembic/versions/0005_stage6_experiments_and_models.py`, `PROJECT_MEMORY.md`.
+- **Objective:** Stage 8 Completed, Verified, and Validated. Ready for Stage 9.
+- **Relevant Files:** `backend/app/security/`, `policies/rules/`, `backend/app/api/v1/security/`, `backend/alembic/versions/0007_stage8_security_compliance_evidence.py`, `PROJECT_MEMORY.md`.
 
 ### Next Recommended Task
-- **Objective:** Stage 7 — 1D-CNN + Multimodal Fusion + Calibration + OOD Detection + TreeSHAP + Isolation Forest Anomaly Detection:
-  1. Sequence tensor extractor for early packet dynamics `(direction, length, delta_t)`.
-  2. PyTorch 1D-CNN sequence architecture and training pipeline.
-  3. Probability fusion ensemble ($\alpha P_{\text{XGB}} + (1-\alpha) P_{\text{CNN}}$).
-  4. Platt scaling / temperature calibration for honest confidence scores.
-  5. Shannon entropy thresholding for out-of-distribution (OOD) rejection.
-  6. TreeSHAP local feature attribution and waterfall plotting.
-  7. Isolation Forest for zero-day / anomalous IPsec flow discovery.
+- **Objective:** Stage 9 — Full-Stack Product Integration & Reporting:
+  1. Next.js / TypeScript frontend application bootstrap.
+  2. Interactive Security Posture & Compliance Dashboard.
+  3. Interactive Forensic Evidence & Provenance Graph (React Flow).
+  4. Metadata Fingerprintability & Traffic Dissection visualizations (ECharts).
+  5. Executive & Technical Security Assessment PDF/JSON report generation.
 
 ---
 
@@ -1069,6 +1135,8 @@ ls -la "c:\SHARAN PROJECTS\TunnelTrace AI\docs"
 | 2026-09-24 00:25 | Principal Protocol Forensics Engineer | Stage 4 IKE/SA & ESP Reconstruction | Implemented IKE correlator, SA Builder, ESP flow aggregator, React Flow API, and Alembic migration 0003. 100/100 tests passing. | Hand off to Stage 5 |
 | 2026-09-24 00:52 | Principal Dataset Engineer | Stage 5 Workload Automation & Dataset Factory | Implemented 8 workload generators, Point A purge lifecycle, quality gate, GroupKFold splitter, manifest builder, dataset card, matrix planner, UNB scanner, and Alembic migration 0004. 126/126 tests passing. | Hand off to Stage 6 |
 | 2026-09-24 01:20 | Principal ML & Forensics Engineer | Stage 6 XGBoost Baseline Classifier | Implemented 24 outer transport features (F01–F24), leakage auditor, train-only preprocessor & weighting, grouped CV, comparators, negative control, slice evaluator, JSON model manifest, CLI, and Alembic migration 0005. 182/182 tests passing. Ruff clean. | Hand off to Stage 7 |
+| 2026-09-24 02:00 | Principal ML & AI Systems Engineer | Stage 7 1D-CNN + Multimodal Fusion + Calibration + OOD + SHAP | Implemented 1D-CNN PyTorch/TorchScript, weighted fusion with JS divergence, temperature scaling calibration, Shannon entropy OOD gating, TreeSHAP attributions, Isolation Forest anomaly detector, and Alembic migration 0006. 239/239 tests passing. | Hand off to Stage 8 |
+| 2026-09-24 03:55 | Principal IPsec Security Engineer & Compliance Architect | Stage 8 Security, Compliance, Evidence & Scoring Engine | Implemented deterministic Policy-as-Code engine, 3-valued Kleene logic, safe YAML loader, 8 canonical rules, deduplicated 0-100 scoring engine with evidence coverage, deterministic risk engine, threat matrix THR-001..THR-008, 6-metric MFI, forensic evidence DAG with provenance resolver, cryptographic manifest, Alembic migration 0007, and REST endpoints. 37/37 Stage 8 tests passing, 276/276 total tests passing. Ruff 100% clean. Zero git commit/push. | Hand off to Stage 9 |
 
 ---
 

@@ -8,6 +8,24 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.schemas import AnalysisRunResponseDTO, CreateAnalysisRequestDTO
+from app.api.v1.security.router import (
+    get_compliance_summary,
+    get_evidence_graph,
+    get_metadata_fingerprintability,
+    get_risk_assessment,
+    get_security_findings,
+    get_security_score,
+    get_threat_matrix,
+)
+from app.api.v1.security.schemas import (
+    ComplianceSummaryDTO,
+    EvidenceGraphDTO,
+    FingerprintabilityDTO,
+    RiskAssessmentDTO,
+    SecurityFindingDTO,
+    SecurityScoreDTO,
+    ThreatInstanceDTO,
+)
 from app.core.errors import AnalysisNotFoundError, CaptureNotFoundError
 from app.db.models.capture import AnalysisRun, Capture
 from app.db.session import get_db_session
@@ -116,3 +134,55 @@ async def get_protocol_summary(
     """Retrieve verified protocol facts, observed transforms, SPIs, and exchange types."""
     service = ProtocolForensicsService(db)
     return await service.get_protocol_summary(analysis_id)
+
+
+# Stage 8: Direct /analyses/{analysis_id}/... security endpoints
+router.add_api_route(
+    "/{analysis_id}/compliance",
+    get_compliance_summary,
+    methods=["GET"],
+    response_model=ComplianceSummaryDTO,
+    summary="Retrieve itemized rule compliance evaluations",
+)
+router.add_api_route(
+    "/{analysis_id}/findings",
+    get_security_findings,
+    methods=["GET"],
+    response_model=list[SecurityFindingDTO],
+    summary="Retrieve structured security findings",
+)
+router.add_api_route(
+    "/{analysis_id}/security-score",
+    get_security_score,
+    methods=["GET"],
+    response_model=SecurityScoreDTO,
+    summary="Retrieve transparent Security Posture Score",
+)
+router.add_api_route(
+    "/{analysis_id}/risk",
+    get_risk_assessment,
+    methods=["GET"],
+    response_model=RiskAssessmentDTO,
+    summary="Retrieve deterministic risk evaluation",
+)
+router.add_api_route(
+    "/{analysis_id}/threat-matrix",
+    get_threat_matrix,
+    methods=["GET"],
+    response_model=list[ThreatInstanceDTO],
+    summary="Retrieve threat matrix instances",
+)
+router.add_api_route(
+    "/{analysis_id}/metadata-fingerprintability",
+    get_metadata_fingerprintability,
+    methods=["GET"],
+    response_model=FingerprintabilityDTO,
+    summary="Retrieve behavioral metadata fingerprintability",
+)
+router.add_api_route(
+    "/{analysis_id}/evidence-graph",
+    get_evidence_graph,
+    methods=["GET"],
+    response_model=EvidenceGraphDTO,
+    summary="Retrieve forensic provenance graph",
+)

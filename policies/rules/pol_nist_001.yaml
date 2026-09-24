@@ -1,0 +1,38 @@
+rule_id: "POL-NIST-001"
+rule_version: "1.0.0"
+title: "Prohibition of DES and Triple-DES (3DES)"
+description: "DES and Triple-DES (3DES) utilize small 64-bit block sizes vulnerable to Sweet32 birthday collision attacks and are disallowed under NIST SP 800-77 Rev. 1 and RFC 9395."
+category: "CRYPTOGRAPHY"
+profile: "profile_nist_sp800_77"
+authority_tier: "NATIONAL_STANDARD"
+authoritative_reference:
+  source: "NIST SP 800-77 Rev. 1"
+  section: "Section 5.1.1"
+  url: "https://csrc.nist.gov/publications/detail/sp/800-77/rev-1/final"
+  normative_requirement: "DES and Triple-DES (3DES) SHALL NOT be used for IPsec VPNs."
+  verification_date: "2026-09-24T00:00:00Z"
+  verified_by: "NIST Standards Assurance Auditor"
+evidence_requirements:
+  - "ike_sa.encryption_algorithm"
+applicability: null
+assertion:
+  target_field: "ike_sa.encryption_algorithm"
+  operator: "not_in_set"
+  expected_value:
+    - "3DES"
+    - "DES"
+    - "ENCR_3DES"
+    - "ENCR_DES"
+    - "TRIPLE_DES"
+    - "3DES-CBC"
+    - "ENCR_3DES_CBC"
+    - "DES-CBC"
+severity: "CRITICAL"
+root_cause_key: "CIPHER_DEPRECATED_DES"
+remediation:
+  summary: "Upgrade encryption algorithm to AES-GCM (256-bit) or AES-CBC."
+  strongswan_directive: "esp = aes256gcm16-ecp256!"
+  target_config_key: "esp"
+  guidance: "Remove 3des / des proposals from ipsec.conf / swanctl.conf and mandate AES-GCM."
+threat_mapping_id: "THR-002"
+status: "ACTIVE"

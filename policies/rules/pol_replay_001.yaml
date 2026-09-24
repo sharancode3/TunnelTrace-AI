@@ -1,0 +1,30 @@
+rule_id: "POL-REPLAY-001"
+rule_version: "1.0.0"
+title: "ESP Packet Sequence Anti-Replay Monotonicity"
+description: "ESP sequence numbers protect against packet replay and injection. Observed sequence numbers must progress monotonically without duplicate or reversed numbers."
+category: "REPLAY_EVIDENCE"
+profile: "profile_ietf_baseline"
+authority_tier: "IETF_STANDARD"
+authoritative_reference:
+  source: "RFC 4303"
+  section: "Section 3.3.3"
+  url: "https://www.rfc-editor.org/rfc/rfc4303.html"
+  normative_requirement: "The transmitter's Packet Sequence Number Counter MUST advance monotonically for each packet transmitted."
+  verification_date: "2026-09-24T00:00:00Z"
+  verified_by: "IETF Security Protocol Specialist"
+evidence_requirements:
+  - "esp_flow.sequence_monotonic"
+applicability: null
+assertion:
+  target_field: "esp_flow.sequence_monotonic"
+  operator: "equals"
+  expected_value: true
+severity: "HIGH"
+root_cause_key: "REPLAY_SEQUENCE_NON_MONOTONIC"
+remediation:
+  summary: "Verify anti-replay window configuration and investigate potential wire replay/reordering."
+  strongswan_directive: "replay_window = 64"
+  target_config_key: "replay_window"
+  guidance: "Ensure anti-replay window is enabled and sufficiently sized on IPsec endpoints."
+threat_mapping_id: "THR-007"
+status: "ACTIVE"

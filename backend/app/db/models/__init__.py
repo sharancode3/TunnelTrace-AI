@@ -24,6 +24,16 @@ from app.db.models.reconstruction import (
     IKESession,
     TrafficSelector,
 )
+from app.db.models.security import (
+    ComplianceEvaluationModel,
+    EvidenceGraphModel,
+    FingerprintabilityAssessmentModel,
+    PolicyBundleModel,
+    RiskAssessmentModel,
+    ScoreAssessmentModel,
+    SecurityFindingModel,
+    ThreatInstanceModel,
+)
 
 __all__ = [
     "Capture",
@@ -42,5 +52,12 @@ __all__ = [
     "TrainingExperiment",
     "ModelArtifact",
     "FlowClassification",
+    "PolicyBundleModel",
+    "ComplianceEvaluationModel",
+    "SecurityFindingModel",
+    "ScoreAssessmentModel",
+    "RiskAssessmentModel",
+    "ThreatInstanceModel",
+    "FingerprintabilityAssessmentModel",
+    "EvidenceGraphModel",
 ]
-

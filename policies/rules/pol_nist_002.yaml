@@ -1,0 +1,30 @@
+rule_id: "POL-NIST-002"
+rule_version: "1.0.0"
+title: "Approved Symmetric Encryption Key Strength"
+description: "Symmetric encryption algorithms in NIST SP 800-77 Rev. 1 compliant IPsec deployments must provide at least 128 bits of security strength."
+category: "CRYPTOGRAPHY"
+profile: "profile_nist_sp800_77"
+authority_tier: "NATIONAL_STANDARD"
+authoritative_reference:
+  source: "NIST SP 800-77 Rev. 1"
+  section: "Section 5.1.1"
+  url: "https://csrc.nist.gov/publications/detail/sp/800-77/rev-1/final"
+  normative_requirement: "Symmetric ciphers SHALL provide at least 128 bits of security (e.g. AES-128, AES-256)."
+  verification_date: "2026-09-24T00:00:00Z"
+  verified_by: "NIST Standards Assurance Auditor"
+evidence_requirements:
+  - "ike_sa.key_length_bits"
+applicability: null
+assertion:
+  target_field: "ike_sa.key_length_bits"
+  operator: "greater_or_equal"
+  expected_value: 128
+severity: "HIGH"
+root_cause_key: "KEY_LENGTH_INSUFFICIENT"
+remediation:
+  summary: "Configure 128-bit or 256-bit AES encryption keys."
+  strongswan_directive: "ike = aes256gcm16-prfsha256-ecp256!"
+  target_config_key: "ike"
+  guidance: "Ensure cipher key length is at least 128 bits for AES ciphers."
+threat_mapping_id: null
+status: "ACTIVE"

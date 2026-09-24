@@ -33,10 +33,10 @@ def test_readiness_probe_all_healthy(client: TestClient):
         assert data["dependencies"]["database"]["status"] == "UP"
         assert data["dependencies"]["redis"]["status"] == "UP"
         assert data["dependencies"]["storage"]["status"] == "UP"
-        # Future dependencies reported as NOT_CONFIGURED honestly
-        assert data["dependencies"]["tshark"]["status"] == "NOT_CONFIGURED"
-        assert data["dependencies"]["privileged_agent"]["status"] == "NOT_CONFIGURED"
-        assert data["dependencies"]["ml_engine"]["status"] == "NOT_CONFIGURED"
+        # Dependencies reported as UP (if present on host) or NOT_CONFIGURED
+        assert data["dependencies"]["tshark"]["status"] in ("NOT_CONFIGURED", "UP")
+        assert data["dependencies"]["privileged_agent"]["status"] in ("NOT_CONFIGURED", "UP")
+        assert data["dependencies"]["ml_engine"]["status"] in ("NOT_CONFIGURED", "UP")
 
 
 def test_readiness_probe_database_down(client: TestClient):

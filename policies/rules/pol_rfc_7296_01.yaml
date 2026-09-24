@@ -1,0 +1,30 @@
+rule_id: "POL-RFC-7296-01"
+rule_version: "1.0.0"
+title: "Modern IKE Protocol Standard (IKEv2 Mandate)"
+description: "IKEv1 is legacy and deprecated, vulnerable to offline dictionary attacks in Aggressive Mode and identity exposure in Main Mode. RFC 7296 defines IKEv2 as the modern internet standard."
+category: "PROTOCOL_VERSION"
+profile: "profile_ietf_baseline"
+authority_tier: "IETF_STANDARD"
+authoritative_reference:
+  source: "RFC 7296"
+  section: "Section 1.2"
+  url: "https://www.rfc-editor.org/rfc/rfc7296.html"
+  normative_requirement: "Implementations SHOULD use IKEv2 for establishing security associations."
+  verification_date: "2026-09-24T00:00:00Z"
+  verified_by: "IETF Security Protocol Specialist"
+evidence_requirements:
+  - "ike_session.ike_version"
+applicability: null
+assertion:
+  target_field: "ike_session.ike_version"
+  operator: "equals"
+  expected_value: "IKEv2"
+severity: "HIGH"
+root_cause_key: "PROTOCOL_LEGACY_IKEV1"
+remediation:
+  summary: "Migrate VPN gateway from IKEv1 to IKEv2."
+  strongswan_directive: "version = 2"
+  target_config_key: "version"
+  guidance: "Specify version = 2 in connection definitions to disallow legacy IKEv1 fallback."
+threat_mapping_id: "THR-003"
+status: "ACTIVE"

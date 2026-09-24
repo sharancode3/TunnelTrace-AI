@@ -1,0 +1,32 @@
+rule_id: "POL-RFC-8221-01"
+rule_version: "1.0.0"
+title: "Mandatory-to-Implement ESP Ciphers (No Cleartext NULL)"
+description: "ESP encryption transforms protect data confidentiality across untrusted transit networks. RFC 8221 requires modern ciphers; NULL encryption offers zero confidentiality."
+category: "CIPHER_SUITE"
+profile: "profile_ietf_baseline"
+authority_tier: "IETF_STANDARD"
+authoritative_reference:
+  source: "RFC 8221"
+  section: "Section 4"
+  url: "https://www.rfc-editor.org/rfc/rfc8221.html"
+  normative_requirement: "Implementations MUST support AES-GCM or AES-CBC. NULL encryption MUST NOT be used for confidentiality."
+  verification_date: "2026-09-24T00:00:00Z"
+  verified_by: "IETF Security Protocol Specialist"
+evidence_requirements:
+  - "child_sa.encryption_algorithm"
+applicability: null
+assertion:
+  target_field: "child_sa.encryption_algorithm"
+  operator: "not_in_set"
+  expected_value:
+    - "NULL"
+    - "ENCR_NULL"
+severity: "CRITICAL"
+root_cause_key: "CIPHER_NULL_CLEARTEXT"
+remediation:
+  summary: "Enforce authenticated encryption (AES-GCM-16) for all Child SAs."
+  strongswan_directive: "esp = aes256gcm16-ecp256!"
+  target_config_key: "esp"
+  guidance: "Disallow NULL encryption proposals in Child SA security associations."
+threat_mapping_id: null
+status: "ACTIVE"

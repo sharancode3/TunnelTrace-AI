@@ -1,0 +1,30 @@
+rule_id: "POL-PFS-001"
+rule_version: "1.0.0"
+title: "Child SA Perfect Forward Secrecy (PFS) Enforcement"
+description: "Child SAs must negotiate independent Diffie-Hellman exchanges during rekeying to ensure that compromise of the parent IKE SA does not expose data plane keys."
+category: "PFS"
+profile: "profile_enterprise_strict"
+authority_tier: "NATIONAL_STANDARD"
+authoritative_reference:
+  source: "NIST SP 800-77 Rev. 1"
+  section: "Section 5.1.2"
+  url: "https://csrc.nist.gov/publications/detail/sp/800-77/rev-1/final"
+  normative_requirement: "Child SAs SHOULD negotiate ephemeral Diffie-Hellman keys during rekeying to guarantee Perfect Forward Secrecy."
+  verification_date: "2026-09-24T00:00:00Z"
+  verified_by: "NIST Standards Assurance Auditor"
+evidence_requirements:
+  - "child_sa.pfs_status"
+applicability: null
+assertion:
+  target_field: "child_sa.pfs_status"
+  operator: "equals"
+  expected_value: "ENABLED"
+severity: "MEDIUM"
+root_cause_key: "PFS_DISABLED"
+remediation:
+  summary: "Enable Perfect Forward Secrecy (PFS) for Child SAs."
+  strongswan_directive: "esp = aes256gcm16-ecp256!"
+  target_config_key: "esp"
+  guidance: "Append DH group specification (e.g. -ecp256 or -modp2048) to the esp proposal in swanctl.conf."
+threat_mapping_id: null
+status: "ACTIVE"

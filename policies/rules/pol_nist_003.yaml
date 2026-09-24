@@ -1,0 +1,36 @@
+rule_id: "POL-NIST-003"
+rule_version: "1.0.0"
+title: "Prohibition of Deprecated Integrity Algorithms (MD5 / SHA-1)"
+description: "HMAC-MD5 and HMAC-SHA-1 are vulnerable to practical collision forgery attacks and are disallowed under NIST SP 800-77 Rev. 1 and NIST SP 800-131A Rev. 2."
+category: "AUTHENTICATION_INTEGRITY"
+profile: "profile_nist_sp800_77"
+authority_tier: "NATIONAL_STANDARD"
+authoritative_reference:
+  source: "NIST SP 800-77 Rev. 1"
+  section: "Section 5.1.1"
+  url: "https://csrc.nist.gov/publications/detail/sp/800-77/rev-1/final"
+  normative_requirement: "HMAC-MD5 and HMAC-SHA-1 SHALL NOT be used for IPsec integrity."
+  verification_date: "2026-09-24T00:00:00Z"
+  verified_by: "NIST Standards Assurance Auditor"
+evidence_requirements:
+  - "ike_sa.integrity_algorithm"
+applicability: null
+assertion:
+  target_field: "ike_sa.integrity_algorithm"
+  operator: "not_in_set"
+  expected_value:
+    - "HMAC-MD5"
+    - "MD5"
+    - "AUTH_HMAC_MD5_96"
+    - "HMAC-SHA1"
+    - "SHA1"
+    - "AUTH_HMAC_SHA1_96"
+severity: "HIGH"
+root_cause_key: "INTEGRITY_DEPRECATED_HASH"
+remediation:
+  summary: "Upgrade integrity algorithm to HMAC-SHA-256 or use authenticated encryption (AEAD)."
+  strongswan_directive: "ike = aes256-sha256-ecp256!"
+  target_config_key: "ike"
+  guidance: "Replace MD5 and SHA-1 transforms with SHA-256 or higher, or migrate to AES-GCM AEAD."
+threat_mapping_id: "THR-004"
+status: "ACTIVE"
