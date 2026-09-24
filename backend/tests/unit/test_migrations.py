@@ -20,9 +20,13 @@ def test_alembic_migration_lineage():
 
     # Invariant: exactly one head revision
     assert len(heads) == 1
-    assert heads[0] == "0007"
+    assert heads[0] == "0008"
 
-    # Invariant: verify chain 0007 -> 0006 -> 0005 -> 0004 -> 0003 -> 0002 -> 0001 -> None
+    # Invariant: verify chain 0008 -> 0007 -> 0006 -> 0005 -> 0004 -> 0003 -> 0002 -> 0001 -> None
+    rev_0008 = script.get_revision("0008")
+    assert rev_0008 is not None
+    assert rev_0008.down_revision == "0007"
+
     rev_0007 = script.get_revision("0007")
     assert rev_0007 is not None
     assert rev_0007.down_revision == "0006"

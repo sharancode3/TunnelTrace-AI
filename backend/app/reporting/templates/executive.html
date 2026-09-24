@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Executive Security Assessment Report — TunnelTrace AI</title>
+    <style>
+        {{ css_content | safe }}
+    </style>
+</head>
+<body>
+
+    <!-- Header / Identification -->
+    <header class="report-header">
+        <div class="report-title-block">
+            <h1>Executive Security Assessment</h1>
+            <div class="subtitle">IPsec Protocol Audit & Defensive Security Intelligence</div>
+        </div>
+        <div class="report-meta-block">
+            <div>Target: <span>{{ snapshot.capture.filename }}</span></div>
+            <div>Generated: <span>{{ snapshot.generated_at }}</span></div>
+            <div>Classification: <span>RESTRICTED / DEFENSIVE USE</span></div>
+        </div>
+    </header>
+
+    <!-- Executive Posture KPI Grid -->
+    <div class="grid-4">
+        <div class="metric-card">
+            <div class="metric-label">Observed Security Posture</div>
+            <div class="metric-value score">{{ snapshot.score.score | round(1) }}<span style="font-size: 10pt; color: #777;"> / 100</span></div>
+            <div class="metric-sub">Methodology v{{ snapshot.score.methodology_version }}</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Evidence Coverage</div>
+            <div class="metric-value">{{ (snapshot.score.evidence_coverage * 100) | round(1) }}%</div>
+            <div class="metric-sub">Observed vs Required Facts</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Aggregate Risk Tier</div>
+            <div class="metric-value">
+                {% if snapshot.risk.aggregate_risk_tier == 'CRITICAL' %}
+                    <span style="color: #DE350B;">CRITICAL</span>
+                {% elif snapshot.risk.aggregate_risk_tier == 'HIGH' %}
+                    <span style="color: #FF5630;">HIGH</span>
+                {% elif snapshot.risk.aggregate_risk_tier == 'MEDIUM' %}
+                    <span style="color: #FF8B00;">MEDIUM</span>
+                {% else %}
+                    <span style="color: #00875A;">LOW</span>
+                {% endif %}
+            </div>
+            <div class="metric-sub">Deterministic Threat Impact</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Identified Vulnerabilities</div>
+            <div class="metric-value">{{ snapshot.findings.total_findings }}</div>
+            <div class="metric-sub">{{ snapshot.findings.critical_count }} Crit, {{ snapshot.findings.high_count }} High, {{ snapshot.findings.medium_count }} Med</div>
+        </div>
+    </div>
+
+    <!-- Section 1: Executive Summary & Context -->
+    <section class="section">
+        <div class="section-title">1. Executive Overview</div>
+        <p style="margin-bottom: 8px;">
+            This executive assessment summarizes the cryptographic compliance, forensic protocol state, and encrypted traffic profile for IPsec capture <strong class="mono">{{ snapshot.capture.filename }}</strong> (SHA-256: <span class="mono">{{ snapshot.capture.sha256[:16] }}...</span>). Protocol forensics and declarative policy evaluation identified <strong>{{ snapshot.findings.total_findings }} security finding(s)</strong> across NIST SP 800-77 Rev. 1 and relevant RFC standards.
+        </p>
+        <div class="disclaimer-box">
+            <strong>Methodology Notice:</strong> The TunnelTrace Internal Security Posture Score evaluates observable cryptographic transforms, Key Exchange (KE/DH) groups, Perfect Forward Secrecy (PFS), replay protection, and protocol lifecycle states against standards-based baselines. It is an automated defensive security audit, not a formal cryptographic certification.
+        </div>
+    </section>
+
+    <!-- Section 2: Material Security Findings -->
+    <section class="section">
+        <div class="section-title">2. Material Security Findings</div>
+        {% if snapshot.findings.findings %}
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">Severity</th>
+                    <th style="width: 25%;">Finding Title</th>
+                    <th style="width: 15%;">Rule ID</th>
+                    <th style="width: 18%;">Affected Entity</th>
+                    <th style="width: 10%;">Penalty</th>
+                    <th style="width: 20%;">Remediation Guidance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in snapshot.findings.findings if f.severity in ['CRITICAL', 'HIGH', 'MEDIUM'] %}
+                <tr>
+                    <td>
+                        {% if f.severity == 'CRITICAL' %}
+                            <span class="badge badge-critical">CRITICAL</span>
+                        {% elif f.severity == 'HIGH' %}
+                            <span class="badge badge-high">HIGH</span>
+                        {% elif f.severity == 'MEDIUM' %}
+                            <span class="badge badge-warning">MEDIUM</span>
+                        {% else %}
+                            <span class="badge badge-low">LOW</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ f.title }}</strong></td>
+                    <td class="mono">{{ f.rule_id }}</td>
+                    <td class="mono">{{ f.affected_entity }}</td>
+                    <td style="color: #DE350B; font-weight: 700;">-{{ f.score_deduction | round(1) }}</td>
+                    <td>{{ f.remediation_guidance }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #00875A; font-weight: 600; padding: 10px; border: 1px solid #D1D1CB; background: #F8FFF8;">
+            No material security vulnerabilities detected. All observed parameters conform to baseline cryptographic policy profiles.
+        </p>
+        {% endif %}
+    </section>
+
+    <!-- Section 3: Standards Compliance & Threat Posture -->
+    <section class="section">
+        <div class="section-title">3. Compliance & Threat Landscape</div>
+        <div class="grid-2">
+            <div>
+                <table class="dense-table">
+                    <thead>
+                        <tr>
+                            <th colspan="2">Compliance Breakdown (NIST / RFC)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Passed Rules</td>
+                            <td><span class="badge badge-pass">{{ snapshot.compliance.pass_count }} PASS</span></td>
+                        </tr>
+                        <tr>
+                            <td>Failed Rules</td>
+                            <td><span class="badge badge-fail">{{ snapshot.compliance.fail_count }} FAIL</span></td>
+                        </tr>
+                        <tr>
+                            <td>Incomplete Observations (Evidence Gaps)</td>
+                            <td><span class="badge badge-unknown">{{ snapshot.compliance.unknown_count }} UNKNOWN</span></td>
+                        </tr>
+                        <tr>
+                            <td>Non-Applicable Rules</td>
+                            <td><span class="badge badge-na">{{ snapshot.compliance.not_applicable_count }} N/A</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div>
+                <table class="dense-table">
+                    <thead>
+                        <tr>
+                            <th>Threat Code</th>
+                            <th>Threat Vector</th>
+                            <th>Risk Tier</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if snapshot.threats %}
+                            {% for t in snapshot.threats %}
+                            <tr>
+                                <td class="mono">{{ t.threat_id }}</td>
+                                <td>{{ t.title }}</td>
+                                <td>
+                                    {% if t.risk_tier == 'CRITICAL' %}
+                                        <span class="badge badge-critical">CRITICAL</span>
+                                    {% elif t.risk_tier == 'HIGH' %}
+                                        <span class="badge badge-high">HIGH</span>
+                                    {% elif t.risk_tier == 'MEDIUM' %}
+                                        <span class="badge badge-warning">MEDIUM</span>
+                                    {% else %}
+                                        <span class="badge badge-low">LOW</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3" style="text-align: center; color: #777;">No active threats mapped to observed findings.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Encrypted Traffic & Side-Channel Distinguishability -->
+    <section class="section">
+        <div class="section-title">4. Encrypted Traffic & Metadata Fingerprintability</div>
+        <div class="grid-2">
+            <div class="metric-card">
+                <div class="metric-label">Metadata Fingerprintability Index (MFI)</div>
+                <div class="metric-value">{{ snapshot.metadata_fingerprintability.overall_index | round(3) }}<span style="font-size: 10pt; color: #777;"> / 1.0</span></div>
+                <div class="metric-sub">
+                    {% if snapshot.metadata_fingerprintability.is_experimental %}
+                        [EXPERIMENTAL METHODOLOGY]
+                    {% else %}
+                        [VALIDATED INDEX]
+                    {% endif %}
+                </div>
+                <div style="font-size: 7.5pt; color: #555; margin-top: 6px;">
+                    {{ snapshot.metadata_fingerprintability.disclaimer }}
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Encrypted Traffic Inference Summary</div>
+                <div style="font-size: 9pt; margin-top: 4px;">
+                    <div>Classified ESP Flows: <strong>{{ snapshot.traffic.classified_flows }}</strong></div>
+                    <div>Application Classes Detected: <strong>{{ snapshot.traffic.classes_detected | join(', ') if snapshot.traffic.classes_detected else 'None' }}</strong></div>
+                    <div>Statistical Behavioral Anomalies: <strong>{{ snapshot.traffic.anomaly_count }}</strong></div>
+                </div>
+                <div style="font-size: 7.5pt; color: #555; margin-top: 6px;">
+                    Application class inferred from packet timing, packet length and flow directionality metadata. Payload is not decrypted.
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 5: Strategic Remediation Directives -->
+    <section class="section">
+        <div class="section-title">5. Strategic Defensive Recommendations</div>
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Priority</th>
+                    <th style="width: 25%;">Target Finding</th>
+                    <th style="width: 60%;">Recommended Architecture Update</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if snapshot.findings.findings %}
+                    {% for f in snapshot.findings.findings if f.severity in ['CRITICAL', 'HIGH'] %}
+                    <tr>
+                        <td><span class="badge badge-critical">IMMEDIATE</span></td>
+                        <td>{{ f.title }} (<span class="mono">{{ f.rule_id }}</span>)</td>
+                        <td>{{ f.remediation_guidance }}</td>
+                    </tr>
+                    {% endfor %}
+                    {% for f in snapshot.findings.findings if f.severity == 'MEDIUM' %}
+                    <tr>
+                        <td><span class="badge badge-warning">SCHEDULED</span></td>
+                        <td>{{ f.title }} (<span class="mono">{{ f.rule_id }}</span>)</td>
+                        <td>{{ f.remediation_guidance }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="3" style="text-align: center; color: #00875A;">No remediation actions required. Current tunnel configuration adheres to target security baseline.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Provenance & Integrity Block -->
+    <footer class="provenance-card">
+        <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 6px; color: #111;">Forensic Report Provenance & Artifact Attestation</div>
+        <div class="provenance-grid">
+            <div class="provenance-row">
+                <span class="provenance-label">Analysis Run ID:</span>
+                <span class="mono">{{ snapshot.analysis_id }}</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Capture SHA-256:</span>
+                <span class="mono">{{ snapshot.capture.sha256 }}</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Snapshot Manifest SHA-256:</span>
+                <span class="mono">{{ snapshot.snapshot_sha256 }}</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Parser Engine:</span>
+                <span class="mono">{{ snapshot.analysis.parser_engine }} (v{{ snapshot.analysis.parser_version }})</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Policy Bundle / Scoring:</span>
+                <span class="mono">{{ snapshot.score.score_policy_hash[:16] }} (v{{ snapshot.score.methodology_version }})</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Generated Timestamp:</span>
+                <span class="mono">{{ snapshot.generated_at }}</span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

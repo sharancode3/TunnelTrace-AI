@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+:root {
+  --surface: #F7F7F4;
+  --panel: #FFFFFF;
+  --panel-hover: #FAFAF8;
+  --border: #D1D1CB;
+  --border-subtle: #E5E5E0;
+  --text-primary: #111111;
+  --text-secondary: #666660;
+  --text-muted: #888884;
+  --accent: #FF3D00;
+  --accent-hover: #E63700;
+  
+  --status-pass-bg: #E3FCEF;
+  --status-pass-text: #006644;
+  --status-pass-border: #57D9A3;
+
+  --status-fail-bg: #FFEBE6;
+  --status-fail-text: #BF2600;
+  --status-fail-border: #FF8F73;
+
+  --status-high-bg: #FFECEB;
+  --status-high-text: #DE350B;
+  --status-high-border: #FFAB9A;
+
+  --status-warning-bg: #FFF0B3;
+  --status-warning-text: #974F0C;
+  --status-warning-border: #FFE380;
+
+  --status-neutral-bg: #F4F5F7;
+  --status-neutral-text: #505F79;
+  --status-neutral-border: #C1C7D0;
+}
+
+.dark {
+  --surface: #0E0E10;
+  --panel: #17171A;
+  --panel-hover: #1E1E23;
+  --border: #28282D;
+  --border-subtle: #202024;
+  --text-primary: #F0F0EE;
+  --text-secondary: #9A9A9E;
+  --text-muted: #6E6E72;
+  --accent: #FF3D00;
+  --accent-hover: #FF5722;
+
+  --status-pass-bg: #0E2E1D;
+  --status-pass-text: #57D9A3;
+  --status-pass-border: #1B5E20;
+
+  --status-fail-bg: #38120C;
+  --status-fail-text: #FF8F73;
+  --status-fail-border: #B71C1C;
+
+  --status-high-bg: #381512;
+  --status-high-text: #FFAB9A;
+  --status-high-border: #D32F2F;
+
+  --status-warning-bg: #332608;
+  --status-warning-text: #FFE380;
+  --status-warning-border: #F57F17;
+
+  --status-neutral-bg: #1F2228;
+  --status-neutral-text: #B3BAC5;
+  --status-neutral-border: #3E4452;
+}
+
+/* Sharp brutalist geometry reset: 0px border radius across all controls */
+*, *::before, *::after {
+  border-radius: 0px !important;
+}
+
+body {
+  background-color: var(--surface);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  line-height: 1.45;
+  overflow-x: hidden;
+}
+
+.font-mono {
+  font-family: "JetBrains Mono", "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}

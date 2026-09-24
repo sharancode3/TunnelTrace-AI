@@ -24,6 +24,7 @@ from app.db.models.reconstruction import (
     IKESession,
     TrafficSelector,
 )
+from app.db.models.report import ReportModel
 from app.db.models.security import (
     ComplianceEvaluationModel,
     EvidenceGraphModel,
@@ -60,4 +61,5 @@ __all__ = [
     "ThreatInstanceModel",
     "FingerprintabilityAssessmentModel",
     "EvidenceGraphModel",
+    "ReportModel",
 ]

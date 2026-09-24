@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Technical Forensics & Security Audit Report — TunnelTrace AI</title>
+    <style>
+        {{ css_content | safe }}
+    </style>
+</head>
+<body>
+
+    <!-- Header / Forensic Identification -->
+    <header class="report-header">
+        <div class="report-title-block">
+            <h1>Technical Forensics & Security Audit</h1>
+            <div class="subtitle">Deterministic Protocol Dissection, Cryptographic Assessment & Evidence Lineage</div>
+        </div>
+        <div class="report-meta-block">
+            <div>Capture: <span>{{ snapshot.capture.filename }}</span></div>
+            <div>File Size: <span>{{ snapshot.capture.file_size_bytes }} bytes ({{ snapshot.capture.packet_count }} packets)</span></div>
+            <div>Capture SHA-256: <span class="mono">{{ snapshot.capture.sha256[:16] }}...</span></div>
+            <div>Analysis Run ID: <span class="mono">{{ snapshot.analysis_id }}</span></div>
+        </div>
+    </header>
+
+    <!-- Top KPI Dashboard -->
+    <div class="grid-4">
+        <div class="metric-card">
+            <div class="metric-label">Security Posture Score</div>
+            <div class="metric-value score">{{ snapshot.score.score | round(1) }}<span style="font-size: 10pt; color: #777;"> / 100</span></div>
+            <div class="metric-sub">Methodology v{{ snapshot.score.methodology_version }}</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Evidence Coverage</div>
+            <div class="metric-value">{{ (snapshot.score.evidence_coverage * 100) | round(1) }}%</div>
+            <div class="metric-sub">Observed vs Expected Facts</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Reconstructed SAs</div>
+            <div class="metric-value">{{ snapshot.security_associations.child_sa_count }}</div>
+            <div class="metric-sub">{{ snapshot.security_associations.ike_session_count }} IKE Session(s)</div>
+        </div>
+        <div class="metric-card">
+            <div class="metric-label">Active Findings</div>
+            <div class="metric-value">{{ snapshot.findings.total_findings }}</div>
+            <div class="metric-sub">{{ snapshot.compliance.fail_count }} Failed Rules</div>
+        </div>
+    </div>
+
+    <!-- Section 1: Protocol Forensics Discovery -->
+    <section class="section">
+        <div class="section-title">1. Protocol Forensics & Observable Transforms</div>
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th style="width: 25%;">Forensic Property</th>
+                    <th style="width: 50%;">Observed Value(s)</th>
+                    <th style="width: 25%;">Evidence State</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>IKE Version(s)</strong></td>
+                    <td class="mono">{{ snapshot.protocol.ike_versions | join(', ') if snapshot.protocol.ike_versions else 'UNKNOWN' }}</td>
+                    <td><span class="badge badge-verified">VERIFIED</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Protocols Dissected</strong></td>
+                    <td class="mono">{{ snapshot.protocol.protocols_detected | join(', ') if snapshot.protocol.protocols_detected else 'UNKNOWN' }}</td>
+                    <td><span class="badge badge-verified">VERIFIED</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Observed Cipher Suites</strong></td>
+                    <td class="mono">{{ snapshot.protocol.transforms_observed | join(', ') if snapshot.protocol.transforms_observed else 'UNKNOWN' }}</td>
+                    <td><span class="badge badge-verified">VERIFIED</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Diffie-Hellman / Key Exchange Groups</strong></td>
+                    <td class="mono">{{ snapshot.protocol.dh_groups | join(', ') if snapshot.protocol.dh_groups else 'UNKNOWN' }}</td>
+                    <td><span class="badge badge-verified">VERIFIED</span></td>
+                </tr>
+                <tr>
+                    <td><strong>NAT-Traversal (UDP 4500)</strong></td>
+                    <td>{{ 'DETECTED' if snapshot.protocol.nat_detected else 'NOT_OBSERVED' }}</td>
+                    <td><span class="badge badge-verified">VERIFIED</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Total Protocol Observations</strong></td>
+                    <td>{{ snapshot.protocol.total_observations }} dissected frame records</td>
+                    <td><span class="badge badge-verified">VERIFIED</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Section 2: Security Associations & Traffic Flows -->
+    <section class="section">
+        <div class="section-title">2. Reconstructed Security Associations (Child SAs)</div>
+        {% if snapshot.security_associations.child_sas %}
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th style="width: 15%;">Inbound SPI</th>
+                    <th style="width: 15%;">Outbound SPI</th>
+                    <th style="width: 10%;">Protocol</th>
+                    <th style="width: 10%;">Mode</th>
+                    <th style="width: 10%;">PFS</th>
+                    <th style="width: 20%;">Cipher / Integrity</th>
+                    <th style="width: 10%;">Lifecycle</th>
+                    <th style="width: 10%;">Evidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sa in snapshot.security_associations.child_sas %}
+                <tr>
+                    <td class="mono">{{ sa.inbound_spi }}</td>
+                    <td class="mono">{{ sa.outbound_spi }}</td>
+                    <td>{{ sa.protocol }}</td>
+                    <td><span class="badge badge-unknown">{{ sa.mode }}</span></td>
+                    <td><span class="badge {% if sa.pfs_status == 'ENABLED' %}badge-pass{% elif sa.pfs_status == 'DISABLED' %}badge-fail{% else %}badge-unknown{% endif %}">{{ sa.pfs_status }}</span></td>
+                    <td class="mono">{{ sa.encryption_algorithm }} / {{ sa.integrity_algorithm }}</td>
+                    <td>{{ sa.lifecycle_state }}</td>
+                    <td><span class="badge badge-verified">{{ sa.evidence_state }}</span></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #666; padding: 8px; border: 1px solid #D1D1CB;">No Child Security Associations reconstructed in this analysis run.</p>
+        {% endif %}
+        <div style="font-size: 8pt; color: #555; margin-top: 4px;">
+            Total Encrypted ESP Flows: <strong>{{ snapshot.security_associations.flow_count }}</strong> | 
+            Total Volume: <strong>{{ snapshot.security_associations.total_bytes }} bytes</strong> ({{ snapshot.security_associations.total_packets }} packets).
+        </div>
+    </section>
+
+    <!-- Section 3: Encrypted Traffic Classification & ML Attribution -->
+    <section class="section">
+        <div class="section-title">3. Encrypted Traffic Intelligence & Model Transparency</div>
+        <div class="disclaimer-box">
+            <strong>Analytical Disclaimer:</strong> Inner application classes are inferred exclusively from outer encrypted packet metadata (packet length distributions, inter-arrival times, burst directions). ESP payloads are never decrypted. Statistical anomalies represent distribution outliers, not confirmed cyber intrusions.
+        </div>
+        <div class="grid-3">
+            <div class="metric-card">
+                <div class="metric-label">Inferred Classes</div>
+                <div style="font-size: 11pt; font-weight: 700; margin-top: 4px;">
+                    {{ snapshot.traffic.classes_detected | join(', ') if snapshot.traffic.classes_detected else 'None' }}
+                </div>
+                <div class="metric-sub">{{ snapshot.traffic.classified_flows }} flow(s) evaluated</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Mean Calibrated Confidence</div>
+                <div class="metric-value">
+                    {% if snapshot.traffic.avg_calibrated_confidence is not none %}
+                        {{ (snapshot.traffic.avg_calibrated_confidence * 100) | round(1) }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+                <div class="metric-sub">Temperature-Scaled Probability</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Out-of-Distribution (OOD) / Anomalies</div>
+                <div class="metric-value">{{ snapshot.traffic.ood_count }} <span style="font-size: 10pt; font-weight: normal; color: #555;">OOD</span> / {{ snapshot.traffic.anomaly_count }} <span style="font-size: 10pt; font-weight: normal; color: #555;">Anom</span></div>
+                <div class="metric-sub">Isolation Forest & Entropy Gating</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 4: Detailed Compliance Evaluation Audit -->
+    <section class="section">
+        <div class="section-title">4. Standards Compliance Evaluation Audit</div>
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th style="width: 14%;">Rule ID</th>
+                    <th style="width: 22%;">Rule Title</th>
+                    <th style="width: 12%;">Standard</th>
+                    <th style="width: 10%;">State</th>
+                    <th style="width: 18%;">Observed vs Expected</th>
+                    <th style="width: 24%;">Evaluation Rationale</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in snapshot.compliance.evaluations %}
+                <tr>
+                    <td class="mono">{{ ev.rule_id }}</td>
+                    <td><strong>{{ ev.rule_title }}</strong></td>
+                    <td class="mono" style="font-size: 7.5pt;">{{ ev.standard }}</td>
+                    <td>
+                        {% if ev.compliance_state == 'PASS' %}
+                            <span class="badge badge-pass">PASS</span>
+                        {% elif ev.compliance_state == 'FAIL' %}
+                            <span class="badge badge-fail">FAIL</span>
+                        {% elif ev.compliance_state == 'UNKNOWN' %}
+                            <span class="badge badge-unknown">UNKNOWN</span>
+                        {% else %}
+                            <span class="badge badge-na">N/A</span>
+                        {% endif %}
+                    </td>
+                    <td class="mono" style="font-size: 7.5pt;">
+                        Obs: {{ ev.observed_value or 'N/A' }}<br>
+                        Exp: {{ ev.expected_value or 'N/A' }}
+                    </td>
+                    <td style="font-size: 8pt;">{{ ev.rationale }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Section 5: Itemized Security Findings & Deductions -->
+    <section class="section">
+        <div class="section-title">5. Itemized Security Findings & Deductions</div>
+        {% if snapshot.findings.findings %}
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th style="width: 10%;">Severity</th>
+                    <th style="width: 20%;">Finding</th>
+                    <th style="width: 14%;">Affected Entity</th>
+                    <th style="width: 8%;">Deduction</th>
+                    <th style="width: 24%;">Technical Description</th>
+                    <th style="width: 24%;">Remediation Guidance</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in snapshot.findings.findings %}
+                <tr>
+                    <td>
+                        {% if f.severity == 'CRITICAL' %}
+                            <span class="badge badge-critical">CRITICAL</span>
+                        {% elif f.severity == 'HIGH' %}
+                            <span class="badge badge-high">HIGH</span>
+                        {% elif f.severity == 'MEDIUM' %}
+                            <span class="badge badge-warning">MEDIUM</span>
+                        {% else %}
+                            <span class="badge badge-low">LOW</span>
+                        {% endif %}
+                    </td>
+                    <td><strong>{{ f.title }}</strong><br><span class="mono" style="font-size: 7.5pt;">{{ f.rule_id }}</span><br><span class="mono" style="font-size: 7pt; color: #777;">Key: {{ f.root_cause_key }}</span></td>
+                    <td class="mono">{{ f.affected_entity }}</td>
+                    <td style="color: #DE350B; font-weight: 700;">-{{ f.score_deduction | round(1) }}</td>
+                    <td style="font-size: 8pt;">{{ f.technical_description }}</td>
+                    <td style="font-size: 8pt;">{{ f.remediation_guidance }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #00875A; padding: 8px; border: 1px solid #D1D1CB;">No security findings generated.</p>
+        {% endif %}
+    </section>
+
+    <!-- Section 6: Threat Matrix -->
+    <section class="section">
+        <div class="section-title">6. Mapped Threat Catalog Matrix</div>
+        <table class="dense-table">
+            <thead>
+                <tr>
+                    <th style="width: 12%;">Threat Code</th>
+                    <th style="width: 25%;">Threat Title</th>
+                    <th style="width: 12%;">Risk Tier</th>
+                    <th style="width: 15%;">MITRE ATT&CK</th>
+                    <th style="width: 18%;">NIST SP 800-53 Control</th>
+                    <th style="width: 18%;">Likelihood / Impact</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if snapshot.threats %}
+                    {% for t in snapshot.threats %}
+                    <tr>
+                        <td class="mono">{{ t.threat_id }}</td>
+                        <td><strong>{{ t.title }}</strong></td>
+                        <td>
+                            {% if t.risk_tier == 'CRITICAL' %}
+                                <span class="badge badge-critical">CRITICAL</span>
+                            {% elif t.risk_tier == 'HIGH' %}
+                                <span class="badge badge-high">HIGH</span>
+                            {% elif t.risk_tier == 'MEDIUM' %}
+                                <span class="badge badge-warning">MEDIUM</span>
+                            {% else %}
+                                <span class="badge badge-low">LOW</span>
+                            {% endif %}
+                        </td>
+                        <td class="mono">{{ t.mitre_technique_id }}</td>
+                        <td class="mono">{{ t.nist_control }}</td>
+                        <td>{{ t.likelihood }} / {{ t.impact }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #777;">No active threats cataloged for current findings.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- Section 7: Metadata Fingerprintability Details -->
+    <section class="section">
+        <div class="section-title">7. Metadata Fingerprintability Component Breakdown</div>
+        <p style="margin-bottom: 8px; font-size: 8pt; color: #444;">
+            The Metadata Fingerprintability Index assesses side-channel leakage across 6 orthogonal observable features of the encrypted tunnel stream:
+        </p>
+        <div class="grid-3">
+            {% for name, val in snapshot.metadata_fingerprintability.component_metrics.items() %}
+            <div class="metric-card">
+                <div class="metric-label">{{ name | replace('_', ' ') }}</div>
+                <div class="metric-value" style="font-size: 13pt;">{{ val | round(3) }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- Provenance & Sealing Section -->
+    <footer class="provenance-card">
+        <div style="font-weight: 800; text-transform: uppercase; margin-bottom: 6px; color: #111;">Forensic Lineage & Tamper-Evident Attestation</div>
+        <div class="provenance-grid">
+            <div class="provenance-row">
+                <span class="provenance-label">Analysis Run ID:</span>
+                <span class="mono">{{ snapshot.analysis_id }}</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Capture SHA-256:</span>
+                <span class="mono">{{ snapshot.capture.sha256 }}</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Snapshot Manifest SHA-256:</span>
+                <span class="mono">{{ snapshot.snapshot_sha256 }}</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Parser & Forensics Engine:</span>
+                <span class="mono">{{ snapshot.analysis.parser_engine }} (v{{ snapshot.analysis.parser_version }})</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Policy Bundle Digest:</span>
+                <span class="mono">{{ snapshot.score.score_policy_hash }}</span>
+            </div>
+            <div class="provenance-row">
+                <span class="provenance-label">Sealed Timestamp:</span>
+                <span class="mono">{{ snapshot.generated_at }}</span>
+            </div>
+        </div>
+    </footer>
+
+</body>
+</html>

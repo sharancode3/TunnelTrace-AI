@@ -1,0 +1,132 @@
+"""Reporting orchestration service managing report lifecycle, storage, and persistence."""
+
+from __future__ import annotations
+
+import logging
+import uuid
+from datetime import datetime, timezone
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.db.models.capture import AnalysisRun
+from app.db.models.report import ReportModel
+from app.reporting.engine import ReportGeneratorEngine
+from app.reporting.snapshot import AnalysisSnapshotBuilder
+from app.services.storage import get_storage_provider
+from app.services.storage.base import StorageProvider
+
+logger = logging.getLogger(__name__)
+
+
+class ReportingService:
+    """Orchestrates report generation, database records, and artifact streaming."""
+
+    def __init__(
+        self,
+        db: AsyncSession,
+        storage: StorageProvider | None = None,
+        engine: ReportGeneratorEngine | None = None,
+    ) -> None:
+        self.db = db
+        self.storage = storage or get_storage_provider()
+        self.engine = engine or ReportGeneratorEngine()
+        self.snapshot_builder = AnalysisSnapshotBuilder(db)
+
+    async def create_report(
+        self, analysis_id: uuid.UUID, report_type: str = "EXECUTIVE"
+    ) -> ReportModel:
+        """Build snapshot, render artifacts, persist record, and return populated ReportModel."""
+        # 1. Verify AnalysisRun existence
+        stmt_run = select(AnalysisRun).where(AnalysisRun.id == analysis_id)
+        res_run = await self.db.execute(stmt_run)
+        run = res_run.scalar_one_or_none()
+        if not run:
+            raise ValueError(f"Analysis '{analysis_id}' not found")
+
+        # 2. Build immutable snapshot
+        snapshot = await self.snapshot_builder.build_snapshot(analysis_id)
+
+        # 3. Generate artifacts
+        res = self.engine.generate_report_artifacts(
+            analysis_id=analysis_id,
+            report_type=report_type,
+            snapshot=snapshot,
+            storage=self.storage,
+        )
+
+        # 4. Persist in database
+        report = ReportModel(
+            id=res["report_id"],
+            analysis_id=analysis_id,
+            report_type=res["report_type"],
+            status=res["status"],
+            format=res["format"],
+            template_version=res["template_version"],
+            engine_version=res["engine_version"],
+            html_artifact_path=res["html_artifact_path"],
+            html_sha256=res["html_sha256"],
+            pdf_artifact_path=res["pdf_artifact_path"],
+            pdf_sha256=res["pdf_sha256"],
+            snapshot_manifest_sha256=res["snapshot_manifest_sha256"],
+            error_message=res["error_message"],
+            generation_duration_ms=res["generation_duration_ms"],
+            metadata_json={"capture_sha256": snapshot["capture"]["sha256"]},
+            created_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
+        )
+        self.db.add(report)
+        await self.db.commit()
+        await self.db.refresh(report)
+
+        logger.info(
+            f"Successfully generated {report.report_type} report '{report.id}' for analysis '{analysis_id}' in {report.generation_duration_ms}ms"
+        )
+        return report
+
+    async def get_report(self, report_id: uuid.UUID) -> ReportModel | None:
+        """Fetch report record by ID."""
+        stmt = select(ReportModel).where(ReportModel.id == report_id)
+        res = await self.db.execute(stmt)
+        return res.scalar_one_or_none()
+
+    async def list_reports(self, analysis_id: uuid.UUID) -> list[ReportModel]:
+        """List all generated reports for an analysis run, ordered newest first."""
+        stmt = (
+            select(ReportModel)
+            .where(ReportModel.analysis_id == analysis_id)
+            .order_by(ReportModel.created_at.desc())
+        )
+        res = await self.db.execute(stmt)
+        return list(res.scalars().all())
+
+    async def get_report_html(self, report_id: uuid.UUID) -> str:
+        """Retrieve the raw HTML string of a generated report artifact."""
+        report = await self.get_report(report_id)
+        if not report or not report.html_artifact_path:
+            raise ValueError(f"Report '{report_id}' HTML artifact not found")
+
+        raw_bytes = self.storage.read_file(report.html_artifact_path)
+        return raw_bytes.decode("utf-8")
+
+    async def get_report_bytes(
+        self, report_id: uuid.UUID, requested_format: str = "pdf"
+    ) -> tuple[bytes, str, str]:
+        """Retrieve binary bytes, media type, and suggested filename for download."""
+        report = await self.get_report(report_id)
+        if not report:
+            raise ValueError(f"Report '{report_id}' not found")
+
+        clean_format = requested_format.lower()
+        if clean_format == "pdf" and report.pdf_artifact_path and self.storage.exists(report.pdf_artifact_path):
+            data = self.storage.read_file(report.pdf_artifact_path)
+            media_type = "application/pdf"
+            filename = f"TunnelTrace_Report_{report.report_type.lower()}_{str(report.id)[:8]}.pdf"
+            return data, media_type, filename
+        elif report.html_artifact_path and self.storage.exists(report.html_artifact_path):
+            data = self.storage.read_file(report.html_artifact_path)
+            media_type = "text/html; charset=utf-8"
+            filename = f"TunnelTrace_Report_{report.report_type.lower()}_{str(report.id)[:8]}.html"
+            return data, media_type, filename
+        else:
+            raise FileNotFoundError(f"Requested artifact format '{requested_format}' unavailable for report '{report_id}'")

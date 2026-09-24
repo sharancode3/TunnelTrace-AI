@@ -93,3 +93,67 @@ class StopLiveCaptureResponseDTO(BaseModel):
     file_size_bytes: int
     packet_count: int
     sha256: str
+
+
+class AnalysisListItemDTO(BaseModel):
+    """Concise item for historical and active analysis triage lists."""
+
+    analysis_id: uuid.UUID
+    capture_id: uuid.UUID
+    capture_filename: str
+    capture_sha256: str
+    status: str
+    current_stage: str
+    created_at: datetime
+    completed_at: datetime | None = None
+    security_score: float | None = None
+    critical_findings: int = 0
+    high_findings: int = 0
+
+
+class TrafficFlowItemDTO(BaseModel):
+    """Encrypted ESP flow annotated with Stage 7 ML inferences and explainability."""
+
+    flow_id: uuid.UUID
+    spi: str
+    reverse_spi: str | None = None
+    src_ip: str
+    dst_ip: str
+    duration_seconds: float
+    packet_count: int
+    byte_count: int
+    association_state: str
+    known_class: str | None = None
+    final_class: str | None = None
+    calibrated_confidence: float | None = None
+    normalized_entropy: float | None = None
+    ood_status: str | None = None
+    behavioral_anomaly_status: str | None = None
+    top_shap_features: list[dict] | None = None
+
+
+class TrafficSummaryResponseDTO(BaseModel):
+    """Response payload for Traffic Intelligence view."""
+
+    analysis_id: uuid.UUID
+    total_flows: int
+    classified_flows: int
+    classes_detected: list[str]
+    ood_count: int
+    anomaly_count: int
+    flows: list[TrafficFlowItemDTO]
+
+
+class AnalysisOverviewDTO(BaseModel):
+    """Consolidated summary payload for Command Center overview."""
+
+    analysis_id: uuid.UUID
+    capture: dict
+    analysis: dict
+    security_posture: dict
+    compliance_counts: dict
+    findings_summary: dict
+    traffic_summary: dict
+    fingerprintability: dict
+    protocol_summary: dict
+
