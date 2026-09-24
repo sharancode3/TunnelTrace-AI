@@ -307,7 +307,7 @@
             {% for name, val in snapshot.metadata_fingerprintability.component_metrics.items() %}
             <div class="metric-card">
                 <div class="metric-label">{{ name | replace('_', ' ') }}</div>
-                <div class="metric-value" style="font-size: 13pt;">{{ val | round(3) }}</div>
+                <div class="metric-value" style="font-size: 13pt;">{{ (val if val is number else (val.score if val is mapping and val.score is defined else 0.0)) | round(3) }}</div>
             </div>
             {% endfor %}
         </div>

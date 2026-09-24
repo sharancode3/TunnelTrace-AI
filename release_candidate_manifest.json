@@ -1,0 +1,154 @@
+{
+  "manifest_schema_version": "1.0.0",
+  "release_candidate_id": "TT-SIH2026-RC1",
+  "generated_at_utc": "2026-09-24T14:23:06.947041+00:00",
+  "product": {
+    "name": "TunnelTrace AI",
+    "full_title": "AI-Powered IPsec VPN Protocol Analyzer and Security Assessment Framework",
+    "problem_statement_id": "26160 / PS 160",
+    "sponsoring_organization": "National Technical Research Organisation (NTRO)",
+    "competition": "Smart India Hackathon 2026",
+    "product_version": "0.1.0-alpha",
+    "release_stage": "STAGE_12_FINAL_RELEASE_CANDIDATE"
+  },
+  "repository_state": {
+    "git_commit": "1e8995b245419b9d2de1599322061a4506d2bcca",
+    "working_tree_dirty": true,
+    "git_safety_guarantee": "NO_REMOTE_PUSH_PERFORMED; ALL_STAGE12_CHANGES_LOCAL",
+    "dirty_status_summary": "M PROJECT_MEMORY.md\n M backend/app/api/v1/router.py\n M backend/app/core/config.py\n M backend/app/db/models/__init__.py\n M backend/app/integrations/privileged_agent/local.py\n M backend/app/reconstruction/flow/aggregator.py\n M backend/tests/unit/test_migrations.py\n M frontend/src/app/analyses/[analysisId]/ai-analyst/page.tsx\n M frontend/src/app/analyses/[analysisId]/protocol/page.tsx\n M frontend/src/app/analyses/[analysisId]/remediation/page.tsx\n M frontend/src/lib/api/client.ts\n M frontend/src/li"
+  },
+  "runtime_environment": {
+    "os": "win32",
+    "python_version": "3.10.11",
+    "node_version": "24.11.0",
+    "nextjs_version": "16.3.6",
+    "fastapi_version": "0.115.0",
+    "alembic_head": "0010_stage11_grounded_ai_analyst",
+    "postgresql_version": "16 (Alpine)",
+    "pgvector_version": "0.5.1",
+    "redis_version": "7 (Alpine)",
+    "strongswan_version": "5.9.8",
+    "tshark_version": "4.0+"
+  },
+  "ml_bundle": {
+    "bundle_id": "tt-ml-stage7-multimodal-v1",
+    "bundle_version": "1.0.0-ensemble",
+    "feature_schema_version": "1.0 (52 tabular features)",
+    "sequence_schema_version": "1.0 (N=30 packets, 3 channels: direction, length, delta_t)",
+    "xgboost_baseline": "Trained with early stopping, max_depth=6, n_estimators=200",
+    "cnn_architecture": "Lightweight 1D-CNN (3 Conv1D layers + AdaptiveAvgPool1d)",
+    "fusion_methodology": "Calibrated Logit Fusion (Softmax over weighted ensemble logits)",
+    "calibration_method": "Temperature Scaling / Platt Scaling (guaranteed monotonicity)",
+    "ood_detection": "Energy-Based OOD + Mahalanobis Distance (canonical UNKNOWN label, not attack)",
+    "anomaly_detection": "Isolation Forest (unsupervised behavioral deviation)",
+    "explainability": "TreeSHAP (bounded strictly to XGBoost tabular branch)",
+    "cpu_inference_latency_ms": "< 15ms per flow on CPU"
+  },
+  "security_policy_bundle": {
+    "bundle_id": "pol-bundle-sih2026-v1",
+    "engine_version": "Stage8-v1.0.0",
+    "active_policy_count": 8,
+    "policy_bundle_hash": "666da4f0faf0a4169e915a80f0e69a965d27b02c09dd69d8db4b8c3227e12e80",
+    "evaluation_semantics": "Kleene 3-Valued Logic (PASS, FAIL, UNKNOWN, NOT_APPLICABLE)",
+    "zero_deduction_for_unknown": true,
+    "score_policy_version": "SCORE-V1-RFC8221",
+    "risk_matrix_methodology": "STRIDE + CVSS v3.1 deterministic mapping",
+    "threat_catalog_version": "THR-CAT-2026-01 (MITRE ATT&CK Enterprise Matrix)",
+    "fingerprintability_methodology": "METADATA-FINGERPRINT-V1 (EXPERIMENTAL behavioral distinguishability)"
+  },
+  "configuration_twin_and_remediation": {
+    "twin_states": [
+      "CURRENT_OBSERVED",
+      "PROPOSED_PROJECTED",
+      "VERIFIED_POST_REMEDIATION"
+    ],
+    "lab_agent_isolation": "Class-B Privileged Agent strictly bound to /tmp/tunneltrace-lab-tmp*",
+    "remediation_verification_rules": [
+      "Baseline FAIL -> Post UNKNOWN strictly evaluated as NOT_RESOLVED",
+      "Score improvement while target finding persists strictly evaluated as NOT_RESOLVED",
+      "New regression finding detected triggers REGRESSION_DETECTED alert",
+      "Fresh SA establishment verified via new SPI generation and fresh capture SHA-256"
+    ],
+    "rollback_support": "Atomic backup restoration on preflight failure or negotiation failure"
+  },
+  "grounded_ai_analyst": {
+    "engine_version": "Stage11-Grounded-RAG-v1.0.0",
+    "selected_model": "Qwen/Qwen2.5-Coder-7B-Instruct (GGUF / Ollama local execution)",
+    "local_embedding_model": "BAAI/bge-small-en-v1.5 (384-dimensional dense vectors)",
+    "read_only_boundary": "Enforced: Chat agent cannot mutate configuration or execute lab commands",
+    "cross_analysis_isolation": "Strict SQL analysis_id partitioning + vector metadata tenant lock",
+    "prompt_injection_guard": "Triple XML delimiter boundary isolation (<analyst_query>)",
+    "hallucination_abstention": "Grounded abstention on unverifiable claims or unsupported decryption requests",
+    "knowledge_hash": "3d22dfb5c5bb8997f4ddc3d24ac9d795aa9f303c887f88440f2af19a5c95359e"
+  },
+  "reporting_engine": {
+    "template_version": "v1.0.0",
+    "templates_hash": "8ff81bc1cdf6cb1c6b3920fe194e52bb36be6bc842d6c73d5e176edcb332ff1b",
+    "supported_types": [
+      "EXECUTIVE (C-Level / Audit)",
+      "TECHNICAL (Forensic Deep Dive)"
+    ],
+    "render_formats": [
+      "HTML5 (Zero Dependency)",
+      "PDF (WeasyPrint / Headless Chrome)"
+    ],
+    "tamper_evidence": "Embedded AssessmentManifest SHA-256 and Snapshot SHA-256"
+  },
+  "verified_fixtures": {
+    "manifest_hash": "039f2fbf296479383d63fda320316ddda236d521ee0b3f00555df439520bf439",
+    "count": 6,
+    "fixtures": [
+      {
+        "id": "FIX-STAGE2-RUN01-WAN",
+        "sha256": "0eca936dffea9c38d0cedadd51f2a36084b3f7f03aa6fff9ef1fe58a988c70a9",
+        "scenario": "scn-01-tunnel-v4-gcm-pfs"
+      },
+      {
+        "id": "FIX-STAGE2-RUN01-PLAINTEXT-NO-IPSEC",
+        "sha256": "b37aa527dd51c80a1b003cc305f56bc77f53ba44da0ec3d4144fc29efb1ad61c",
+        "scenario": "scn-01-client-plaintext-icmp"
+      },
+      {
+        "id": "FIX-STAGE2-RUN04-IPV6",
+        "sha256": "09e98faba82d2c297089276aa8ff29fb0114d82ff8f1206e575ff990ba0d8e32",
+        "scenario": "scn-04-tunnel-v6-gcm-pfs"
+      },
+      {
+        "id": "FIX-STAGE2-RUN06-NATT",
+        "sha256": "7b63a0fd455202ac286de8d5c1dd8e499fc988680b9bdcb6c8afe6567f7f21fa",
+        "scenario": "scn-06-tunnel-v4-natt"
+      },
+      {
+        "id": "FIX-PCAPNG-01",
+        "sha256": "949531329196d1fbc836ee0685efe8a204c68d6d8da5a5b75ecaa0128c59e04d",
+        "scenario": "pcapng-conversion-from-run01"
+      },
+      {
+        "id": "FIX-ESP-ONLY-01",
+        "sha256": "76b74be5fc6e60d931c1bcf959360c84b59d7f70bada30b46af8938bff339bdd",
+        "scenario": "partial-esp-only-frames-5-12"
+      }
+    ]
+  },
+  "test_evidence": {
+    "backend_test_count": 305,
+    "backend_test_status": "305 PASSED / 0 FAILED (42.41s)",
+    "stage12_dedicated_tests": "21 PASSED / 0 FAILED (0.60s)",
+    "frontend_lint_status": "0 ERRORS (114 warnings in dynamic route props)",
+    "frontend_build_status": "BUILD_ID 4mQqyaCZCH (Next.js 16.3.6 Turbopack production build exit code 0)",
+    "rtm_requirements_tracked": 104,
+    "rtm_audit_status": "PASS (87 validated, 2 planned, 15 unverified downgraded to non-false completion)"
+  },
+  "demonstration_architecture": {
+    "level_1_primary": "Live strongSwan multi-namespace testbed with fresh traffic generation and recapture",
+    "level_2_fallback": "Fresh automated pipeline analysis of validated pre-captured testbed PCAP (real_tunnel_gcm.pcapng)",
+    "level_3_emergency": "Validated cached golden forensic analysis session (tt-1790185654-25c4bc)",
+    "air_gapped_readiness": "100% self-contained; zero cloud dependencies, CDNs, or external model APIs"
+  },
+  "known_limitations_register": [
+    "Passive Wire Observability: Anti-replay window size and Child SA lifetimes cannot be verified from wire metadata without IKE negotiation traffic.",
+    "Legacy IKEv1 Support: Bounded to Main Mode / Aggressive Mode header dissection; IKEv2 is the primary cryptographic forensics focus.",
+    "Remediation Scope: Automated remediation restricted strictly to strongSwan Linux testbed namespace; no production firewall mutations.",
+    "Metadata Fingerprintability: Side-channel behavioral classification is explicitly marked EXPERIMENTAL and disclaims payload decryption."
+  ]
+}

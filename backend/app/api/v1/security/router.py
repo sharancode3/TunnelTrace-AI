@@ -8,6 +8,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.api.v1.security.schemas import (
     ComplianceEvaluationDTO,
@@ -77,10 +78,18 @@ async def _ensure_assessment_executed(
     cap_sha = capture.sha256_hash if capture else "0" * 64
 
     # Fetch reconstructed entities
-    stmt_sess = select(IKESession).where(IKESession.analysis_id == analysis_id)
+    stmt_sess = (
+        select(IKESession)
+        .options(selectinload(IKESession.ike_sas))
+        .where(IKESession.analysis_id == analysis_id)
+    )
     sessions = (await db.execute(stmt_sess)).scalars().all()
 
-    stmt_child = select(ChildSecurityAssociation).where(ChildSecurityAssociation.analysis_id == analysis_id)
+    stmt_child = (
+        select(ChildSecurityAssociation)
+        .options(selectinload(ChildSecurityAssociation.traffic_selectors))
+        .where(ChildSecurityAssociation.analysis_id == analysis_id)
+    )
     child_sas = (await db.execute(stmt_child)).scalars().all()
 
     stmt_flow = select(ESPFlow).where(ESPFlow.analysis_id == analysis_id)
@@ -104,8 +113,8 @@ async def _ensure_assessment_executed(
             bundle_id=result.manifest.policy_bundle_id,
             rule_id=ev.rule_id,
             rule_version=ev.rule_version,
-            subject_type=ev.subject_type,
-            subject_id=ev.subject_id,
+            subject_type=ev.subject_type or "IPSEC_ENTITY",
+            subject_id=ev.subject_id or "GLOBAL",
             compliance_state=ev.compliance_state.value,
             evidence_state=ev.evidence_state.value,
             rationale=ev.rationale,

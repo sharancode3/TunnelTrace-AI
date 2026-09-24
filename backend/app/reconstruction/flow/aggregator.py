@@ -183,8 +183,9 @@ class ESPFlowAggregator:
                         paired_j = j
                         matched_csa = child_sa_by_spis[(s1.spi, s2.spi)]
                         break
-                    # Or reverse endpoint correlation between same hosts
-                    if paired_j is None:
+                    # Or reverse endpoint correlation between same hosts ONLY if neither SPI has a conflicting known Child SA
+                    known_spis = {csa.inbound_spi for csa in child_sas if csa.inbound_spi} | {csa.outbound_spi for csa in child_sas if csa.outbound_spi}
+                    if paired_j is None and not (s1.spi in known_spis or s2.spi in known_spis):
                         paired_j = j
 
             if paired_j is not None:

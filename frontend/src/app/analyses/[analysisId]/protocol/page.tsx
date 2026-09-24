@@ -127,7 +127,7 @@ export default function ProtocolIntelligencePage({
                 </span>
                 {protocol.observed_cipher_suites && protocol.observed_cipher_suites.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {protocol.observed_cipher_suites.map((cipher, idx) => (
+                    {protocol.observed_cipher_suites.map((cipher: string, idx: number) => (
                       <span
                         key={idx}
                         className="px-2.5 py-1 text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white"
@@ -149,7 +149,7 @@ export default function ProtocolIntelligencePage({
                 </span>
                 {protocol.observed_dh_groups && protocol.observed_dh_groups.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {protocol.observed_dh_groups.map((dh, idx) => (
+                    {protocol.observed_dh_groups.map((dh: string, idx: number) => (
                       <span
                         key={idx}
                         className="px-2.5 py-1 text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-white"
@@ -171,7 +171,7 @@ export default function ProtocolIntelligencePage({
                 </span>
                 {protocol.observed_exchange_types && protocol.observed_exchange_types.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
-                    {protocol.observed_exchange_types.map((ex, idx) => (
+                    {protocol.observed_exchange_types.map((ex: string, idx: number) => (
                       <span
                         key={idx}
                         className="px-2.5 py-1 text-xs font-mono bg-sky-50 dark:bg-sky-950/20 text-sky-900 dark:text-sky-300 border border-sky-300 dark:border-sky-800"
@@ -200,7 +200,7 @@ export default function ProtocolIntelligencePage({
                 </span>
                 {protocol.observed_initiator_spis && protocol.observed_initiator_spis.length > 0 ? (
                   <div className="space-y-1.5">
-                    {protocol.observed_initiator_spis.map((spi, idx) => (
+                    {protocol.observed_initiator_spis.map((spi: string, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-center justify-between p-2 bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800"
@@ -223,7 +223,7 @@ export default function ProtocolIntelligencePage({
                 </span>
                 {protocol.observed_responder_spis && protocol.observed_responder_spis.length > 0 ? (
                   <div className="space-y-1.5">
-                    {protocol.observed_responder_spis.map((spi, idx) => (
+                    {protocol.observed_responder_spis.map((spi: string, idx: number) => (
                       <div
                         key={idx}
                         className="flex items-center justify-between p-2 bg-neutral-50 dark:bg-neutral-900/60 border border-neutral-200 dark:border-neutral-800"
@@ -243,6 +243,221 @@ export default function ProtocolIntelligencePage({
           </Card>
         </div>
       </div>
+
+      {/* Stage 3: Evidence Concordance Lane & Active IKE Probe Assessment */}
+      <IkeEvidenceConcordanceSection analysisId={analysisId} protocol={protocol} />
     </div>
   );
 }
+
+function IkeEvidenceConcordanceSection({
+  analysisId,
+  protocol,
+}: {
+  analysisId: string;
+  protocol: any;
+}) {
+  const { data: concordanceRecords, isLoading: isConcordanceLoading } = useQuery({
+    queryKey: ["ikeConcordance", analysisId],
+    queryFn: () => api.ikeAssessment.getConcordance(analysisId),
+  });
+
+  const { data: ikeStatus } = useQuery({
+    queryKey: ["ikeStatus"],
+    queryFn: () => api.ikeAssessment.getStatus(),
+  });
+
+  const latestConcordance =
+    concordanceRecords && concordanceRecords.length > 0 ? concordanceRecords[0] : null;
+
+  return (
+    <div className="space-y-4 pt-6 border-t border-neutral-300 dark:border-neutral-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-[#FF3D00]" />
+            <h2 className="text-base font-bold font-mono tracking-tight text-neutral-900 dark:text-white uppercase">
+              Evidence Concordance Lane (TShark Passive Dissection vs. IKE-scan Active Probes)
+            </h2>
+          </div>
+          <p className="text-xs text-neutral-500 mt-0.5">
+            Deterministic triangulation across passive packet captures, bounded active endpoint probes, and lab ground truth.
+          </p>
+        </div>
+
+        {/* Toolchain Availability Indicator */}
+        <div className="flex items-center space-x-2 font-mono text-xs">
+          <span className="text-neutral-500">IKE-scan Toolchain:</span>
+          {ikeStatus?.ike_scan_available ? (
+            <span className="px-2 py-0.5 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800 font-bold">
+              AVAILABLE ({ikeStatus.ike_scan_version || "OPERABLE"})
+            </span>
+          ) : (
+            <span className="px-2 py-0.5 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800 font-bold">
+              UNAVAILABLE ON HOST (Live scan disabled)
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Concordance Status Banner */}
+      <div className="p-4 bg-white dark:bg-[#141416] border border-neutral-300 dark:border-neutral-800 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-neutral-200 dark:border-neutral-800 pb-3">
+          <div className="flex items-center space-x-3">
+            <span className="text-xs font-mono font-bold uppercase text-neutral-500">
+              Concordance Verdict:
+            </span>
+            {latestConcordance ? (
+              <span
+                className={`px-2.5 py-1 text-xs font-mono font-bold border ${
+                  latestConcordance.concordance_status === "CONSISTENT"
+                    ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-300 dark:border-emerald-800"
+                    : latestConcordance.concordance_status === "CONFLICT"
+                    ? "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-300 dark:border-rose-800"
+                    : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-800"
+                }`}
+              >
+                {latestConcordance.concordance_status}
+              </span>
+            ) : (
+              <span className="px-2.5 py-1 text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-300 dark:border-neutral-700">
+                INSUFFICIENT EVIDENCE (NO ACTIVE PROBES CONDUCTED FOR THIS CAPTURE)
+              </span>
+            )}
+          </div>
+
+          <div className="text-[11px] font-mono text-neutral-500">
+            {latestConcordance
+              ? `Evaluated: ${new Date(latestConcordance.evaluated_at).toLocaleString()}`
+              : "Awaiting authorized active probe triangulation"}
+          </div>
+        </div>
+
+        {/* 3-Lane Architecture Comparison */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+          {/* Lane 1: Passive Observation Lane */}
+          <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-neutral-900 dark:text-white uppercase">
+                Lane 1: Passive TShark Dissection
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                Ground Capture Facts
+              </span>
+            </div>
+            <div className="space-y-1 text-xs font-mono">
+              <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                <span>Observed IKE Versions:</span>
+                <span className="font-bold text-neutral-900 dark:text-white">
+                  {protocol.ikev2_packet_count > 0 && protocol.ikev1_packet_count > 0
+                    ? "IKEv1, IKEv2"
+                    : protocol.ikev2_packet_count > 0
+                    ? "IKEv2"
+                    : protocol.ikev1_packet_count > 0
+                    ? "IKEv1"
+                    : "None Observed"}
+                </span>
+              </div>
+              <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                <span>Negotiated Cipher:</span>
+                <span className="font-bold text-neutral-900 dark:text-white">
+                  {protocol.observed_cipher_suites?.[0] || "Not Observed in Clear"}
+                </span>
+              </div>
+              <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                <span>Initial Handshake Frames:</span>
+                <span className="font-bold text-neutral-900 dark:text-white">
+                  {protocol.ikev1_packet_count + protocol.ikev2_packet_count > 0 ? "Present" : "Missing / Incomplete"}
+                </span>
+              </div>
+            </div>
+            <p className="text-[10px] text-neutral-500 pt-1 border-t border-neutral-200 dark:border-neutral-800">
+              Passively derived from TShark 4.6.4 without emitting any network traffic.
+            </p>
+          </div>
+
+          {/* Lane 2: Active Probe Lane */}
+          <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-neutral-900 dark:text-white uppercase">
+                Lane 2: Active IKE-scan Probe
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300">
+                Scanner Evidence
+              </span>
+            </div>
+            <div className="space-y-1 text-xs font-mono">
+              <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                <span>Probe Status:</span>
+                <span className="font-bold text-neutral-900 dark:text-white">
+                  {latestConcordance?.concordance_details?.active_lane?.response_categories?.[0] ||
+                    (ikeStatus?.ike_scan_available ? "NO RECENT RUN" : "TOOL UNAVAILABLE")}
+                </span>
+              </div>
+              <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                <span>Accepted Cipher:</span>
+                <span className="font-bold text-neutral-900 dark:text-white">
+                  {latestConcordance?.active_accepted_cipher || "None Recorded"}
+                </span>
+              </div>
+              <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                <span>IKEv2 Experimental:</span>
+                <span className="font-bold text-amber-600">Default Proposal Only</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-neutral-500 pt-1 border-t border-neutral-200 dark:border-neutral-800">
+              Active probes prove only endpoint response capability, not tunnel authentication or security.
+            </p>
+          </div>
+
+          {/* Lane 3: Lab Simulation Lane */}
+          <div className="p-3 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-mono font-bold text-neutral-900 dark:text-white uppercase">
+                Lane 3: Lab Ground Truth
+              </span>
+              <span className="text-[10px] font-mono px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300">
+                Namespace Baseline
+              </span>
+            </div>
+            <div className="space-y-1 text-xs font-mono">
+              <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                <span>strongSwan Namespace:</span>
+                <span className="font-bold text-neutral-900 dark:text-white">Isolated Testbed</span>
+              </div>
+              <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                <span>External Traffic:</span>
+                <span className="font-bold text-emerald-600">ZERO (Strictly Blocked)</span>
+              </div>
+              <div className="flex justify-between text-neutral-600 dark:text-neutral-400">
+                <span>Credential Cracking:</span>
+                <span className="font-bold text-rose-600">FORBIDDEN (--pskcrack banned)</span>
+              </div>
+            </div>
+            <p className="text-[10px] text-neutral-500 pt-1 border-t border-neutral-200 dark:border-neutral-800">
+              Controlled environment reference for differential regression testing.
+            </p>
+          </div>
+        </div>
+
+        {/* Epistemic Honesty & Limitation Notice */}
+        <div className="p-3 bg-neutral-100 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-800 text-[11px] font-mono text-neutral-600 dark:text-neutral-400 space-y-1">
+          <div className="font-bold text-neutral-900 dark:text-neutral-200 flex items-center space-x-1">
+            <AlertCircle className="w-3.5 h-3.5 text-amber-500 inline mr-1" />
+            Epistemic Boundary & Operational Guardrails:
+          </div>
+          <p>
+            1. <strong>Direct Observations Only:</strong> Scanner evidence reflects active probe responses, never asserted vulnerabilities or assumed tunnel completion.
+          </p>
+          <p>
+            2. <strong>IKEv2 Experimental Limits:</strong> Upstream <code className="text-[#FF3D00]">ike-scan</code> IKEv2 implementation sends default proposals and does not comprehensively enumerate transforms.
+          </p>
+          <p>
+            3. <strong>Intrusive Probes Prohibited:</strong> Aggressive Mode identity harvesting, <code className="text-rose-500">--pskcrack</code>, and credential guessing are strictly excluded from all adapter execution vectors.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+

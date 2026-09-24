@@ -126,6 +126,74 @@ class Settings(BaseSettings):
     )
 
     # --------------------------------------------------------------------------
+    # Stage 2: Authorized Asset Discovery Settings (Nmap)
+    # --------------------------------------------------------------------------
+    DISCOVERY_ENABLED: bool = Field(
+        default=True,
+        description="Master toggle for active network discovery subsystem",
+    )
+    DISCOVERY_ALLOW_UNAUTHENTICATED_LOCAL: bool = Field(
+        default=True,
+        description="Permit local test mode discovery without enterprise identity provider",
+    )
+    DISCOVERY_MAX_TARGETS: int = Field(
+        default=8,
+        description="Conservative hard cap on total expanded IP targets per discovery job",
+    )
+    DISCOVERY_MAX_PORTS: int = Field(
+        default=16,
+        description="Conservative hard cap on total permitted ports per discovery job",
+    )
+    DISCOVERY_TIMEOUT_SEC: float = Field(
+        default=30.0,
+        description="Execution timeout in seconds for Nmap discovery subprocess",
+    )
+    DISCOVERY_MAX_OUTPUT_BYTES: int = Field(
+        default=1_048_576,
+        description="Maximum allowed XML output size in bytes (1 MB default)",
+    )
+    DISCOVERY_RATE_LIMIT_PPS: int = Field(
+        default=100,
+        description="Maximum packet rate per second passed to Nmap --max-rate",
+    )
+    NMAP_PATH: str | None = Field(
+        default=None,
+        description="Optional custom path to Nmap binary",
+    )
+
+    # --------------------------------------------------------------------------
+    # Stage 3: Authorized IKE/IPsec Negotiation Assessment Settings (IKE-scan)
+    # --------------------------------------------------------------------------
+    IKE_ASSESSMENT_ENABLED: bool = Field(
+        default=True,
+        description="Master toggle for active IKE negotiation assessment subsystem",
+    )
+    IKE_SCAN_PATH: str | None = Field(
+        default=None,
+        description="Optional custom path to ike-scan binary",
+    )
+    IKE_SCAN_TIMEOUT_SEC: float = Field(
+        default=15.0,
+        description="Execution timeout in seconds for ike-scan subprocess",
+    )
+    IKE_SCAN_MAX_RETRY: int = Field(
+        default=2,
+        description="Maximum retransmission retries passed to ike-scan --retry",
+    )
+    IKE_SCAN_BACKOFF_SEC: float = Field(
+        default=2.0,
+        description="Backoff factor passed to ike-scan --backoff",
+    )
+    IKE_SCAN_MAX_OUTPUT_BYTES: int = Field(
+        default=262_144,
+        description="Maximum allowed stdout size in bytes for ike-scan (256 KB default)",
+    )
+    IKE_SCAN_ALLOW_EXPERIMENTAL_V2: bool = Field(
+        default=True,
+        description="Allow explicitly requested experimental IKEv2 default proposal probe",
+    )
+
+    # --------------------------------------------------------------------------
     # Future Subsystem Boundaries (Placeholders for upcoming stages)
     # --------------------------------------------------------------------------
     NETAGENT_ENABLED: bool = Field(
@@ -139,6 +207,57 @@ class Settings(BaseSettings):
     )
     MODELS_DIR: Path = Field(
         default=Path("./models/active"), description="Directory for ML model artifacts"
+    )
+
+    # --------------------------------------------------------------------------
+    # Stage 11: Grounded AI Analyst / Local RAG Settings
+    # --------------------------------------------------------------------------
+    OLLAMA_BASE_URL: str = Field(
+        default="http://localhost:11434", description="Base URL for local Ollama runtime"
+    )
+    AI_PRIMARY_MODEL: str = Field(
+        default="gemma3:4b",
+        description="Primary local chat LLM (empirically benchmarked)",
+    )
+    AI_FALLBACK_MODEL: str = Field(
+        default="qwen3:4b-instruct-2507-q4_K_M",
+        description="Secondary fallback local chat LLM",
+    )
+    AI_EMBEDDING_MODEL: str = Field(
+        default="nomic-embed-text",
+        description="Local embedding model name in Ollama",
+    )
+    AI_EMBEDDING_DIM: int = Field(
+        default=768,
+        description="Vector dimension for embeddings (768 for nomic-embed-text)",
+    )
+    AI_REQUEST_TIMEOUT_SEC: float = Field(
+        default=90.0,
+        description="Local LLM inference timeout in seconds",
+    )
+    AI_MAX_CONCURRENCY: int = Field(
+        default=2,
+        description="Maximum concurrent generation requests to local model runtime",
+    )
+    STANDARDS_DIR: Path = Field(
+        default=Path("./knowledge/standards"),
+        description="Directory containing approved markdown standards documents",
+    )
+    AI_SYSTEM_PROMPT_VERSION: str = Field(
+        default="v1.0.0-grounded",
+        description="Version identifier for strict grounding prompt template",
+    )
+    AI_RETRIEVAL_TOP_K: int = Field(
+        default=5,
+        description="Default number of chunks to retrieve for semantic search",
+    )
+    AI_RETRIEVAL_SIMILARITY_THRESHOLD: float = Field(
+        default=0.40,
+        description="Cosine similarity threshold for standards retrieval",
+    )
+    AI_ENABLE_LEXICAL_SEARCH: bool = Field(
+        default=True,
+        description="Enable lexical/keyword hybrid retrieval alongside pgvector",
     )
 
     @field_validator("CORS_ALLOWED_ORIGINS", mode="before")
@@ -247,6 +366,14 @@ class Settings(BaseSettings):
     def netagent_endpoint(self) -> str:
         return self.NETAGENT_ENDPOINT
 
+    @property
+    def discovery_enabled(self) -> bool:
+        return self.DISCOVERY_ENABLED
+
+    @property
+    def nmap_path(self) -> str | None:
+        return self.NMAP_PATH
+
     def masked_dict(self) -> dict[str, object]:
         """Return configuration dictionary with all credentials safely masked."""
         data = self.model_dump()
@@ -279,3 +406,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Singleton getter for application settings."""
     return Settings()
+
+
+# Convenient module-level alias
+settings: Settings = get_settings()

@@ -124,6 +124,22 @@ class PolicyEvaluator:
         """Evaluate rule logic against a unified fact dictionary for one subject."""
         contributing_fact_ids: list[str] = []
         subj_type: str | None = None
+        if subject_id:
+            for f in fact_map.values():
+                if f.subject_id == subject_id and f.subject_type:
+                    subj_type = f.subject_type.value
+                    break
+        if subj_type is None and rule.evidence_requirements:
+            from app.security.facts.registry import get_fact_field_def
+            for req in rule.evidence_requirements:
+                fdef = get_fact_field_def(req)
+                if fdef and fdef.subject_type:
+                    subj_type = fdef.subject_type.value
+                    break
+        if subj_type is None:
+            subj_type = "IPSEC_ENTITY"
+
+        effective_subject_id = subject_id if subject_id is not None else "GLOBAL"
 
         # ---------------------------------------------------------------------
         # 1. Applicability Check
@@ -138,7 +154,7 @@ class PolicyEvaluator:
                     evidence_state=EvidenceState.VERIFIED,
                     observed_value=None,
                     expected_value=None,
-                    subject_id=subject_id,
+                    subject_id=effective_subject_id,
                     subject_type=subj_type,
                     rationale=f"Rule '{rule.rule_id}' is NOT_APPLICABLE to the observed configuration.",
                     contributing_fact_ids=tuple(contributing_fact_ids),
@@ -158,8 +174,6 @@ class PolicyEvaluator:
                 contributing_fact_ids.append(fact.fact_id)
             else:
                 contributing_fact_ids.append(fact.fact_id)
-                if subj_type is None and fact.subject_type:
-                    subj_type = fact.subject_type.value
 
         if missing_or_unknown:
             return EvaluationRecord(
@@ -169,7 +183,7 @@ class PolicyEvaluator:
                 evidence_state=EvidenceState.UNKNOWN,
                 observed_value=None,
                 expected_value=None,
-                subject_id=subject_id,
+                subject_id=effective_subject_id,
                 subject_type=subj_type,
                 rationale=f"Required protocol evidence missing or unobserved: {', '.join(missing_or_unknown)}",
                 contributing_fact_ids=tuple(contributing_fact_ids),
@@ -211,7 +225,7 @@ class PolicyEvaluator:
             evidence_state=composite_ev,
             observed_value=observed_val,
             expected_value=expected_val,
-            subject_id=subject_id,
+            subject_id=effective_subject_id,
             subject_type=subj_type,
             rationale=rationale,
             contributing_fact_ids=tuple(contributing_fact_ids),

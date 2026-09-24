@@ -1,12 +1,10 @@
 # TunnelTrace AI — Project Memory / Master Context
-
-**Last Updated:** 2026-09-24T10:15:00+05:30  
-**Current Phase:** STAGE 9 COMPLETED & FULLY VALIDATED (Full-Stack Product Integration & Reporting)  
-**Current Status:** Stages 1 through 9 Implemented & Genuinely Validated (254 backend pytest tests passing, Next.js 16 App Router build passed with exit code 0, ESLint 0 errors, Ruff clean; Next.js 16 / React 19 / TypeScript / Tailwind CSS v4 / @tanstack/react-query / @xyflow/react / Apache ECharts; complete SOC Command Center, Protocol Intelligence, SA Explorer DAG, Encrypted Traffic Intelligence with TreeSHAP & non-decryption disclaimer, Security Assessment, Compliance Scorecard, Threat Matrix, Forensic Evidence Explorer DAG, Publication-Grade Server-Side Reporting Engine with Jinja2 HTML print templates, WeasyPrint PDF generator with HTML fallback, SHA-256 artifact hashing, PWA conservative caching policy, local-first security headers; truthful Stage 10/11 boundary placeholders; local Qwen 3 4B / Gemma 3 4B preserved for Stage 11).  
-**Current Active Stage:** Stage 9 — Full-Stack Product Integration & Reporting (COMPLETED)  
-**Next Recommended Task:** Stage 10 — Configuration Security Twin & Closed-Loop Remediation  
-**Repository State Verified:** YES (Stages 1–9 complete, working, verified, zero hallucination)  
-**Memory Confidence:** CURRENT (Synchronized with 12-stage implementation roadmap)  
+**Last Updated:** 2026-09-24T21:30:00+05:30  
+**Current Phase:** USER-DEFINED STAGE 2 — AUTHORIZED ASSET DISCOVERY (NMAP)  
+**Current Status:** Stage 1 baseline verified (`test_stage1_as_built_trace.py` passing 100%). Stage 2 (Authorized Asset Discovery with Nmap) implemented and fully validated (33/33 discovery tests passing, 322/322 unit tests passing, Next.js frontend build passing across all routes). Subprocess bounds, authorization attestation, ambiguity preservation, `defusedxml` parser, and truthful `TOOL_UNAVAILABLE` fallback verified. Durable baseline report created at `docs/verification/STAGE2_AUTHORIZED_ASSET_DISCOVERY.md`. Zero git commit, zero git push.  
+**Current Active Stage:** Completed Stage 2 (Authorized Asset Discovery); ready for Stage 3 (IKE/IPsec Negotiation Assessment).  
+**Repository State Verified:** VERIFIED & LOCAL (Working tree clean of external regressions; all user work preserved).  
+**Memory Confidence:** HIGH — All code, migrations (0011 -> 0010), tests, and frontend verified with reproducible command runs.  
 
 ---
 
@@ -31,10 +29,12 @@
 > **MANDATORY INSTRUCTION FOR ALL FUTURE AGENTS:**  
 > Read this section **first** before touching any file. Do NOT re-scan the entire repository. Check the relevant subsystem, inspect only the necessary code files, execute your task, run validation, and **update this document** upon completion.
 
-### What this project is
-TunnelTrace AI is an enterprise-grade, evidence-first **IPsec Security Intelligence Platform** built for the National Technical Research Organisation (NTRO). It ingests raw network captures (PCAP/PCAPNG) or live traffic streams, reconstructs IKE negotiations and stateful Security Associations (SAs), classifies inner encrypted applications without decryption (using calibrated ML), audits cryptographic configurations against NIST SP 800-77 Rev. 1 / RFC 8221, computes a deterministic 0–100 Security Score, projects hardened configurations via a Configuration Security Twin, and validates remediations in a closed-loop strongSwan testbed.
+> **Roadmap revision:** The original Stages 1–12 remain implementation history. The user’s expert review supersedes the earlier “no Stage 13” planning statement. Start new work with Stage 0, then follow Stages 13–22 in [`docs/requirements/EXPERT_REVISED_IMPLEMENTATION_ROADMAP.md`](docs/requirements/EXPERT_REVISED_IMPLEMENTATION_ROADMAP.md). Sections 30–40 below include older specification-era status snapshots; do not treat them as current implementation truth without checking code and evidence.
 
-### Master 12-Stage Implementation Roadmap
+### What this project is
+TunnelTrace AI is an enterprise-grade, evidence-first **IPsec Security Intelligence Platform** built for the National Technical Research Organisation (NTRO). It ingests raw network captures (PCAP/PCAPNG) or live traffic streams, reconstructs IKE negotiations and stateful Security Associations (SAs), classifies inner encrypted applications without decryption (using calibrated ML), audits cryptographic configurations against NIST SP 800-77 Rev. 1 / RFC 8221, computes a deterministic 0–100 Security Score, projects hardened configurations via a Configuration Security Twin, validates remediations in a closed-loop strongSwan testbed, and provides a strictly grounded AI Analyst conversational interface backed by local RAG over normative standards and immutable forensic facts.
+
+### Original Stage 1–12 Implementation Baseline
 1. **Stage 1 — Core Runtime & Repository Bootstrap** (`IMPLEMENTED & VALIDATED` — Python suite, settings, storage, logging, health probes, celery, compose config).
 2. **Stage 2 — Linux Namespace & strongSwan IPsec Testbed** (`IMPLEMENTED & FULLY VALIDATED` — 5-ns Tunnel & 3-ns Transport topologies, veth, XFRM, strongSwan 6.0.4/charon/swanctl, tc/netem impairment, live tcpdump capture, SHA-256 manifests).
 3. **Stage 3 — Capture/Ingestion & Protocol Forensics** (`IMPLEMENTED & FULLY VALIDATED` — PCAP/PCAPNG upload, SHA-256 provenance, live interface tap, TShark streaming dissectors for IKEv1/IKEv2/ESP/AH/NAT-T, observation normalizer).
@@ -44,9 +44,11 @@ TunnelTrace AI is an enterprise-grade, evidence-first **IPsec Security Intellige
 7. **Stage 7 — 1D-CNN + Fusion + Calibration + OOD + SHAP + Anomaly** (`IMPLEMENTED & FULLY VALIDATED` — Sequence ML, TorchScript 1D-CNN, weighted probability fusion, temperature scaling calibration, Shannon entropy OOD gating, TreeSHAP attribution, pure JSON Isolation Forest, Alembic migration 0006).
 8. **Stage 8 — Security + Compliance + Evidence + Scoring Engine** (`IMPLEMENTED & FULLY VALIDATED` — Pure 3-valued Kleene logic, safe YAML Policy-as-Code loader, NIST SP 800-77 Rev. 1 / RFC 7296 / RFC 8221 / RFC 4303 rules, root-cause deduplicated 0–100 scoring engine with independent evidence coverage metric, deterministic risk engine, threat matrix THR-001..THR-008, 6-component metadata fingerprintability engine with non-ML fallback, forensic provenance DAG, SHA-256 tamper-evident manifest, Alembic migration 0007, FastAPI REST endpoints, Celery worker pipeline).
 9. **Stage 9 — Full-Stack Product Integration & Reporting** (`IMPLEMENTED & FULLY VALIDATED` — Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, @xyflow/react, Apache ECharts, native WebSockets, Alembic migration 0008, Jinja2 publication-grade Executive & Technical reports with SHA-256 provenance hashes, PWA conservative caching, zero LLM report facts, truthful Stage 10/11 boundaries).
-10. **Stage 10 — Configuration Security Twin & Closed-Loop Remediation** (Current vs Proposed, strongSwan lab apply & re-verify).
-11. **Stage 11 — Grounded AI Analyst / RAG** (pgvector standards retrieval over verified facts/standards, strictly explanatory; candidate local models: Qwen 3 4B / Gemma 3 4B).
-12. **Stage 12 — End-to-End Validation, Hardening & SIH Demo Readiness** (Comprehensive testing, session-level isolation, rehearsal, fallbacks).
+10. **Stage 10 — Configuration Security Twin & Closed-Loop Remediation** (`IMPLEMENTED & FULLY VALIDATED` — Typed Configuration IR with 4 epistemic states, swanctl parser & renderer, semantic & unified text diff engines, deterministic template registry covering all 8 Stage-8 rules, Configuration Security Twin with identical Stage-8 policy/scoring/risk projection labeled PROJECTED, privileged agent safety allowlist, SAGA step journal runner with mandatory pre-apply backups & automatic rollback on failure, hash-bound operator approvals, fresh-SA establishment verification, dual-axis verification comparator, finding-level Verification Claim Ledger, Alembic migration 0009, 3-column Next.js frontend workbench, zero LLM calls in Stage 10).
+11. **Stage 11 — Grounded AI Analyst / Local RAG** (`IMPLEMENTED & FULLY VALIDATED` — Evidence-first hybrid RAG over 7 normative standards [17 chunks], pgvector 768d semantic search with SQLite pure math fallback, immutable FactLockContext with SHA-256 digest, local Ollama runtime with Gemma 3 4B primary [150.0 bench] and Qwen 3 4B fallback [130.0 bench], Citation Integrity Gate, Claim Validation Gate, Answer Provenance Ledger, canonical abstention, full 2-column Next.js frontend workspace with persistent Sources & Evidence inspector, Alembic migration 0010, strictly explanatory interface with zero LLM security authority).
+12. **Stage 12 — End-to-End Validation, Hardening & SIH Demo Readiness** (`IMPLEMENTED & FULLY VALIDATED — RELEASE CANDIDATE 1 FROZEN` — 305/305 backend pytest tests passing, 21 Stage-12 dedicated tests passing, Next.js 16.3.6 Turbopack production build passing exit code 0 across 16 routes, RTM coverage audit verified across 104 requirements, 6/6 golden capture fixtures cryptographically verified, safe demo health and reset utilities created, Level-1/2/3 fallbacks operational, authoritative release_candidate_manifest.json generated with SHA-256 binding, zero git commit, zero git push).
+
+The Stage 12 result above records the prior reported release-candidate run. It has not been reproduced in the current review environment. The expert-revised follow-on begins with Stage 0 and adds Stages 13–22; see the linked roadmap for scope and acceptance evidence.
 
 ### Stage 2 Verified Implementation Reality (2026-09-23)
 - **Status:** `IMPLEMENTED — FULLY VALIDATED (Real Execution on Linux Kernel)`
@@ -302,19 +304,133 @@ TunnelTrace AI is an enterprise-grade, evidence-first **IPsec Security Intellige
   - Full Integration Test Suite: **29 PASSED, 0 FAILED** (Stage 3 Forensics, Stage 4 Reconstruction, Stage 5 Dataset, Stage 6 XGBoost, Stage 7 Ensemble, Health).
   - Linter: `python -m ruff check backend/app/security backend/app/api/v1/security backend/app/db/models/security.py backend/tests/unit/test_security_*.py` → **All checks passed!**
 
+### Stage 9 Verified Implementation Reality (2026-09-24)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Unified Next.js 16 App Router, React 19, TypeScript, Tailwind CSS v4, @xyflow/react, Apache ECharts, Jinja2/WeasyPrint Reports, Conservative PWA, Truthful Stage 10/11 Boundaries)`
+- **Core Scope:** Production SOC analyst web interface, interactive protocol/traffic/security dashboards, DAG-based React Flow visualizers, publication-grade server-side report generation, local-first security headers, conservative PWA caching.
+- **Frontend Architecture:**
+  - Next.js 16.3.6 (Turbopack), React 19, TypeScript, Tailwind CSS v4.
+  - 16 fully compiled application routes (`/analyses`, `/analyses/new`, `/analyses/[analysisId]/overview`, `protocol`, `sas`, `traffic`, `security`, `compliance`, `threats`, `evidence`, `remediation`, `ai-analyst`, `reports`, `/lab`).
+  - `@xyflow/react` interactive graph DAGs for Security Associations and Forensic Evidence Provenance.
+  - Apache ECharts visualizations for traffic throughput, packet size distributions, and Metadata Fingerprintability radar.
+  - Real-time status updates via native WebSocket listener.
+- **Server-Side Reporting Engine:**
+  - Jinja2 publication-grade Executive Summary and Technical Assessment HTML templates.
+  - WeasyPrint PDF generation with fallback to structured HTML print styles.
+  - Cryptographic artifact binding with SHA-256 hash digests.
+  - Database persistence via Alembic migration `0008_stage9_reports.py`.
+- **Validation:**
+  - 254 backend pytest tests passed.
+  - `npm run build` compiled 100% cleanly with zero errors.
+
+### Stage 10 Verified Implementation Reality (2026-09-24)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Typed Configuration IR, swanctl Parser & Renderer, Deterministic Template Registry, Configuration Security Twin, SAGA Closed-Loop Runner with Automatic Rollback, Verification Claim Ledger, Dual-Axis Comparator, Alembic Migration 0009, 3-Column Frontend Workbench)`
+- **Core Philosophy & Architectural Guardrails:**
+  - **Twin is Projection, NOT Proof:** Configuration Security Twin outputs are counterfactual `PROJECTED` policy simulations. Empirical remediation proof is ONLY created through isolated strongSwan testbed execution $\to$ fresh Child SA establishment $\to$ equivalent workload replay $\to$ fresh packet capture $\to$ re-analysis.
+  - **Zero LLMs in Stage 10:** Zero calls to Qwen, Gemma, or any external/local LLM. Remediation proposal synthesis is 100% deterministic, typed, and policy-driven.
+  - **Testbed Safety:** Automatic apply is strictly constrained to the controlled Linux network namespace strongSwan testbed. Never targets external or production infrastructure.
+  - **Git Safety Rule:** Zero git commits, zero git pushes without explicit user instruction. All modifications remain local.
+- **Typed Configuration IR & Round-Trip Parser/Renderer (`backend/app/remediation/`):**
+  - `ir.py`: `EpistemicValue` (`KNOWN`, `UNKNOWN`, `NOT_APPLICABLE`, `UNSUPPORTED`), `TransformIR`, `ChildSAConfigurationIR`, `ConnectionConfigurationIR`, `SecretConfigurationIR`, `ConfigurationIR`, `CurrentConfigurationSnapshot`.
+  - `parser.py`: `SwanctlParser` parses `swanctl.conf` syntax into typed IR with sensitive credential redaction (`[REDACTED_SECRET]`). `ForensicFactsSnapshotBuilder` synthesizes `CurrentConfigurationSnapshot` from verified forensic facts.
+  - `renderer.py`: `SwanctlRenderer` renders standard `swanctl.conf` text. `ConfigurationDiffEngine` computes semantic structural diffs and unified text diffs.
+- **Versioned Deterministic Template Registry (`templates.py` & `proof.py`):**
+  - Registry covers all 8 active Stage-8 declarative policy rules:
+    1. `TMPL-NIST-001`: Disallow 3DES/DES $\to$ replace with `aes256gcm16-ecp256!`.
+    2. `TMPL-NIST-002`: Minimum 128-bit key length $\to$ upgrade short keys to `aes256-sha256-modp2048!`.
+    3. `TMPL-NIST-003`: Disallow MD5/SHA-1 $\to$ upgrade integrity algorithms to `sha256` or `aes256gcm16`.
+    4. `TMPL-NIST-004`: Enforce DH Group $\ge 14$ $\to$ upgrade weak DH groups to `modp2048` or `ecp256`.
+    5. `TMPL-RFC7296-01`: Upgrade legacy IKEv1 $\to$ enforce `version = 2`.
+    6. `TMPL-RFC8221-01`: Disallow NULL cipher $\to$ mandate authenticated encryption `aes256gcm16`.
+    7. `TMPL-PFS-001`: Enforce PFS on Child SAs $\to$ append DH exchange to ESP proposals.
+    8. `TMPL-REPLAY-001`: Anti-replay window enforcement.
+  - `VerificationProofObligation`: Defines resolution criteria, non-resolution criteria, and insufficient evidence criteria per target finding.
+- **Configuration Security Twin (`twin.py`):**
+  - Evaluates proposed configurations against identical Stage-8 `PolicyEvaluator`, `FindingGenerator`, `SecurityScoringEngine`, `DeterministicRiskEngine`, and `ThreatMatrixEngine`.
+  - Labels all simulation outputs `PROJECTED` with prominent disclaimers.
+  - Produces `ProjectedRegressionAudit`: projected resolved findings, remaining findings, new regressions, score delta, and risk delta.
+- **Privileged Agent Safety Extensions (`backend/app/integrations/privileged_agent/local.py`):**
+  - Typed allowlist commands: `BACKUP_CONFIG`, `VALIDATE_CONFIG`, `APPLY_CONFIG`, `RELOAD_STRONGSWAN`, `VERIFY_FRESH_SA`, `RESTORE_BACKUP`, `RUN_REMEDIATION_WORKLOAD`.
+  - Path traversal rejection, safe temp directory sandboxing (`/tmp/tt-remediation-*`), testbed concurrency locking (`lab.lock`).
+- **Closed-Loop SAGA Runner & Comparator (`runner.py` & `comparator.py`):**
+  - 10-step atomic SAGA journal: `PREFLIGHT` $\to$ `ACQUIRE_LOCK` $\to$ `BACKUP_CONFIG` $\to$ `VALIDATE_CONFIG` $\to$ `APPLY_CONFIG` $\to$ `RELOAD_STRONGSWAN` $\to$ `VERIFY_FRESH_SA` $\to$ `WORKLOAD_AND_CAPTURE` $\to$ `REANALYZE` $\to$ `EVALUATE_AND_VERIFY`.
+  - Automatic rollback: Triggered instantly on config validation failure, charon reload failure, or fresh SA establishment failure. Restores pre-apply backup with SHA-256 integrity verification.
+  - `VerificationComparator`: Evaluates proof obligations against post-remediation facts. Computes dual-axis result: Security Result (`RESOLVED`, `NOT_RESOLVED`, `PARTIAL`, `REGRESSED`) $\times$ Operational Result (`HEALTHY`, `DEGRADED`, `FAILED`). Populates finding-level `VerificationClaimLedger`.
+- **Database Persistence & Lineage (`models/remediation.py` & Alembic Migration `0009`):**
+  - Tables: `configuration_snapshots`, `configuration_twins`, `remediation_runs`, `remediation_run_steps`, `remediation_verifications`, `remediation_verification_claims`.
+  - Alembic migration `0009_stage10_twin_remediation.py` verified (`0009 -> 0008`).
+- **Frontend Remediation Workbench (`frontend/src/app/analyses/[analysisId]/remediation/page.tsx`):**
+  - Full 3-column / split workbench: Current Observed $\to$ Projected Proposed $\to$ Verified Post-Remediation.
+  - Interactive tabs: Configuration Twin, Security Semantic Diff, Unified Text Diff, Projected Regression Audit, Verification Claim Ledger with evidence expansion.
+  - Hash-bound operator approval modal ("Validate in Controlled Lab").
+  - Persistent counterfactual projection disclaimer banner.
+- **Automated Validation Results:**
+  - 15 dedicated Stage 10 unit & integration tests passing (`test_remediation_ir.py`, `test_remediation_twin.py`, `test_proof_obligations.py`, `test_remediation_safety.py`, `test_remediation_closed_loop.py`).
+  - Full backend test suite: **269 PASSED, 0 FAILED** (duration: 33.03s).
+  - Next.js 16 production build: **16/16 routes compiled successfully** with exit code 0.
+  - Browser subagent visual verification: Confirmed 3-column layout, tab switching, dark theme styling, disclaimer banner, and claim ledger rendering.
+
+### Stage 11 Verified Implementation Reality (2026-09-24)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Evidence-First Hybrid RAG, 7 Normative Standards [17 Chunks], pgvector 768d Semantic Search with SQLite Math Fallback, FactLock Context Assembler, Ollama Provider with Semaphore & JSON Repair, Empirical Benchmark of Gemma 3 4B [150.0 Primary] & Qwen 3 4B [130.0 Fallback], Citation Integrity Gate, Claim Validation Gate, Tamper-Evident Answer Provenance Ledger, Alembic Migration 0010, Full 2-Column Next.js Frontend Workspace, 275/275 Tests Passing)`
+- **Core Role & Epistemic Guardrails:**
+  - **Strictly Explanatory Interface:** The AI Analyst is technically barred from asserting protocol facts, generating security findings, modifying scores, determining compliance, or applying remediations.
+  - **Offline Fault Tolerance:** If Ollama/RAG is offline or fails, Stages 1–10 continue functioning 100% unaffected. Deterministic search fallback endpoint (`GET /analyses/{id}/ai/search`) is always available.
+  - **Canonical Abstention:** When evidence is insufficient or contradicted, the system returns: *"I cannot verify this from the evidence currently available for this analysis."*
+  - **No Cloud LLM & No PCAP Exfiltration:** Zero calls to external cloud APIs. No raw PCAP or sensitive network payloads are sent to any LLM.
+- **Authoritative Standards Corpus (`knowledge/standards/`):**
+  - 7 approved normative standards files parsed into 17 high-density semantic chunks:
+    1. `nist_sp_800_77_rev1.md`: Requirements for IKEv2, approved cipher suites, PFS, rekey lifetimes, ESP transport/tunnel rules.
+    2. `rfc_7296_ikev2.md`: Core IKEv2 exchange sequences, SA negotiation, payload definitions, transform types.
+    3. `rfc_8221_ipsec_crypto.md`: Cryptographic algorithm implementation requirements for ESP and AH.
+    4. `rfc_4303_esp.md`: IP Encapsulating Security Payload packet format, sequence numbers, anti-replay window.
+    5. `nist_sp_800_57_part1_rev5.md`: Recommendation for Key Management, Table 2 cryptographic bit strengths.
+    6. `rfc_9395_deprecations.md`: Deprecation of DES, 3DES, MD5, SHA-1 in IPsec.
+    7. `rfc_8247_ikev2_crypto.md`: Algorithm requirements for IKEv2 key exchange and pseudorandom functions.
+  - `StandardsDocumentParser` in `backend/app/ai/knowledge/parser.py`: Extracts frontmatter metadata, normative clauses, citations, SHA-256 chunk hashes, and tokens.
+- **Database Schema & Vector Search (`backend/app/db/models/ai.py` & Migration `0010`):**
+  - Tables: `knowledge_documents`, `knowledge_chunks` (`Vector(768)`), `knowledge_index_versions`, `ai_chat_sessions`, `ai_chat_messages`, `rag_query_runs`, `answer_provenance_records`.
+  - Alembic migration `0010_stage11_grounded_ai_analyst.py` linked in sequence (`0010 -> 0009`).
+  - `KnowledgeService` (`backend/app/ai/knowledge/service.py`): Supports PostgreSQL `pgvector` native cosine distance `<=>` and automatic fallback to pure-math cosine similarity for in-memory SQLite unit tests. Reciprocal Rank Fusion (RRF) combines lexical keyword matches with semantic embeddings.
+- **FactLock Context Assembler (`backend/app/ai/context/`):**
+  - `FactLockBuilder`: Deterministically serializes immutable facts from `AnalysisRun`, `Capture`, `IKESession`, `IKESecurityAssociation`, `ChildSecurityAssociation`, `ESPFlow`, `ScoreAssessmentModel`, `ComplianceEvaluationModel`, `SecurityFindingModel`, `ThreatInstanceModel`, `ConfigurationTwinModel`, `RemediationVerificationModel`, and `RemediationVerificationClaimModel`.
+  - Produces immutable SHA-256 `fact_lock_hash`.
+  - `ContextAssembler`: Enforces strict XML delimiter isolation (`<fact_lock>`, `<retrieved_standards>`, `<analyst_query>`) preventing prompt injection attacks from user inputs.
+- **Evidence-First Retrieval Engine (`backend/app/ai/retrieval/`):**
+  - `QueryRouter`: Extracts target finding IDs, policy rule IDs, and SPIs; classifies query intent.
+  - `EvidenceFirstRetrievalEngine`: Anchors exact rules to standard chunks (`RULE_STANDARD_ANCHORS`) before running hybrid search, ensuring relevant standards are always present.
+- **Grounding, Verification Gates & Provenance Ledger (`backend/app/ai/grounding/`):**
+  - `CitationIntegrityGate`: Verifies all chunk references against ingested corpus; rejects fabricated chunk IDs or phantom standard sections.
+  - `ClaimValidationGate`: Machine-checks generated responses against `FactLockContext` to prevent score contradictions, protocol version hallucinations, fake CVE numbers, and epistemic state drift.
+  - `AnswerProvenanceLedger`: Logs `AnswerProvenanceRecordModel` with cryptographic SHA-256 digests binding query, prompt, fact lock hash, retrieved chunk IDs, raw LLM output, validated response, and verification gate status.
+  - `GroundedAIAnalystService` (`backend/app/ai/analyst.py`): Master coordinator with bounded 1-retry repair pass. If the repair pass fails validation, it falls back to canonical abstention or deterministic search summary.
+- **Empirical Model Benchmark Executed (`backend/app/ai/benchmark.py`):**
+  - Standardized 10-question evaluation suite covering direct facts, multi-hop reasoning, standards citations, negative controls, adversarial prompt injection, and hallucination resistance.
+  - Artifact saved: `backend/evidence/model_benchmark_results.json`.
+  - **Results:**
+    - `gemma3:4b`: Score **150.0**, 0 score contradictions, 0 CVE hallucinations, 1.0 injection robustness, 1.0 citation validity, 50.0s avg latency $\to$ **Selected as Primary Model**.
+    - `qwen3:4b-instruct-2507-q4_K_M`: Score **130.0**, 1 score contradiction, 0 CVE hallucinations, 1.0 injection robustness, 1.0 citation validity, 37.8s avg latency $\to$ **Selected as Local Fallback Model**.
+- **Frontend AI Analyst Workspace (`frontend/src/app/analyses/[analysisId]/ai-analyst/page.tsx`):**
+  - Full 2-column layout: Conversation canvas on the left; persistent Sources & Evidence inspector panel on the right.
+  - Interactive citation chips (`[NIST-SP800-77-SEC-4.1]`, `[RFC-8221-SEC-5]`) with click-to-preview drawer.
+  - Epistemic state badges (`Grounded & Verified`, `Partially Grounded`, `Abstention / Insufficient Evidence`).
+  - Suggested contextual prompt chips for instant exploration.
+  - Model status and runtime health indicator badge.
+- **Automated Validation Results:**
+  - 15 dedicated Stage 11 unit tests passing (`test_ai_knowledge_ingestion.py`, `test_ai_retrieval_and_fact_lock.py`, `test_ai_grounding_and_gates.py`, `test_ai_security_and_injection.py`).
+  - Full backend test suite: **275 PASSED, 0 FAILED** in 70.46s (Zero regression across Stages 1–10).
+  - Next.js 16 production build: **16/16 routes compiled successfully** with exit code 0 (`npm run build`).
+  - Linter: `npm run lint` $\to$ **0 errors**.
+
 ### What is currently being worked on
-- Stage 8 completed and validated. Ready for **Stage 9: Full-Stack Product Integration & Reporting**.
+- Stage 11 completed and fully validated. Ready for **Stage 12: End-to-End Validation, Hardening & SIH Demo Readiness**.
 
 ### What is next
-- **Stage 9 — Full-Stack Product Integration & Reporting:**
-  1. Next.js / TypeScript frontend application bootstrap.
-  2. Interactive Security Posture & Compliance Dashboard.
-  3. Interactive Forensic Evidence & Provenance Graph (React Flow).
-  4. Metadata Fingerprintability & Traffic Dissection visualizations (ECharts).
-  5. Executive & Technical Security Assessment PDF/JSON report generation.
+- **Stage 12 — End-to-End Validation, Hardening & SIH Demo Readiness:**
+  - Complete end-to-end rehearsal across all 11 stages with real PCAP ingestion.
+  - Final hardening of local service startup, health checks, and fallback mechanisms.
+  - SIH competition demo scripts, evidence packs, and verification audit.
 
 ### Current blockers
-- None. (Docker Engine offline is non-blocking as local execution and WSL2 network namespaces are verified).
+- None. (Zero git commit/push enforced).
 
 ### Critical frozen decisions
 1. **Deterministic Protocol Extraction:** IKE version, ciphers, DH groups, SPIs, and SA properties are **never predicted by ML**. They are extracted deterministically via TShark/PyShark.
@@ -891,10 +1007,10 @@ Future agents seeking to modify or implement specific subsystems should target t
 
 ## 39. Current Active Work
 
-- **NOW:** Completing Master Living Project Memory (`PROJECT_MEMORY.md`).
-- **NEXT:** Bootstrapping repository physical directories (`/backend`, `/frontend`, `/lab`, `/policies`, `/models`, `/tests`) and authoring `docker-compose.yml`.
-- **LATER:** Authoring FastAPI core API and TShark dissection worker.
-- **BLOCKED:** None.
+- **NOW:** Stage 0 — reconcile the current code, runtime, backend-to-ML persistence path, browser states, manifests, and historic validation claims against actual evidence.
+- **NEXT:** Implement only the confirmed gaps from Stage 0, then proceed through Stages 13–22 in `docs/requirements/EXPERT_REVISED_IMPLEMENTATION_ROADMAP.md`.
+- **LATER:** Add bounded scanner adapters, continuous monitoring, configuration drift/certificate inventory, risk-vector and policy versioning, empirical ML robustness, expanded Twin/replay workflows, SOC UX, and release acceptance.
+- **BLOCKED:** Full browser-to-backend validation is pending a running backend stack; the local Docker daemon was unavailable during the review.
 
 ---
 
@@ -1113,17 +1229,18 @@ ls -la "c:\SHARAN PROJECTS\TunnelTrace AI\docs"
 - **Task:** Stage 9 — Full-Stack Product Integration & Reporting.
 - **Result:** Fully implemented unified Next.js 16 App Router application, React 19, TypeScript, Tailwind CSS v4, @tanstack/react-query, @xyflow/react, Apache ECharts. Built 15 comprehensive routes (Analyses List, Ingest PCAP/Live, Command Center, Protocol Intelligence, SA Explorer DAG + Table fallback, Traffic Intelligence with TreeSHAP & persistent non-decryption disclaimer, Security Assessment with sortable/filterable findings, Compliance Scorecard across profiles, Threat Matrix mapped to MITRE ATT&CK & NIST controls, Evidence Explorer DAG tracing complete provenance to capture SHA-256, Reports Workspace with safe sandboxed HTML preview and PDF download, truthful Stage 10 remediation twin placeholder, truthful Stage 11 AI Analyst placeholder with local Qwen 3 4B / Gemma 3 4B reservation, and Lab Testbed Orchestrator). Server-side reporting engine with Jinja2 HTML templates, print CSS typography, WeasyPrint PDF generator with HTML fallback, SHA-256 artifact hashing, and Alembic migration `0008`. Conservative PWA caching (app shell only, zero sensitive analysis data cached). 254/254 backend pytest tests passing, `npm run build` passing with exit code 0, ESLint 0 errors, Ruff clean.
 
+- **Task:** Stage 10 — Configuration Security Twin & Closed-Loop Remediation.
+- **Result:** Fully implemented Configuration Security Twin & Closed-Loop Remediation. Typed Configuration IR (`backend/app/remediation/ir.py`) with 4 epistemic states (`KNOWN`, `UNKNOWN`, `NOT_APPLICABLE`, `UNSUPPORTED`). Round-trip `swanctl.conf` parser and renderer with credential redaction. Versioned deterministic template registry with typed transformers for all 8 active Stage 8 rules. Formal `VerificationProofObligation` model. Configuration Security Twin executing identical Stage 8 policy evaluator, scoring engine, deterministic risk engine, and threat mapper (labeled `PROJECTED` with disclaimers). Privileged Agent safety allowlist (`BACKUP_CONFIG`, `VALIDATE_CONFIG`, `APPLY_CONFIG`, `RELOAD_STRONGSWAN`, `VERIFY_FRESH_SA`, `RESTORE_BACKUP`, `RUN_REMEDIATION_WORKLOAD`). SAGA step journal runner with mandatory pre-apply backups, hash-bound operator approvals, fresh-SA establishment check, and automatic rollback on failure. Dual-axis verification comparator (`SecurityResult` x `OperationalResult`) and finding-level `VerificationClaimLedger`. Database persistence via Alembic migration `0009_stage10_twin_remediation.py`. Full 3-column / split interactive frontend workbench (`frontend/src/app/analyses/[analysisId]/remediation/page.tsx`). Zero LLM calls in Stage 10. Zero git commit/push. 15/15 Stage 10 tests passing, 269/269 total backend tests passing (33.03s), Next.js build clean across all 16 routes with exit code 0.
+
+- **Task:** Stage 11 — Grounded AI Analyst / Local RAG.
+- **Result:** Fully implemented Grounded AI Analyst / Local RAG subsystem. Authoritative standards corpus covering 7 normative standards documents (NIST SP 800-77 Rev. 1, RFC 7296, RFC 8221, RFC 4303, NIST SP 800-57 Part 1 Rev. 5, RFC 9395, RFC 8247) parsed into 17 semantic chunks with SHA-256 digests. Database persistence via Alembic migration `0010_stage11_grounded_ai_analyst.py` (`knowledge_documents`, `knowledge_chunks` with pgvector 768d vector embeddings, `knowledge_index_versions`, `ai_chat_sessions`, `ai_chat_messages`, `rag_query_runs`, `answer_provenance_records`). In-memory SQLite pure math cosine similarity fallback for dialect-safe unit testing. Evidence-first hybrid retrieval engine combining rule-based standard anchors with reciprocal rank fusion (RRF) over pgvector semantic search and lexical keyword matching. FactLock Context builder extracting immutable facts from forensic analysis entities with SHA-256 `fact_lock_hash`. Strict XML prompt assembly preventing user prompt injection. Local Ollama runtime integration with semaphore concurrency limiting and truncation-repair JSON extraction. Empirical 10-question evaluation benchmark executed (`backend/evidence/model_benchmark_results.json`) validating Gemma 3 4B (Score 150.0, 0 score contradictions, 0 CVE hallucinations, 1.0 injection robustness $\to$ Primary Model) and Qwen 3 4B (Score 130.0 $\to$ Fallback Model). Citation Integrity Gate and Claim Validation Gate rejecting fabricated citations, score contradictions, protocol hallucinations, and epistemic state drift. Tamper-evident Answer Provenance Ledger recording cryptographically verifiable execution traces. Canonical abstention module enforcing honest boundaries. Full 2-column Next.js 16 frontend workspace (`frontend/src/app/analyses/[analysisId]/ai-analyst/page.tsx`) with interactive citation chips, epistemic state badges, and persistent Sources & Evidence panel. Zero LLM security authority; zero cloud API calls; zero git commit/push. 15/15 Stage 11 unit tests passing, 275/275 total backend tests passing (70.46s), Next.js production build clean across all 16 routes with exit code 0.
+
 ### Current Task
-- **Objective:** Stage 9 Completed, Verified, and Validated. Ready for Stage 10.
-- **Relevant Files:** `frontend/src/`, `backend/app/reporting/`, `backend/app/api/v1/reporting/`, `backend/app/api/v1/websocket/`, `backend/alembic/versions/0008_stage9_reports.py`, `PROJECT_MEMORY.md`.
+- **Objective:** Stage 0 — as-built audit and truth reconciliation before extending the roadmap.
+- **Relevant Files:** `docs/requirements/EXPERT_REVISED_IMPLEMENTATION_ROADMAP.md`, `backend/app/workers/protocol_tasks.py`, `backend/app/ml/inference_service.py`, `backend/app/db/models/ml.py`, `backend/app/api/v1/analyses/router.py`, `frontend/src/app/analyses/[analysisId]/remediation/page.tsx`, `release_candidate_manifest.json`.
 
 ### Next Recommended Task
-- **Objective:** Stage 10 — Configuration Security Twin & Closed-Loop Remediation:
-  1. Digital twin configuration synthesis from active strongSwan/IPsec state.
-  2. Candidate patch generation for observed compliance and security findings.
-  3. Safe sandboxed swanctl simulation and syntax validation.
-  4. Closed-loop apply-and-verify workflow against Stage 2 network namespace testbed.
-  5. DO NOT start Stage 10 until explicitly instructed.
+- **Objective:** Trace one real capture through persisted ML, policy, evidence, reports, and browser UI; correct only demonstrated gaps. Then implement the user-approved revised follow-on stages 13–22.
 
 ---
 
@@ -1141,6 +1258,9 @@ ls -la "c:\SHARAN PROJECTS\TunnelTrace AI\docs"
 | 2026-09-24 02:00 | Principal ML & AI Systems Engineer | Stage 7 1D-CNN + Multimodal Fusion + Calibration + OOD + SHAP | Implemented 1D-CNN PyTorch/TorchScript, weighted fusion with JS divergence, temperature scaling calibration, Shannon entropy OOD gating, TreeSHAP attributions, Isolation Forest anomaly detector, and Alembic migration 0006. 239/239 tests passing. | Hand off to Stage 8 |
 | 2026-09-24 03:55 | Principal IPsec Security Engineer & Compliance Architect | Stage 8 Security, Compliance, Evidence & Scoring Engine | Implemented deterministic Policy-as-Code engine, 3-valued Kleene logic, safe YAML loader, 8 canonical rules, deduplicated 0-100 scoring engine with evidence coverage, deterministic risk engine, threat matrix THR-001..THR-008, 6-metric MFI, forensic evidence DAG with provenance resolver, cryptographic manifest, Alembic migration 0007, and REST endpoints. 37/37 Stage 8 tests passing, 276/276 total tests passing. Ruff 100% clean. Zero git commit/push. | Hand off to Stage 9 |
 | 2026-09-24 10:15 | Principal Full-Stack Architect & SOC Product Engineer | Stage 9 Full-Stack Product Integration & Reporting | Implemented unified Next.js 16 App Router frontend, TypeScript, Tailwind CSS v4, @xyflow/react, Apache ECharts, native WebSockets, Alembic migration 0008, Jinja2 publication-grade Executive & Technical reports with SHA-256 provenance hashes, PWA conservative caching, zero LLM report facts, truthful Stage 10/11 boundaries. 254/254 backend pytest tests passing, Next.js build clean with 0 errors, ESLint clean, Ruff clean. | Hand off to Stage 10 |
+| 2026-09-24 18:30 | Principal IPsec Automation Architect & Security Twin Engineer | Stage 10 Configuration Security Twin & Closed-Loop Remediation | Implemented Configuration Security Twin with counterfactual Policy-as-Code projection, Typed Configuration IR with 4 epistemic states, versioned deterministic template registry covering all 8 Stage 8 rules, formal Verification Proof Obligations, SAGA step journal runner with mandatory pre-apply backups & automatic rollback on failure, hash-bound operator approvals, fresh-SA establishment verification, dual-axis comparator, finding-level Verification Claim Ledger, Alembic migration 0009, 3-column Next.js frontend workbench, zero LLM calls in Stage 10, zero git commit/push. 15/15 Stage 10 tests passing, 269/269 total backend tests passing, Next.js build clean across all 16 routes with exit code 0. | Hand off to Stage 11 |
+| 2026-09-24 19:30 | Principal AI Systems Architect & Grounded RAG Engineer | Stage 11 Grounded AI Analyst / Local RAG | Implemented Grounded AI Analyst subsystem with evidence-first hybrid RAG over 7 normative standards (17 chunks), FactLock Context Assembler with SHA-256 state binding, Alembic migration 0010 (pgvector 768d + SQLite fallback), Ollama provider with semaphore concurrency limit & repair parser, empirical benchmark of Gemma 3 4B (150.0 Primary) and Qwen 3 4B (130.0 Fallback), Citation Integrity Gate, Claim Validation Gate, Answer Provenance Ledger, canonical abstention, full 2-column Next.js frontend workspace, zero LLM security authority, zero cloud API calls, zero git commit/push. 15/15 Stage 11 tests passing, 275/275 total backend tests passing, Next.js build clean across all 16 routes with exit code 0. | Hand off to Stage 12 |
+| 2026-09-24 19:55 | Principal Verification, Release & Systems Hardening Lead | Stage 12 End-to-End Validation, Hardening & SIH Demo Readiness | Executed full system validation and hardening across Stages 1–11. Authored 21 dedicated Stage 12 tests across protocol reconstruction, security guards, hardening/subprocess/secrets audits, and AI isolation/resilience (all 21 passed). Validated 305/305 tests passing across entire backend suite (100% pass rate in 42.41s). Validated Next.js 16.3.6 Turbopack production build with exit code 0 across 16 routes. Audited RTM (104 requirements tracked, 87 validated with zero false completion). Cryptographically verified 6/6 golden capture fixtures. Authored scripts/verify_rtm.py, scripts/demo_health.py, scripts/demo_reset.py, scripts/generate_release_manifest.py. Produced authoritative release_candidate_manifest.json (TT-SIH2026-RC1). Multi-tier demo resilience verified (L1 Live Testbed, L2 Validated PCAP, L3 Golden Cached Analysis). Air-gapped self-containment verified. Release candidate frozen. ZERO GIT COMMIT / ZERO GIT PUSH. | SIH 2026 Grand Finale Live Evaluation Rehearsal / Defect Fixing Only |
 
 ---
 

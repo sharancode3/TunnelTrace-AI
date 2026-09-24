@@ -327,3 +327,417 @@ export interface InterfaceMetadataDTO {
   lab_owned: boolean;
   operstate: string;
 }
+
+export interface SemanticDiffItemDTO {
+  field: string;
+  label: string;
+  current_value: any;
+  current_evidence_state: string;
+  proposed_value: any;
+  is_changed: boolean;
+  policy_impact: string;
+}
+
+export interface ProjectedFindingDTO {
+  finding_id: string;
+  rule_id: string;
+  title: string;
+  severity: string;
+  root_cause_key: string;
+  projected_state: string;
+  rationale: string;
+}
+
+export interface ProjectedRegressionAuditDTO {
+  targeted_finding_ids: string[];
+  targeted_rule_ids: string[];
+  projected_resolved_findings: ProjectedFindingDTO[];
+  projected_remaining_findings: ProjectedFindingDTO[];
+  projected_new_regressions: ProjectedFindingDTO[];
+  baseline_score: number | null;
+  projected_score: number | null;
+  projected_score_delta: number | null;
+  baseline_risk_score: number | null;
+  projected_risk_score: number | null;
+  projected_risk_delta: number | null;
+  has_blocking_regressions: boolean;
+  proof_obligations: any[];
+  disclaimer: string;
+}
+
+export interface TwinResponseDTO {
+  twin_id: string;
+  analysis_id: string;
+  status: string;
+  proposal_hash: string;
+  current_snapshot: Record<string, any>;
+  proposed_ir: Record<string, any>;
+  rendered_proposed_config: string;
+  semantic_diff: SemanticDiffItemDTO[];
+  text_diff: string;
+  projected_regression_audit: ProjectedRegressionAuditDTO;
+  projected_score: number | null;
+  projected_score_delta: number | null;
+  disclaimer: string;
+}
+
+export interface PreflightCheckDTO {
+  code: string;
+  status: "PASS" | "FAIL" | "WARN";
+  message: string;
+}
+
+export interface PreflightResponseDTO {
+  status: "READY" | "BLOCKED" | "WARNING";
+  is_ready: boolean;
+  checks: PreflightCheckDTO[];
+  blocking_reasons: string[];
+}
+
+export interface RemediationRunStepDTO {
+  sequence: number;
+  action_type: string;
+  status: "PENDING" | "RUNNING" | "SUCCESS" | "FAILED" | "SKIPPED";
+  safe_output: Record<string, any> | null;
+  error_code: string | null;
+  created_at: string;
+}
+
+export interface RemediationRunResponseDTO {
+  run_id: string;
+  twin_id: string;
+  status: string;
+  proposal_hash: string;
+  lab_instance_id: string;
+  operator_id: string;
+  rollback_state: string;
+  rollback_reason: string | null;
+  error_message: string | null;
+  steps: RemediationRunStepDTO[];
+  executed_at: string;
+  completed_at: string | null;
+}
+
+export interface VerificationClaimDTO {
+  claim_id: string;
+  rule_id: string;
+  rule_version: string;
+  root_cause_key: string;
+  claim_result: "VERIFIED_RESOLVED" | "VERIFIED_NOT_RESOLVED" | "PARTIALLY_VERIFIED" | "UNKNOWN" | "NOT_APPLICABLE";
+  reason_code: string;
+  expected_condition: string | null;
+  baseline_evidence: Record<string, any> | null;
+  post_evidence: Record<string, any> | null;
+}
+
+export interface VerificationResponseDTO {
+  verification_id: string;
+  remediation_run_id: string;
+  baseline_analysis_id: string;
+  post_analysis_id: string | null;
+  post_capture_id: string | null;
+  verification_result: "VERIFIED_RESOLVED" | "VERIFIED_NOT_RESOLVED" | "PARTIALLY_VERIFIED" | "VERIFICATION_FAILED" | "UNKNOWN";
+  security_result: "RESOLVED" | "NOT_RESOLVED" | "PARTIAL" | "UNKNOWN" | "FAILED";
+  operational_result: "HEALTHY" | "DEGRADED" | "FAILED";
+  baseline_score: number | null;
+  verified_score: number | null;
+  score_delta: number | null;
+  claims: VerificationClaimDTO[];
+  finding_diff_summary: Record<string, any> | null;
+  regression_summary: Record<string, any> | null;
+  verified_at: string;
+}
+
+// -----------------------------------------------------------------------------
+// Stage 11: Grounded AI Analyst & Local RAG Types
+// -----------------------------------------------------------------------------
+
+export interface AIChatClaimDTO {
+  claim_id: string;
+  text: string;
+  claim_type: "PROTOCOL_FACT" | "POLICY_FINDING" | "SECURITY_SCORE" | "ML_INFERENCE" | "STANDARD_REQUIREMENT" | "REMEDIATION_STATUS";
+  epistemic_state: "VERIFIED" | "INFERRED" | "UNKNOWN" | "PROJECTED" | "VERIFIED_POST_REMEDIATION";
+  citation_ids: string[];
+}
+
+export interface AIChatCitationDTO {
+  source_id: string;
+  source_type: "fact" | "finding" | "rule" | "score" | "flow" | "standard" | "twin" | "verification" | "claim";
+  locator: string;
+  title: string;
+  excerpt?: string;
+}
+
+export interface AIChatQueryResponseDTO {
+  query_run_id: string;
+  session_id: string;
+  analysis_id: string;
+  status: "ANSWERED" | "INSUFFICIENT_EVIDENCE" | "OUT_OF_SCOPE" | "MODEL_UNAVAILABLE" | "FAILED";
+  answer: string;
+  claims: AIChatClaimDTO[];
+  citations: AIChatCitationDTO[];
+  limitations: string[];
+  provenance: {
+    answer_hash: string;
+    fact_lock_hash: string;
+    prompt_template_version: string;
+    model_name: string;
+    verified_at: string;
+  } | null;
+  metrics: {
+    generation_ms?: number;
+    total_ms: number;
+    citation_validity_rate?: number;
+    prompt_eval_count?: number;
+    eval_count?: number;
+  };
+}
+
+export interface AIChatMessageDTO {
+  id: string;
+  role: "user" | "assistant" | "system";
+  content: string;
+  status: string;
+  claims: AIChatClaimDTO[] | null;
+  citations: AIChatCitationDTO[] | null;
+  limitations: string[] | null;
+  created_at: string;
+}
+
+export interface AIChatSessionHistoryDTO {
+  session_id: string;
+  analysis_id: string | null;
+  title: string;
+  model_name: string;
+  is_active: boolean;
+  messages: AIChatMessageDTO[];
+}
+
+export interface EvidenceSearchResponseDTO {
+  analysis_id: string;
+  query: string;
+  intent: string;
+  fact_lock_hash: string;
+  matched_facts: Array<{
+    source_id: string;
+    fact_type: string;
+    name: string;
+    value: any;
+    epistemic_state: string;
+    entity: string;
+  }>;
+  matched_standards: Array<{
+    source_id: string;
+    document_code: string;
+    section_reference: string;
+    section_title: string;
+    authority: string;
+    similarity: number;
+    excerpt: string;
+  }>;
+}
+
+export interface AIHealthResponseDTO {
+  status: "healthy" | "degraded" | "offline";
+  runtime: string;
+  base_url: string;
+  primary_model: string;
+  primary_model_available: boolean;
+  fallback_model: string;
+  fallback_model_available: boolean;
+  embedding_model: string;
+  embedding_model_available: boolean;
+  embedding_dimension: number;
+  knowledge_index_ready: boolean;
+  total_documents_indexed: number;
+  total_chunks_indexed: number;
+  installed_models: string[];
+}
+
+export interface DiscoveredServiceDTO {
+  id: string;
+  protocol: string;
+  port: number;
+  state: string;
+  state_reason: string | null;
+  service_name: string | null;
+  product: string | null;
+  version: string | null;
+  extra_info: string | null;
+  confidence: number | null;
+}
+
+export interface DiscoveredHostDTO {
+  id: string;
+  ip_address: string;
+  ip_version: string;
+  state: string;
+  hostnames: string[] | null;
+  services: DiscoveredServiceDTO[];
+}
+
+export interface DiscoveryJobDTO {
+  id: string;
+  job_name: string;
+  operator_id: string;
+  authorization_reference: string;
+  authorization_attestation: string;
+  authorized_at: string;
+  profile: string;
+  requested_targets: string[];
+  canonical_targets: string[];
+  exclusions: string[];
+  permitted_ports: number[];
+  status:
+    | "QUEUED"
+    | "VALIDATING"
+    | "RUNNING"
+    | "COMPLETED"
+    | "COMPLETED_WITH_AMBIGUITY"
+    | "CANCELLED"
+    | "FAILED"
+    | "REJECTED"
+    | "TOOL_UNAVAILABLE";
+  failure_reason: string | null;
+  raw_output_sha256: string | null;
+  output_bytes_count: number | null;
+  tool_version: string | null;
+  target_count: number;
+  hosts_up_count: number;
+  services_discovered_count: number;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  hosts: DiscoveredHostDTO[];
+}
+
+export interface DiscoveryStatusDTO {
+  enabled: boolean;
+  nmap_available: boolean;
+  nmap_version: string | null;
+  nmap_path: string | null;
+  max_targets: number;
+  max_ports: number;
+  timeout_sec: number;
+  rate_limit_pps: number;
+  available_profiles: Array<{ name: string; description: string; protocol: string }>;
+}
+
+export interface DiscoveryJobCreateRequestDTO {
+  job_name: string;
+  operator_id: string;
+  authorization_reference: string;
+  authorization_attestation: string;
+  profile: string;
+  requested_targets: string[];
+  exclusions?: string[];
+  permitted_ports?: number[];
+}
+
+export interface IkeAssessmentStatusDTO {
+  enabled: boolean;
+  ike_scan_available: boolean;
+  ike_scan_version: string | null;
+  ike_scan_path: string | null;
+  timeout_sec: number;
+  allow_experimental_v2: boolean;
+  available_profiles: Array<{
+    name: string;
+    description: string;
+    ike_version: string;
+    is_experimental: boolean;
+    default_port: number;
+    permitted_ports: number[];
+    retries: number;
+    timeout_ms: number;
+  }>;
+}
+
+export interface IkeProbeResultDTO {
+  id: string;
+  target_ip: string;
+  target_port: number;
+  response_category: string;
+  ike_version: string;
+  handshake_type: string | null;
+  notify_code: number | null;
+  notify_message: string | null;
+  vendor_ids: string[] | null;
+  transforms_returned: Array<Record<string, any>> | null;
+  rtt_ms: number | null;
+  is_experimental: boolean;
+  created_at: string;
+}
+
+export interface IkeJobResponseDTO {
+  id: string;
+  job_name: string;
+  operator_id: string;
+  authorization_reference: string;
+  target_ip: string;
+  target_port: number;
+  profile: string;
+  ike_version_requested: string;
+  status:
+    | "QUEUED"
+    | "VALIDATING"
+    | "RUNNING"
+    | "COMPLETED"
+    | "CANCELLED"
+    | "FAILED"
+    | "TOOL_UNAVAILABLE";
+  failure_reason: string | null;
+  raw_output_sha256: string | null;
+  output_bytes_count: number | null;
+  tool_version: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string;
+  results: IkeProbeResultDTO[];
+}
+
+export interface IkeJobCreateRequestDTO {
+  job_name: string;
+  operator_id: string;
+  authorization_reference: string;
+  authorization_attestation: string;
+  profile_name: string;
+  target: string;
+  port?: number;
+  analysis_id?: string;
+}
+
+export interface IkeConcordanceDTO {
+  id: string;
+  analysis_id: string;
+  ike_job_id: string | null;
+  target_ip: string;
+  concordance_status:
+    | "CONSISTENT"
+    | "CONFLICT"
+    | "INSUFFICIENT_EVIDENCE"
+    | "NOT_COMPARABLE";
+  passive_ike_versions: string[];
+  active_ike_versions: string[];
+  passive_selected_cipher: string | null;
+  active_accepted_cipher: string | null;
+  concordance_details: {
+    passive_lane?: {
+      ike_versions: string[];
+      selected_cipher: string | null;
+      associated_frames: number[];
+      has_initial_negotiation: boolean;
+    };
+    active_lane?: {
+      ike_versions: string[];
+      accepted_cipher: string | null;
+      response_categories: string[];
+      is_experimental: boolean;
+      rtt_ms: number | null;
+    };
+    lab_ground_truth_lane?: any;
+  };
+  evaluated_at: string;
+}
+
+

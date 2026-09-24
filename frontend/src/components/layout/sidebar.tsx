@@ -19,6 +19,7 @@ import {
   Bot,
   FlaskConical,
   Layers,
+  Globe,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -52,6 +53,13 @@ export function Sidebar({ analysisId, isOpen = true, onClose }: SidebarProps) {
           name: "Analysis History",
           href: "/analyses",
           icon: Layers,
+          disabled: false,
+        },
+        {
+          name: "Asset Discovery",
+          href: "/discovery",
+          icon: Globe,
+          stageTag: "STAGE 2",
           disabled: false,
         },
       ],

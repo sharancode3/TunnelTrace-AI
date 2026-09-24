@@ -13,7 +13,9 @@ import {
   EvidenceGraphDTO,
   FingerprintabilityDTO,
   InterfaceMetadataDTO,
+  PreflightResponseDTO,
   ProtocolSummaryDTO,
+  RemediationRunResponseDTO,
   ReportListResponseDTO,
   ReportResponseDTO,
   RiskAssessmentDTO,
@@ -22,7 +24,14 @@ import {
   SecurityScoreDTO,
   ThreatInstanceDTO,
   TrafficSummaryResponseDTO,
+  TwinResponseDTO,
+  VerificationResponseDTO,
+  AIChatQueryResponseDTO,
+  AIChatSessionHistoryDTO,
+  EvidenceSearchResponseDTO,
+  AIHealthResponseDTO,
 } from "./types";
+
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
@@ -209,9 +218,158 @@ export const api = {
     },
   },
 
+  remediation: {
+    getTwin: async (analysisId: string): Promise<TwinResponseDTO> => {
+      return request<TwinResponseDTO>(`/analyses/${analysisId}/remediation/twin`);
+    },
+    updateProposal: async (
+      analysisId: string,
+      proposalText: string
+    ): Promise<TwinResponseDTO> => {
+      return request<TwinResponseDTO>(`/analyses/${analysisId}/remediation/twin/proposals`, {
+        method: "POST",
+        body: JSON.stringify({ proposal_swanctl_text: proposalText }),
+      });
+    },
+    runPreflight: async (
+      analysisId: string,
+      twinId: string,
+      proposalHash: string
+    ): Promise<PreflightResponseDTO> => {
+      return request<PreflightResponseDTO>(
+        `/analyses/${analysisId}/remediation/twin/preflight?twin_id=${twinId}&proposal_hash=${proposalHash}`,
+        { method: "POST" }
+      );
+    },
+    apply: async (
+      analysisId: string,
+      data: {
+        twin_id: string;
+        proposal_hash: string;
+        lab_instance_id?: string;
+        confirm_controlled_lab_only: boolean;
+      }
+    ): Promise<RemediationRunResponseDTO> => {
+      return request<RemediationRunResponseDTO>(`/analyses/${analysisId}/remediation/apply`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    getRun: async (
+      analysisId: string,
+      runId: string
+    ): Promise<RemediationRunResponseDTO> => {
+      return request<RemediationRunResponseDTO>(`/analyses/${analysisId}/remediation/runs/${runId}`);
+    },
+    getVerification: async (
+      analysisId: string,
+      verificationId: string
+    ): Promise<VerificationResponseDTO> => {
+      return request<VerificationResponseDTO>(
+        `/analyses/${analysisId}/remediation/verifications/${verificationId}`
+      );
+    },
+    getLatestVerification: async (
+      analysisId: string
+    ): Promise<VerificationResponseDTO | null> => {
+      return request<VerificationResponseDTO | null>(`/analyses/${analysisId}/remediation/latest-verification`);
+    },
+  },
+
+  ai: {
+    chat: async (
+      analysisId: string,
+      data: {
+        question: string;
+        session_id?: string;
+        model_override?: string;
+      }
+    ): Promise<AIChatQueryResponseDTO> => {
+      return request<AIChatQueryResponseDTO>(`/analyses/${analysisId}/ai/chat`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    getHistory: async (
+      analysisId: string,
+      sessionId: string
+    ): Promise<AIChatSessionHistoryDTO> => {
+      return request<AIChatSessionHistoryDTO>(`/analyses/${analysisId}/ai/chat/${sessionId}`);
+    },
+    searchEvidenceOnly: async (
+      analysisId: string,
+      query: string
+    ): Promise<EvidenceSearchResponseDTO> => {
+      return request<EvidenceSearchResponseDTO>(`/analyses/${analysisId}/ai/search?q=${encodeURIComponent(query)}`);
+    },
+    getHealth: async (): Promise<AIHealthResponseDTO> => {
+      return request<AIHealthResponseDTO>("/ai/health");
+    },
+    getKnowledgeStatus: async (): Promise<any> => {
+      return request("/ai/knowledge/status");
+    },
+  },
+
+  discovery: {
+    getStatus: async (): Promise<import("./types").DiscoveryStatusDTO> => {
+      return request<import("./types").DiscoveryStatusDTO>("/discovery/status");
+    },
+    listJobs: async (operatorId?: string): Promise<import("./types").DiscoveryJobDTO[]> => {
+      const q = operatorId ? `?operator_id=${encodeURIComponent(operatorId)}` : "";
+      return request<import("./types").DiscoveryJobDTO[]>(`/discovery/jobs${q}`);
+    },
+    getJob: async (jobId: string): Promise<import("./types").DiscoveryJobDTO> => {
+      return request<import("./types").DiscoveryJobDTO>(`/discovery/jobs/${jobId}`);
+    },
+    createJob: async (
+      data: import("./types").DiscoveryJobCreateRequestDTO
+    ): Promise<import("./types").DiscoveryJobDTO> => {
+      return request<import("./types").DiscoveryJobDTO>("/discovery/jobs", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    cancelJob: async (jobId: string): Promise<import("./types").DiscoveryJobDTO> => {
+      return request<import("./types").DiscoveryJobDTO>(`/discovery/jobs/${jobId}/cancel`, {
+        method: "POST",
+      });
+    },
+  },
+
+  ikeAssessment: {
+    getStatus: async (): Promise<import("./types").IkeAssessmentStatusDTO> => {
+      return request<import("./types").IkeAssessmentStatusDTO>("/ike-assessment/status");
+    },
+    getConcordance: async (analysisId: string): Promise<import("./types").IkeConcordanceDTO[]> => {
+      return request<import("./types").IkeConcordanceDTO[]>(
+        `/ike-assessment/analyses/${analysisId}/concordance`
+      );
+    },
+    listJobs: async (limit = 50, offset = 0): Promise<import("./types").IkeJobResponseDTO[]> => {
+      return request<import("./types").IkeJobResponseDTO[]>(
+        `/ike-assessment/jobs?limit=${limit}&offset=${offset}`
+      );
+    },
+    getJob: async (jobId: string): Promise<import("./types").IkeJobResponseDTO> => {
+      return request<import("./types").IkeJobResponseDTO>(`/ike-assessment/jobs/${jobId}`);
+    },
+    createJob: async (
+      data: import("./types").IkeJobCreateRequestDTO
+    ): Promise<import("./types").IkeJobResponseDTO> => {
+      return request<import("./types").IkeJobResponseDTO>("/ike-assessment/jobs", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+  },
+
   system: {
     getHealth: async (): Promise<{ status: string; checks: Record<string, any> }> => {
       return request("/system/health");
     },
   },
 };
+
+export const apiClient = api;
+
+

@@ -31,6 +31,16 @@ def analyze_capture_task(self, analysis_id_str: str) -> dict[str, str]:
                 engine = ReconstructionEngine(db)
                 await engine.execute_reconstruction(analysis_id)
 
+                # Stage 7/9: Execute ML flow classification if model bundle available
+                try:
+                    from app.ml.service import execute_flow_classification
+
+                    await execute_flow_classification(analysis_id, db)
+                except Exception as ml_err:
+                    logger.warning(
+                        f"ML classification skipped or encountered error for '{analysis_id}': {ml_err}"
+                    )
+
                 # Stage 8: Execute deterministic Policy-as-Code, Scoring & Evidence Graph
                 from app.api.v1.security.router import (
                     _ensure_assessment_executed,

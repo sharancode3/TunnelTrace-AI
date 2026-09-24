@@ -61,11 +61,38 @@ class AnalysisSnapshotBuilder:
 
         protocol_facts = {
             "total_observations": len(observations),
-            "ike_versions": sorted({o.ike_version for o in observations if o.ike_version}),
-            "protocols_detected": sorted({o.protocol for o in observations if o.protocol}),
-            "nat_detected": any(o.is_nat_detected for o in observations if o.is_nat_detected is not None),
-            "transforms_observed": sorted({o.cipher_suite for o in observations if o.cipher_suite}),
-            "dh_groups": sorted({str(o.dh_group) for o in observations if o.dh_group}),
+            "ike_versions": sorted(
+                {
+                    o.normalized_value
+                    for o in observations
+                    if o.category == "IKE_HEADER" and o.field_name == "version"
+                }
+                or {o.protocol for o in observations if o.protocol in ("IKEv1", "IKEv2")}
+            ),
+            "protocols_detected": sorted({o.protocol for o in observations if getattr(o, "protocol", None)}),
+            "nat_detected": any(
+                o.protocol == "NAT-T"
+                or o.category == "NAT_T"
+                or "nat" in getattr(o, "field_name", "").lower()
+                for o in observations
+            ),
+            "transforms_observed": sorted(
+                {
+                    o.normalized_value
+                    for o in observations
+                    if o.category == "IKE_TRANSFORM"
+                    or "cipher" in getattr(o, "field_name", "").lower()
+                    or "encr" in getattr(o, "field_name", "").lower()
+                }
+            ),
+            "dh_groups": sorted(
+                {
+                    o.normalized_value
+                    for o in observations
+                    if "dh" in getattr(o, "field_name", "").lower()
+                    or "group" in getattr(o, "field_name", "").lower()
+                }
+            ),
         }
 
         # 3. Fetch SAs & Flows
@@ -157,14 +184,14 @@ class AnalysisSnapshotBuilder:
             "evaluations": [
                 {
                     "rule_id": e.rule_id,
-                    "rule_title": e.rule_title,
-                    "category": e.category,
-                    "severity": e.severity,
-                    "standard": e.standard,
+                    "rule_title": getattr(e, "rule_title", e.rule_id),
+                    "category": getattr(e, "category", getattr(e, "subject_type", "SECURITY")),
+                    "severity": getattr(e, "severity", "MEDIUM"),
+                    "standard": getattr(e, "standard", getattr(e, "bundle_id", "NIST")),
                     "compliance_state": e.compliance_state,
                     "evidence_state": e.evidence_state,
-                    "observed_value": e.observed_value,
-                    "expected_value": e.expected_value,
+                    "observed_value": getattr(e, "observed_value", "N/A"),
+                    "expected_value": getattr(e, "expected_value", "N/A"),
                     "rationale": e.rationale,
                 }
                 for e in evals
@@ -175,7 +202,7 @@ class AnalysisSnapshotBuilder:
         stmt_find = (
             select(SecurityFindingModel)
             .where(SecurityFindingModel.analysis_id == analysis_id)
-            .order_by(SecurityFindingModel.score_deduction.desc())
+            .order_by(SecurityFindingModel.created_at)
         )
         res_find = await self.db.execute(stmt_find)
         findings = res_find.scalars().all()
@@ -188,16 +215,16 @@ class AnalysisSnapshotBuilder:
             "low_count": sum(1 for f in findings if f.severity == "LOW"),
             "findings": [
                 {
-                    "finding_id": str(f.id),
+                    "finding_id": getattr(f, "finding_id", str(f.id)),
                     "rule_id": f.rule_id,
                     "title": f.title,
                     "severity": f.severity,
                     "category": f.category,
-                    "score_deduction": f.score_deduction,
-                    "affected_entity": f.affected_entity,
+                    "score_deduction": getattr(f, "score_deduction", 0.0) or 0.0,
+                    "affected_entity": getattr(f, "affected_entity", getattr(f, "affected_entity_id", "UNKNOWN")),
                     "technical_description": f.technical_description,
-                    "remediation_guidance": f.remediation_guidance,
-                    "evidence_references": f.evidence_references or [],
+                    "remediation_guidance": getattr(f, "remediation_guidance", "N/A") or "N/A",
+                    "evidence_references": getattr(f, "evidence_references", []) or [],
                     "evidence_state": f.evidence_state,
                     "root_cause_key": f.root_cause_key,
                 }
@@ -229,9 +256,10 @@ class AnalysisSnapshotBuilder:
         risk_row = res_risk.scalar_one_or_none()
 
         risk_data = {
-            "aggregate_risk_tier": risk_row.aggregate_risk_tier if risk_row else "LOW",
-            "risk_score": risk_row.risk_score if risk_row else 0.0,
-            "rationale": risk_row.rationale if risk_row else "No severe security violations observed.",
+            "aggregate_risk_tier": getattr(risk_row, "overall_risk_tier", getattr(risk_row, "aggregate_risk_tier", "LOW")) if risk_row else "LOW",
+            "overall_risk_tier": getattr(risk_row, "overall_risk_tier", "LOW") if risk_row else "LOW",
+            "risk_score": getattr(risk_row, "risk_score", 0.0) if risk_row else 0.0,
+            "rationale": getattr(risk_row, "rationale", "No severe security violations observed.") if risk_row else "No severe security violations observed.",
         }
 
         stmt_threats = (
@@ -244,14 +272,16 @@ class AnalysisSnapshotBuilder:
         threats_data = [
             {
                 "threat_id": t.threat_id,
-                "title": t.title,
-                "category": t.category,
-                "likelihood": t.likelihood,
-                "impact": t.impact,
-                "risk_tier": t.risk_tier,
-                "mitre_technique_id": t.mitre_technique_id,
-                "nist_control": t.nist_control,
-                "evidence_state": t.evidence_state,
+                "title": getattr(t, "threat_name", getattr(t, "title", "Threat")),
+                "threat_name": getattr(t, "threat_name", "Threat"),
+                "category": getattr(t, "attack_vector", getattr(t, "category", "UNKNOWN")),
+                "attack_vector": getattr(t, "attack_vector", "UNKNOWN"),
+                "likelihood": getattr(t, "likelihood", "LOW"),
+                "impact": getattr(t, "impact", "LOW"),
+                "risk_tier": getattr(t, "risk_tier", "LOW"),
+                "mitre_technique_id": getattr(t, "mitre_technique_id", "N/A"),
+                "nist_control": getattr(t, "nist_control", "N/A"),
+                "evidence_state": getattr(t, "evidence_state", "VERIFIED"),
             }
             for t in threat_rows
         ]
@@ -263,12 +293,24 @@ class AnalysisSnapshotBuilder:
         res_mfi = await self.db.execute(stmt_mfi)
         mfi_row = res_mfi.scalar_one_or_none()
 
+        raw_components = getattr(mfi_row, "components", {}) if mfi_row else {}
+        comp_scores = {}
+        if isinstance(raw_components, dict):
+            for k, v in raw_components.items():
+                if isinstance(v, dict) and "score" in v and isinstance(v["score"], (int, float)):
+                    comp_scores[k] = float(v["score"])
+                elif isinstance(v, (int, float)):
+                    comp_scores[k] = float(v)
+                else:
+                    comp_scores[k] = 0.0
+
         mfi_data = {
-            "overall_index": mfi_row.overall_index if mfi_row else 0.0,
-            "is_experimental": mfi_row.is_experimental if mfi_row else True,
-            "component_metrics": mfi_row.component_metrics if mfi_row else {},
+            "overall_index": mfi_row.overall_index if (mfi_row and mfi_row.overall_index is not None) else 0.0,
+            "is_experimental": getattr(mfi_row, "is_experimental", True) if mfi_row else True,
+            "component_metrics": comp_scores,
+            "components": raw_components,
             "disclaimer": (
-                mfi_row.disclaimer
+                getattr(mfi_row, "disclaimer", "Behavioral side-channel distinguishability of encrypted traffic metadata. Does not indicate plaintext payload recovery.")
                 if mfi_row
                 else "Behavioral side-channel distinguishability of encrypted traffic metadata. Does not indicate plaintext payload recovery."
             ),

@@ -20,6 +20,7 @@ The documentation is organized into two primary categories:
 | **Requirements Traceability Matrix (RTM)** | [`docs/requirements/RTM.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/requirements/RTM.md) | 37 Sections: 25-column matrix mapping all 55 NTRO PS requirements to components, tests, and demo proofs. |
 | **Testing, Validation & Evaluation Plan** | [`docs/requirements/TESTING_VALIDATION_PLAN.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/requirements/TESTING_VALIDATION_PLAN.md) | 99 Sections: 34 test matrices, V&V levels L1–L10, 31-step Golden Acceptance Flow, and zero-hallucination verification rules. |
 | **User / Analyst Guide + Demo Runbook** | [`docs/requirements/USER_GUIDE_AND_DEMO_RUNBOOK.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/requirements/USER_GUIDE_AND_DEMO_RUNBOOK.md) | 96 Sections: Complete analyst user manual, evidence interpretation, 12-step SIH Demo Runbook, and 3-tier fallback matrix. |
+| **Expert-Revised Implementation Roadmap** | [`docs/requirements/EXPERT_REVISED_IMPLEMENTATION_ROADMAP.md`](file:///c:/SHARAN%20PROJECTS/TunnelTrace%20AI/docs/requirements/EXPERT_REVISED_IMPLEMENTATION_ROADMAP.md) | As-built audit gate plus bounded tool integrations, monitoring, drift, risk context, ML validation, replay, remediation, SOC UX, and release acceptance. |
 
 ---
 

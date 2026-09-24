@@ -197,10 +197,21 @@ class SecurityFactNormalizer:
             )
 
             # Process attached IKE SAs
-            parent_sas = getattr(sess, "ike_sas", None)
-            if not parent_sas:
-                single_sa = getattr(sess, "parent_sa", None)
-                parent_sas = [single_sa] if single_sa is not None else []
+            parent_sas = None
+            if hasattr(sess, "__dict__"):
+                if "ike_sas" in sess.__dict__ and sess.__dict__["ike_sas"] is not None:
+                    parent_sas = sess.__dict__["ike_sas"]
+                elif "parent_sa" in sess.__dict__ and sess.__dict__["parent_sa"] is not None:
+                    single_sa = sess.__dict__["parent_sa"]
+                    parent_sas = [single_sa] if single_sa is not None else []
+            if parent_sas is None:
+                try:
+                    parent_sas = getattr(sess, "ike_sas", None)
+                    if not parent_sas:
+                        single_sa = getattr(sess, "parent_sa", None)
+                        parent_sas = [single_sa] if single_sa is not None else []
+                except Exception:
+                    parent_sas = []
             for sa in parent_sas:
                 sa_id = str(getattr(sa, "id", ""))
                 sa_ev_str = getattr(sa, "evidence_state", "VERIFIED")

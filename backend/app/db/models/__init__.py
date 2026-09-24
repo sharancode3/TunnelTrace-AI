@@ -24,6 +24,33 @@ from app.db.models.reconstruction import (
     IKESession,
     TrafficSelector,
 )
+from app.db.models.remediation import (
+    ConfigurationSnapshotModel,
+    ConfigurationTwinModel,
+    RemediationRunModel,
+    RemediationRunStepModel,
+    RemediationVerificationClaimModel,
+    RemediationVerificationModel,
+)
+from app.db.models.ai import (
+    AIChatMessageModel,
+    AIChatSessionModel,
+    AnswerProvenanceRecordModel,
+    KnowledgeChunkModel,
+    KnowledgeDocumentModel,
+    KnowledgeIndexVersionModel,
+    RAGQueryRunModel,
+)
+from app.db.models.discovery import (
+    DiscoveredHost,
+    DiscoveredService,
+    DiscoveryJob,
+)
+from app.db.models.ike_assessment import (
+    IkeAssessmentJob,
+    IkeConcordanceRecord,
+    IkeProbeResult,
+)
 from app.db.models.report import ReportModel
 from app.db.models.security import (
     ComplianceEvaluationModel,
@@ -62,4 +89,24 @@ __all__ = [
     "FingerprintabilityAssessmentModel",
     "EvidenceGraphModel",
     "ReportModel",
+    "ConfigurationSnapshotModel",
+    "ConfigurationTwinModel",
+    "RemediationRunModel",
+    "RemediationRunStepModel",
+    "RemediationVerificationModel",
+    "RemediationVerificationClaimModel",
+    "KnowledgeDocumentModel",
+    "KnowledgeChunkModel",
+    "KnowledgeIndexVersionModel",
+    "AIChatSessionModel",
+    "AIChatMessageModel",
+    "RAGQueryRunModel",
+    "AnswerProvenanceRecordModel",
+    "DiscoveryJob",
+    "DiscoveredHost",
+    "DiscoveredService",
+    "IkeAssessmentJob",
+    "IkeProbeResult",
+    "IkeConcordanceRecord",
 ]
+
