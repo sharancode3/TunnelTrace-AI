@@ -1,9 +1,8 @@
-"""Pydantic request and response schemas for Stage 3 REST endpoints."""
-
+import re
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class CaptureResponseDTO(BaseModel):
@@ -44,6 +43,24 @@ class AnalysisRunResponseDTO(BaseModel):
     completed_at: datetime | None = None
     error_code: str | None = None
     error_message: str | None = None
+    parent_analysis_id: uuid.UUID | None = None
+    replay_mode: str | None = None
+    provenance_metadata: dict | None = None
+    created_at: datetime
+
+
+class ReplayExecutionResponseDTO(BaseModel):
+    """Response payload returned when a forensic re-analysis run is executed."""
+
+    child_analysis_id: uuid.UUID
+    parent_analysis_id: uuid.UUID
+    replay_mode: str
+    status: str
+    artifact_integrity: str
+    comparison_status: str
+    summary: str
+    differences: dict | None = None
+    metrics: dict | None = None
     created_at: datetime
 
 
@@ -61,10 +78,33 @@ class InterfaceMetadataDTO(BaseModel):
 class StartLiveCaptureRequestDTO(BaseModel):
     """Request payload to initiate authorized live packet capture."""
 
-    interface_id: str = Field(..., description="Target network interface (must be in allowlist)")
-    duration_sec: int | None = Field(None, description="Optional maximum capture duration in seconds")
-    capture_profile: str = Field(default="IPSEC_RELEVANT", description="Capture profile preset")
-    bpf_filter: str | None = Field(None, description="Optional BPF filter expression")
+    interface_id: str = Field(..., max_length=32, description="Target network interface (must be in allowlist)")
+    duration_sec: int | None = Field(None, ge=1, le=300, description="Optional maximum capture duration in seconds (1-300)")
+    capture_profile: str = Field(default="IPSEC_RELEVANT", max_length=64, description="Capture profile preset")
+    bpf_filter: str | None = Field(None, max_length=256, description="Optional BPF filter expression")
+
+    @field_validator("interface_id")
+    @classmethod
+    def validate_interface_id(cls, v: str) -> str:
+        clean = v.strip()
+        if not re.match(r"^[a-zA-Z0-9_\-\.]+$", clean):
+            raise ValueError("interface_id contains invalid characters")
+        return clean
+
+    @field_validator("bpf_filter")
+    @classmethod
+    def validate_bpf_filter(cls, v: str | None) -> str | None:
+        if v is None:
+            return None
+        clean = v.strip()
+        if not clean:
+            return None
+        for forbidden in (";", "&", "|", "`", "$", "(", ")", ">", "<", "\n", "\r", "\t", "\\"):
+            if forbidden in clean:
+                raise ValueError(f"bpf_filter contains forbidden shell character: {forbidden!r}")
+        if not re.match(r"^[a-zA-Z0-9\s_\-\.:/]+$", clean):
+            raise ValueError(f"bpf_filter contains invalid characters: '{clean}'")
+        return clean
 
 
 class LiveCaptureSessionResponseDTO(BaseModel):
@@ -109,6 +149,8 @@ class AnalysisListItemDTO(BaseModel):
     security_score: float | None = None
     critical_findings: int = 0
     high_findings: int = 0
+    parent_analysis_id: uuid.UUID | None = None
+    replay_mode: str | None = None
 
 
 class TrafficFlowItemDTO(BaseModel):
@@ -123,12 +165,19 @@ class TrafficFlowItemDTO(BaseModel):
     packet_count: int
     byte_count: int
     association_state: str
+    input_status: str | None = None
+    supervised_hypothesis: str | None = None
     known_class: str | None = None
     final_class: str | None = None
+    accepted_prediction: str | None = None
     calibrated_confidence: float | None = None
+    calibration_status: str | None = None
     normalized_entropy: float | None = None
     ood_status: str | None = None
     behavioral_anomaly_status: str | None = None
+    anomaly_score: float | None = None
+    is_degraded: bool | None = None
+    degraded_reason: str | None = None
     top_shap_features: list[dict] | None = None
 
 
@@ -141,6 +190,9 @@ class TrafficSummaryResponseDTO(BaseModel):
     classes_detected: list[str]
     ood_count: int
     anomaly_count: int
+    ml_run_status: str = "NOT_CONFIGURED"
+    model_version: str | None = None
+    model_bundle_id: str | None = None
     flows: list[TrafficFlowItemDTO]
 
 

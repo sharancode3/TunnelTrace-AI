@@ -2,13 +2,18 @@
 
 Maps active SecurityFindings to concrete ThreatInstances using the static,
 pre-authored ThreatCatalog. Prohibits any generative hallucination of threats.
+Binds canonical Threat Catalog content hash and verified MITRE ATT&CK metadata.
 """
 
 from __future__ import annotations
 
 from app.security.findings.models import SecurityFinding
 from app.security.risk.models import Impact, RiskTier
-from app.security.threats.catalog import find_threat_for_root_cause, get_threat_by_id
+from app.security.threats.catalog import (
+    compute_catalog_hash,
+    find_threat_for_root_cause,
+    get_threat_by_id,
+)
 from app.security.threats.models import ThreatInstance
 
 
@@ -16,7 +21,7 @@ class ThreatMatrixEngine:
     """Deterministic mapper converting findings into operational ThreatInstances."""
 
     def __init__(self) -> None:
-        self.catalog_hash = "threat_catalog_hash_canonical_v1"
+        self.catalog_hash = compute_catalog_hash()
 
     def map_findings(
         self,
@@ -71,6 +76,10 @@ class ThreatMatrixEngine:
                 evidence_state=finding.evidence_state,
                 authoritative_reference=entry.authoritative_reference,
                 mitre_attack_id=entry.mitre_attack_id,
+                mitre_attack_name=entry.mitre_attack.technique_name if entry.mitre_attack else None,
+                mitre_attack_url=entry.mitre_attack.source_url if entry.mitre_attack else None,
+                mitre_attack_rationale=entry.mitre_attack.rationale if entry.mitre_attack else None,
+                catalog_hash=self.catalog_hash,
             )
             threat_instances.append(instance)
 

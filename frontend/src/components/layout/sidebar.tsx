@@ -14,12 +14,13 @@ import {
   Grid,
   FileSearch,
   SlidersHorizontal,
-  RotateCcw,
   FileText,
   Bot,
   FlaskConical,
   Layers,
   Globe,
+  ShieldCheck,
+  FileKey2,
 } from "lucide-react";
 
 interface SidebarProps {
@@ -30,29 +31,18 @@ interface SidebarProps {
 
 export function Sidebar({ analysisId, isOpen = true, onClose }: SidebarProps) {
   const pathname = usePathname();
-
-  const id = analysisId || "default";
+  const id = analysisId || "";
 
   const navigationGroups = [
     {
-      title: "OVERVIEW",
+      title: "OPERATIONS & TELEMETRY",
+      subtitle: "Live monitoring, discovery & crypto posture",
       items: [
         {
-          name: "Command Center",
-          href: analysisId ? `/analyses/${id}/overview` : `/analyses`,
-          icon: Activity,
-          disabled: false,
-        },
-        {
-          name: "Analyze / Ingest",
-          href: "/analyses/new",
-          icon: UploadCloud,
-          disabled: false,
-        },
-        {
-          name: "Analysis History",
-          href: "/analyses",
-          icon: Layers,
+          name: "Live Monitoring",
+          href: "/monitoring",
+          icon: Radio,
+          stageTag: "LIVE",
           disabled: false,
         },
         {
@@ -62,34 +52,68 @@ export function Sidebar({ analysisId, isOpen = true, onClose }: SidebarProps) {
           stageTag: "STAGE 2",
           disabled: false,
         },
+        {
+          name: "Config & Cert Inventory",
+          href: "/inventory",
+          icon: FileKey2,
+          stageTag: "CRYPTO",
+          disabled: false,
+        },
+        {
+          name: "Vulnerability Feed",
+          href: "/vulnerabilities",
+          icon: ShieldCheck,
+          stageTag: "STAGE 4",
+          disabled: false,
+        },
       ],
     },
     {
-      title: "ANALYSIS",
+      title: "INVESTIGATIONS",
+      subtitle: "Capture ingestion & historical catalog",
       items: [
         {
-          name: "Protocol Intelligence",
+          name: "New Ingest / Upload",
+          href: "/analyses/new",
+          icon: UploadCloud,
+          disabled: false,
+        },
+        {
+          name: "Investigation Runs",
+          href: "/analyses",
+          icon: Layers,
+          disabled: false,
+        },
+      ],
+    },
+    {
+      title: "ACTIVE RUN FORENSICS",
+      subtitle: analysisId ? `Run: ${analysisId.slice(0, 8)}...` : "Select an investigation run below",
+      items: [
+        {
+          name: "Session Overview",
+          href: analysisId ? `/analyses/${id}/overview` : `/analyses`,
+          icon: Activity,
+          disabled: !analysisId,
+        },
+        {
+          name: "Protocol Dissection",
           href: `/analyses/${id}/protocol`,
           icon: Network,
           disabled: !analysisId,
         },
         {
-          name: "Security Association Explorer",
+          name: "SAs & ESP Flows",
           href: `/analyses/${id}/sas`,
           icon: GitBranch,
           disabled: !analysisId,
         },
         {
-          name: "Traffic Intelligence",
+          name: "Traffic & ML Intelligence",
           href: `/analyses/${id}/traffic`,
           icon: Radio,
           disabled: !analysisId,
         },
-      ],
-    },
-    {
-      title: "SECURITY",
-      items: [
         {
           name: "Security Assessment",
           href: `/analyses/${id}/security`,
@@ -109,7 +133,7 @@ export function Sidebar({ analysisId, isOpen = true, onClose }: SidebarProps) {
           disabled: !analysisId,
         },
         {
-          name: "Evidence Explorer",
+          name: "Evidence Provenance DAG",
           href: `/analyses/${id}/evidence`,
           icon: FileSearch,
           disabled: !analysisId,
@@ -117,50 +141,41 @@ export function Sidebar({ analysisId, isOpen = true, onClose }: SidebarProps) {
       ],
     },
     {
-      title: "REMEDIATION",
+      title: "REMEDIATION & TESTBED",
+      subtitle: "Digital twin diffs & strongSwan testbed",
       items: [
         {
           name: "Configuration Security Twin",
-          href: `/analyses/${id}/remediation`,
+          href: analysisId ? `/analyses/${id}/remediation` : "/lab",
           icon: SlidersHorizontal,
           stageTag: "STAGE 10",
-          disabled: false,
+          disabled: !analysisId,
         },
         {
-          name: "Remediation Verification",
-          href: `/analyses/${id}/remediation#verification`,
-          icon: RotateCcw,
-          stageTag: "STAGE 10",
+          name: "Lab Testbed Orchestrator",
+          href: "/lab",
+          icon: FlaskConical,
+          stageTag: "LAB",
           disabled: false,
         },
       ],
     },
     {
-      title: "OUTPUT",
+      title: "REPORTING & COPILOT",
+      subtitle: "Executive export & explainable AI",
       items: [
         {
-          name: "Executive & Technical Reports",
+          name: "Audit & Briefing Reports",
           href: `/analyses/${id}/reports`,
           icon: FileText,
           disabled: !analysisId,
         },
         {
-          name: "AI Analyst",
-          href: `/analyses/${id}/ai-analyst`,
+          name: "SOC AI Copilot",
+          href: analysisId ? `/analyses/${id}/ai-analyst` : "/analyses",
           icon: Bot,
           stageTag: "STAGE 11",
-          disabled: false,
-        },
-      ],
-    },
-    {
-      title: "LAB",
-      items: [
-        {
-          name: "Testbed Orchestrator",
-          href: "/lab",
-          icon: FlaskConical,
-          disabled: false,
+          disabled: !analysisId,
         },
       ],
     },
@@ -191,12 +206,29 @@ export function Sidebar({ analysisId, isOpen = true, onClose }: SidebarProps) {
       <div className="flex-1 overflow-y-auto p-3 space-y-4">
         {navigationGroups.map((group) => (
           <div key={group.title} className="space-y-1">
-            <h4 className="px-2 text-[10px] font-mono font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">
-              {group.title}
-            </h4>
-            <div className="space-y-0.5">
+            <div className="px-2 pb-0.5">
+              <h4 className="text-[10px] font-mono font-bold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+                {group.title}
+              </h4>
+              {group.subtitle && (
+                <p className="text-[9px] text-neutral-400 dark:text-neutral-500 leading-tight">
+                  {group.subtitle}
+                </p>
+              )}
+            </div>
+            <div className="space-y-0.5 pt-0.5">
               {group.items.map((item) => {
-                const isActive = pathname === item.href;
+                const isActive = (() => {
+                  if (item.disabled) return false;
+                  if (item.href === "/analyses") {
+                    return pathname === "/analyses";
+                  }
+                  if (item.href === "/analyses/new") {
+                    return pathname === "/analyses/new";
+                  }
+                  return pathname === item.href;
+                })();
+
                 const Icon = item.icon;
 
                 if (item.disabled) {
@@ -204,12 +236,13 @@ export function Sidebar({ analysisId, isOpen = true, onClose }: SidebarProps) {
                     <div
                       key={item.name}
                       className="flex items-center justify-between px-2.5 py-1.5 text-xs text-neutral-400 dark:text-neutral-600 cursor-not-allowed select-none"
+                      title="Select an investigation run to view this analysis"
                     >
                       <div className="flex items-center space-x-2.5">
                         <Icon className="w-3.5 h-3.5" />
-                        <span>{item.name}</span>
+                        <span className="truncate">{item.name}</span>
                       </div>
-                      <span className="text-[9px] font-mono uppercase text-neutral-400">
+                      <span className="text-[9px] font-mono uppercase text-neutral-400 border border-neutral-200 dark:border-neutral-800 px-1 py-0.2">
                         Select Run
                       </span>
                     </div>
@@ -229,7 +262,7 @@ export function Sidebar({ analysisId, isOpen = true, onClose }: SidebarProps) {
                   >
                     <div className="flex items-center space-x-2.5">
                       <Icon className="w-3.5 h-3.5" />
-                      <span>{item.name}</span>
+                      <span className="truncate">{item.name}</span>
                     </div>
                     {item.stageTag && (
                       <span className="text-[9px] font-mono px-1 py-0.2 border border-neutral-300 dark:border-neutral-700 text-neutral-400">
@@ -246,9 +279,9 @@ export function Sidebar({ analysisId, isOpen = true, onClose }: SidebarProps) {
 
       {/* Footer Info */}
       <div className="p-3 border-t border-neutral-300 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-950 text-[10px] font-mono text-neutral-500">
-        <div className="flex justify-between">
+        <div className="flex justify-between items-center">
           <span>NTRO / SIH 2026</span>
-          <span>v1.0.0-STAGE9</span>
+          <span className="text-emerald-600 dark:text-emerald-400 font-bold">● ONLINE</span>
         </div>
       </div>
     </aside>

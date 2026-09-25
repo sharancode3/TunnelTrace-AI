@@ -6,6 +6,7 @@ Combines topology creation, strongSwan orchestration, netem impairment, packet c
 traffic probing, XFRM state verification, provenance manifest creation, and safe teardown.
 """
 
+import hashlib
 from typing import Optional, Dict, Any, List
 import os
 import json
@@ -13,7 +14,7 @@ import time
 import secrets
 from datetime import datetime, timezone
 
-from lab.scenarios.schema import ScenarioDefinition, TopologyType, IPVersion
+from lab.scenarios.schema import ExpectedOutcome, ScenarioDefinition, TopologyType, IPVersion
 from lab.scenarios.loader import ScenarioLoader
 from lab.agent.operations.runner import SystemRunner
 from lab.agent.doctor import EnvironmentDoctor
@@ -43,7 +44,9 @@ class ExperimentRunner:
         self,
         scenario: ScenarioDefinition,
         run_id_prefix: str = "tt",
-        cleanup_after: bool = True
+        cleanup_after: bool = True,
+        parent_run_id: Optional[str] = None,
+        replay_mode: Optional[str] = None,
     ) -> RunManifest:
         """
         Executes a validated scenario end-to-end inside Linux namespaces.
@@ -69,7 +72,9 @@ class ExperimentRunner:
             topology_type=scenario.topology.value,
             started_at_utc=start_time.isoformat(),
             scenario_sha256=scenario.sha256_hash or "",
-            evidence_directory=run_storage_dir
+            evidence_directory=run_storage_dir,
+            parent_run_id=parent_run_id,
+            replay_mode=replay_mode,
         )
 
         # 1. Acquire Run Mutex Lock
@@ -96,10 +101,7 @@ class ExperimentRunner:
             manifest.address_plan = topo.address_plan
 
             # 4. Generate strongSwan & swanctl Configurations and Start Daemons
-            # Stop any global host strongswan daemon in WSL that might hold port 500/4500
-            self.runner.run_raw(["pkill", "-9", "-f", "/usr/lib/ipsec/charon"], check=False)
-            time.sleep(0.3)
-
+            # Daemons run strictly inside isolated network namespaces with private /var/run tmpfs mounts
             sw_mgr = StrongSwanManager(run_id=run_id, tracker=tracker, runner=self.runner)
             # Generate a secure, runtime-only ephemeral pre-shared key (never written to manifest or git)
             lab_psk = secrets.token_hex(32)
@@ -127,11 +129,14 @@ class ExperimentRunner:
                     "config_hash": cfg_hash
                 }
 
-            # Record non-secret configuration hashes
+            # Record non-secret configuration hashes and canonical redacted digest
             manifest.config_hashes = {
                 p: item["config_hash"] for p, item in peer_runtimes.items()
             }
             manifest.requested_configuration = scenario.model_dump()
+            from app.replay.redaction import compute_canonical_config_digest
+            _, cfg_digest = compute_canonical_config_digest(manifest.requested_configuration)
+            manifest.canonical_config_digest = cfg_digest
 
             # 5. Apply Network Impairment (tc/netem) if configured
             netem_mgr = NetemManager(self.runner, tracker)
@@ -166,12 +171,12 @@ class ExperimentRunner:
             init_info = peer_runtimes[init_peer]
             
             # Initiate child-sa
-            sw_mgr.initiate_tunnel(
+            init_res = sw_mgr.initiate_tunnel(
                 namespace=init_info["netns"],
                 vici_socket=init_info["vici_socket"],
                 child_name="child-sa"
             )
-            
+
             # Poll for SA establishment (up to 10 seconds)
             sa_established = False
             for _ in range(10):
@@ -204,6 +209,7 @@ class ExperimentRunner:
 
             # 9. Record Runtime State & XFRM Policies
             runtime_observations: Dict[str, Any] = {
+                "initiate_output": (init_res.stdout + "\n" + init_res.stderr).strip(),
                 "sa_status": {
                     peer: sw_mgr.query_sa_status(item["netns"], item["vici_socket"])
                     for peer, item in peer_runtimes.items()
@@ -242,19 +248,51 @@ class ExperimentRunner:
                     bpf_filter=cap.get("bpf_filter")
                 ))
 
-            # 12. Determine Final Validation Status
+            # 12. Determine Final Validation Status against ExpectedOutcome Contract
             wan_cap = next((c for c in manifest.captures if "wan" in c.capture_id), None)
             has_wan_packets = wan_cap and wan_cap.packet_count > 0
+            exp_outcome = getattr(scenario, "expected_outcome", ExpectedOutcome.SUCCESS)
 
-            if sa_established and ping_passed and has_wan_packets:
-                manifest.validation_status = "VALIDATED"
-                manifest.status_summary = "IPsec SA established, ping crossed tunnel successfully, and WAN PCAP captured genuine IPsec packets."
-            elif sa_established and ping_passed:
-                manifest.validation_status = "PARTIAL"
-                manifest.status_summary = "IPsec SA established and traffic passed, but WAN capture had 0 packets."
+            if exp_outcome == ExpectedOutcome.EXPECTED_REJECTION:
+                # Deliberate misconfiguration / proposal mismatch
+                if not sa_established:
+                    manifest.validation_status = "VALIDATED"
+                    manifest.status_summary = (
+                        f"Expected rejection verified: SA failed to establish as predicted "
+                        f"(reason: {scenario.expected_failure_reason or 'NO_PROPOSAL_CHOSEN'})."
+                    )
+                else:
+                    manifest.validation_status = "FAILED"
+                    manifest.status_summary = (
+                        "Negative test failed: IPsec SA unexpectedly established despite mismatched proposals."
+                    )
+            elif exp_outcome == ExpectedOutcome.EXPECTED_NEGATIVE:
+                # Deliberate weak cipher / legacy suite in isolated lab
+                if sa_established and ping_passed and has_wan_packets:
+                    manifest.validation_status = "VALIDATED"
+                    manifest.status_summary = (
+                        f"Isolated negative test verified: Weak suite established in lab namespace: {scenario.crypto_profile.value}."
+                    )
+                elif sa_established and ping_passed:
+                    manifest.validation_status = "PARTIAL"
+                    manifest.status_summary = "Negative test: SA established and traffic passed, but WAN capture had 0 packets."
+                else:
+                    manifest.validation_status = "FAILED"
+                    manifest.status_summary = f"Negative test failed to complete: SA={sa_established}, Ping={ping_passed}"
+            elif exp_outcome == ExpectedOutcome.UNSUPPORTED_ENVIRONMENT:
+                manifest.validation_status = "BLOCKED"
+                manifest.status_summary = f"Environment unsupported: {scenario.expected_failure_reason or 'Feature disabled in strongSwan build'}"
             else:
-                manifest.validation_status = "FAILED"
-                manifest.status_summary = f"Establishment failed: SA={sa_established}, Ping={ping_passed}"
+                # ExpectedOutcome.SUCCESS
+                if sa_established and ping_passed and has_wan_packets:
+                    manifest.validation_status = "VALIDATED"
+                    manifest.status_summary = "IPsec SA established, ping crossed tunnel successfully, and WAN PCAP captured genuine IPsec packets."
+                elif sa_established and ping_passed:
+                    manifest.validation_status = "PARTIAL"
+                    manifest.status_summary = "IPsec SA established and traffic passed, but WAN capture had 0 packets."
+                else:
+                    manifest.validation_status = "FAILED"
+                    manifest.status_summary = f"Establishment failed: SA={sa_established}, Ping={ping_passed}"
 
         except Exception as exc:
             manifest.validation_status = "FAILED"
@@ -267,6 +305,10 @@ class ExperimentRunner:
             manifest.ended_at_utc = end_time.isoformat()
             manifest.duration_seconds = round((end_time - start_time).total_seconds(), 2)
 
+            # Seal manifest with SHA-256 digest
+            manifest_json = manifest.model_dump_json(exclude={"manifest_sha256"}, indent=2)
+            manifest.manifest_sha256 = hashlib.sha256(manifest_json.encode("utf-8")).hexdigest()
+
             # Save manifest to disk
             manifest_path = os.path.join(run_storage_dir, "manifest.json")
             with open(manifest_path, "w", encoding="utf-8") as f:
@@ -277,6 +319,70 @@ class ExperimentRunner:
                 tracker.release_lock()
 
         return manifest
+
+    def replay_scenario(
+        self,
+        scenario: ScenarioDefinition,
+        parent_manifest: RunManifest,
+        run_id_prefix: str = "tt-replay",
+        cleanup_after: bool = True,
+    ) -> tuple[RunManifest, Dict[str, Any]]:
+        """Executes a controlled lab replay of an existing versioned scenario.
+
+        Enforces:
+        - Parent-child lineage binding (parent_run_id recorded in child manifest).
+        - Environment and tool compatibility verification via EnvironmentDoctor.
+        - Semantic assertion comparison against parent run (evaluating SA state,
+          traffic transit, and validation status rather than requiring byte-identical PCAPs).
+        """
+        from app.replay.comparator import ScenarioReplayComparator
+
+        # Preflight doctor check
+        doc_report = self.doctor.check_environment()
+        if not doc_report.get("ready"):
+            # Record environment mismatch truthfully without fabricating execution
+            start_time = datetime.now(timezone.utc)
+            run_id = f"{run_id_prefix}-{int(start_time.timestamp())}-{secrets.token_hex(3)}"
+            child_manifest = RunManifest(
+                run_id=run_id,
+                scenario_id=scenario.scenario_id,
+                scenario_version=scenario.version,
+                topology_type=scenario.topology.value,
+                started_at_utc=start_time.isoformat(),
+                ended_at_utc=start_time.isoformat(),
+                duration_seconds=0.0,
+                parent_run_id=parent_manifest.run_id,
+                replay_mode="SCENARIO_REPLAY",
+                environment=doc_report,
+                environment_compatibility={
+                    "is_compatible": False,
+                    "mismatches": ["Missing required testbed tools or Linux netns/kernel execution."]
+                },
+                scenario_sha256=scenario.sha256_hash or parent_manifest.scenario_sha256 or "unknown",
+                validation_status="BLOCKED",
+                status_summary=f"Scenario replay blocked: Environment prerequisites not met ({doc_report.get('checks')})",
+            )
+            cmp_res = ScenarioReplayComparator.compare_manifests(
+                parent_manifest.model_dump(),
+                child_manifest.model_dump(),
+            )
+            child_manifest.semantic_assertions = cmp_res
+            return child_manifest, cmp_res
+
+        # Execute in lab
+        child_manifest = self.execute_scenario(
+            scenario=scenario,
+            run_id_prefix=run_id_prefix,
+            cleanup_after=cleanup_after,
+            parent_run_id=parent_manifest.run_id,
+            replay_mode="SCENARIO_REPLAY",
+        )
+        cmp_res = ScenarioReplayComparator.compare_manifests(
+            parent_manifest.model_dump(),
+            child_manifest.model_dump(),
+        )
+        child_manifest.semantic_assertions = cmp_res
+        return child_manifest, cmp_res
 
     def execute_workload_session(
         self,
@@ -335,9 +441,6 @@ class ExperimentRunner:
             manifest.namespaces = tracker.tracked_namespaces
             manifest.interfaces = tracker.tracked_interfaces
             manifest.address_plan = topo.address_plan
-
-            self.runner.run_raw(["pkill", "-9", "-f", "/usr/lib/ipsec/charon"], check=False)
-            time.sleep(0.3)
 
             sw_mgr = StrongSwanManager(run_id=run_id, tracker=tracker, runner=self.runner)
             lab_psk = secrets.token_hex(32)

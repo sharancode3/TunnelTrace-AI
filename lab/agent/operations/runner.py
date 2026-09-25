@@ -94,7 +94,6 @@ RESOLVED_BINARIES = {
     "rm": "/usr/bin/rm",
     "stat": "/usr/bin/stat",
     "sha256sum": "/usr/bin/sha256sum",
-    "pkill": "/usr/bin/pkill",
     "kill": "/usr/bin/kill",
     "true": "/usr/bin/true",
     "tee": "/usr/bin/tee",
@@ -226,6 +225,13 @@ class SystemRunner:
                     raise SecurityViolationError(
                         f"Refusing to execute command touching protected physical host interface: '{iface}'"
                     )
+
+        # Disallow global process kill commands that could affect host daemons
+        if any(arg in ("pkill", "killall", "/usr/bin/pkill", "/usr/bin/killall") for arg in cmd_args):
+            raise SecurityViolationError(
+                "Global process kill commands (pkill, killall) are prohibited. "
+                "Process termination must be strictly scoped to verified run-owned PIDs."
+            )
 
         # Disallow raw shell injections
         for forbidden in (";", "&&", "||", "|", "`", "$("):

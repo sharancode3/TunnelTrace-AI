@@ -105,13 +105,16 @@ export function TableCell({
   children,
   className = "",
   mono = false,
+  colSpan,
 }: {
   children: React.ReactNode;
   className?: string;
   mono?: boolean;
+  colSpan?: number;
 }) {
   return (
     <td
+      colSpan={colSpan}
       className={`px-3 py-2 text-neutral-800 dark:text-neutral-200 align-middle ${mono ? "font-mono" : ""} ${className}`}
     >
       {children}

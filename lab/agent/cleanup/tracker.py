@@ -145,8 +145,33 @@ class LabResourceTracker:
 
     register_qdisc = track_qdisc
 
+    def _is_safe_run_path(self, path: str) -> bool:
+        """
+        Strict path containment audit: ensures paths targeted for deletion
+        belong strictly to this run and are confined to approved temporary/storage directories.
+        """
+        if not path or not isinstance(path, str):
+            return False
+        norm = os.path.normpath(path).replace("\\", "/")
+        # Reject root, parent directory traversal, and top-level system directories
+        parts = norm.split("/")
+        if ".." in parts:
+            return False
+        forbidden_roots = {"", "/", "/tmp", "/var", "/var/run", "/etc", "/usr", "/home", "/root", "storage", "storage/lab"}
+        if norm in forbidden_roots or norm.rstrip("/") in forbidden_roots:
+            return False
+        # Must be under /tmp or storage/lab/runs/ and tied to tt- or run_id
+        is_under_tmp = norm.startswith("/tmp/tt-") or norm.startswith("/tmp/tunneltrace/")
+        is_under_storage = "storage/lab/runs/" in norm
+        has_run_id = bool(self.run_id and self.run_id in norm)
+
+        return (is_under_tmp or is_under_storage) and (has_run_id or "tt-" in norm)
+
     def cleanup(self) -> Dict[str, Any]:
-        """Perform comprehensive, idempotent teardown of all tracked resources."""
+        """
+        Perform comprehensive, idempotent teardown of all tracked resources.
+        Enforces exact per-run process ownership and safe signal escalation.
+        """
         results: Dict[str, Any] = {
             "pids_stopped": 0,
             "namespaces_deleted": 0,
@@ -154,14 +179,22 @@ class LabResourceTracker:
             "errors": [],
         }
 
-        # 1. Stop background processes (tcpdump, charon)
-        for pid, name in self.tracked_pids:
+        # 1. Stop background processes (charon, tcpdump) tracked for this run via safe signal escalation
+        for pid, name in list(self.tracked_pids):
             try:
-                logger.debug(f"Stopping tracked process '{name}' (PID {pid})")
-                self.runner.run_raw(["kill", "-TERM", str(pid)], check=False)
-                results["pids_stopped"] += 1
+                alive = self.runner.run_raw(["kill", "-0", str(pid)], check=False)
+                if alive.returncode == 0:
+                    logger.debug(f"Sending SIGTERM to run-owned process '{name}' (PID {pid})")
+                    self.runner.run_raw(["kill", "-TERM", str(pid)], check=False)
+                    time.sleep(0.2)
+                    still_alive = self.runner.run_raw(["kill", "-0", str(pid)], check=False)
+                    if still_alive.returncode == 0:
+                        logger.warning(f"Process '{name}' (PID {pid}) alive after SIGTERM; escalating to SIGKILL")
+                        self.runner.run_raw(["kill", "-KILL", str(pid)], check=False)
+                    results["pids_stopped"] += 1
             except Exception as exc:
                 results["errors"].append(f"kill {pid}: {exc}")
+        self.tracked_pids.clear()
 
         # 2. Clear applied qdiscs
         for ns, iface in self.qdiscs:
@@ -170,19 +203,43 @@ class LabResourceTracker:
                 self.runner.run_tc(args, netns=ns if ns else None, check=False)
             except Exception:
                 pass
+        self.qdiscs.clear()
 
-        # 3. Delete tracked namespaces (automatically destroys interfaces inside them)
+        # 3. Terminate processes inside run namespaces, then delete namespaces
         for ns in list(self.namespaces):
+            if not ns.startswith("tt-"):
+                results["errors"].append(f"Refusing to delete namespace '{ns}': non-lab prefix")
+                continue
+
+            # First terminate any process running inside this specific namespace
             try:
-                logger.debug(f"Deleting namespace: {ns}")
+                pids_res = self.runner.run_raw(["ip", "netns", "pids", ns], check=False)
+                if pids_res.returncode == 0 and pids_res.stdout.strip():
+                    for p_str in pids_res.stdout.split():
+                        if p_str.isdigit():
+                            ns_pid = int(p_str)
+                            self.runner.run_raw(["kill", "-TERM", str(ns_pid)], check=False)
+                            time.sleep(0.1)
+                            if self.runner.run_raw(["kill", "-0", str(ns_pid)], check=False).returncode == 0:
+                                self.runner.run_raw(["kill", "-KILL", str(ns_pid)], check=False)
+                            results["pids_stopped"] += 1
+            except Exception as exc:
+                results["errors"].append(f"netns pids kill {ns}: {exc}")
+
+            try:
+                logger.debug(f"Deleting run-owned namespace: {ns}")
                 self.runner.run_raw(["ip", "netns", "del", ns], check=False)
                 results["namespaces_deleted"] += 1
             except Exception as exc:
                 results["errors"].append(f"netns del {ns}: {exc}")
         self.namespaces.clear()
 
-        # 4. Clean temporary runtime paths inside Linux
-        for p in self.temp_paths:
+        # 4. Clean temporary runtime paths inside run-owned directory
+        for p in list(self.temp_paths):
+            if not self._is_safe_run_path(p):
+                logger.error(f"Refusing to delete unsafe or unconfined path '{p}'")
+                results["errors"].append(f"unsafe path rejected: {p}")
+                continue
             try:
                 self.runner.run_raw(["rm", "-rf", p], check=False)
                 results["temp_cleaned"] += 1
@@ -198,29 +255,46 @@ class LabResourceTracker:
     clean_current_run = cleanup
 
     @classmethod
-    def clean_all_stale_resources(cls, runner: Optional[SystemRunner] = None) -> Dict[str, int]:
-        """Safety utility to scan for and purge any dangling 'tt-*' namespaces from crashed runs."""
+    def clean_all_stale_resources(
+        cls,
+        runner: Optional[SystemRunner] = None,
+        run_id: Optional[str] = None
+    ) -> Dict[str, int]:
+        """
+        Safely scans for and purges dangling 'tt-*' namespaces from crashed runs.
+        Terminates ONLY processes running inside those verified lab namespaces using
+        kernel network namespace discovery (ip netns pids). Never invokes global pkill.
+        """
         exec_runner = runner or SystemRunner()
         cleaned = {"namespaces": 0, "pids": 0}
+        target_prefix = f"tt-{run_id}-" if run_id else "tt-"
 
         try:
             res = exec_runner.run_raw(["ip", "netns", "list"], check=False)
             if res.returncode == 0:
                 for line in res.stdout.splitlines():
                     ns = line.split()[0].strip() if line.split() else ""
-                    if ns.startswith("tt-"):
-                        logger.warning(f"Purging stale lab namespace: {ns}")
+                    if ns.startswith(target_prefix):
+                        # Terminate ONLY processes strictly inside this network namespace
+                        try:
+                            pids_res = exec_runner.run_raw(["ip", "netns", "pids", ns], check=False)
+                            if pids_res.returncode == 0 and pids_res.stdout.strip():
+                                for p_str in pids_res.stdout.split():
+                                    if p_str.isdigit():
+                                        ns_pid = int(p_str)
+                                        exec_runner.run_raw(["kill", "-TERM", str(ns_pid)], check=False)
+                                        time.sleep(0.1)
+                                        if exec_runner.run_raw(["kill", "-0", str(ns_pid)], check=False).returncode == 0:
+                                            exec_runner.run_raw(["kill", "-KILL", str(ns_pid)], check=False)
+                                        cleaned["pids"] += 1
+                        except Exception as exc:
+                            logger.debug(f"Error terminating processes in stale namespace '{ns}': {exc}")
+
+                        logger.warning(f"Purging verified stale lab namespace: {ns}")
                         exec_runner.run_raw(["ip", "netns", "del", ns], check=False)
                         cleaned["namespaces"] += 1
         except Exception as exc:
             logger.error(f"Error querying stale namespaces: {exc}")
 
-        # Kill any lingering charon or tcpdump processes with 'tt-' in arguments
-        try:
-            pkill_res = exec_runner.run_raw(["pkill", "-f", "tt-"], check=False)
-            if pkill_res.returncode == 0:
-                cleaned["pids"] += 1
-        except Exception:
-            pass
-
         return cleaned
+

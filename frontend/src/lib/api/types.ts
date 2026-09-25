@@ -31,6 +31,9 @@ export interface AnalysisRunResponseDTO {
   completed_at: string | null;
   error_code: string | null;
   error_message: string | null;
+  parent_analysis_id?: string | null;
+  replay_mode?: string | null;
+  provenance_metadata?: Record<string, any> | null;
   created_at: string;
 }
 
@@ -46,6 +49,53 @@ export interface AnalysisListItemDTO {
   security_score: number | null;
   critical_findings: number;
   high_findings: number;
+  parent_analysis_id?: string | null;
+  replay_mode?: string | null;
+}
+
+export interface ReplayComparisonDTO {
+  comparison_id: string;
+  replay_mode: string;
+  parent_run_id: string;
+  child_run_id: string;
+  comparison_status: "EXACT_MATCH" | "SEMANTIC_MATCH" | "DISCREPANCY_DETECTED" | "ENVIRONMENT_MISMATCH" | "FAILED";
+  artifact_integrity: "VERIFIED" | "MISMATCH" | "UNAVAILABLE";
+  differences: Record<string, any> | null;
+  summary: string;
+  metrics: Record<string, any> | null;
+  created_at: string;
+}
+
+export interface ReplayLineageDTO {
+  analysis_id: string;
+  parent_analysis_id: string | null;
+  replay_mode: string | null;
+  capture_id: string;
+  capture_filename: string;
+  capture_sha256: string;
+  capture_integrity_verified: boolean;
+  child_runs: Array<{
+    analysis_id: string;
+    replay_mode: string | null;
+    status: string;
+    created_at: string;
+    completed_at: string | null;
+  }>;
+  version_pins: Record<string, any>;
+  latest_comparison: ReplayComparisonDTO | null;
+}
+
+export interface ReplayExecutionResponseDTO {
+  child_analysis_id: string;
+  parent_analysis_id: string;
+  replay_mode: string;
+  status: string;
+  artifact_integrity: string;
+  comparison_status: string;
+  summary: string;
+  differences: Record<string, any> | null;
+  metrics: Record<string, any> | null;
+  created_at: string;
 }
 
 export interface ProtocolSummaryDTO {
@@ -118,12 +168,19 @@ export interface TrafficFlowItemDTO {
   packet_count: number;
   byte_count: number;
   association_state: string;
+  input_status?: "VALID" | "INSUFFICIENT_INPUT" | string | null;
+  supervised_hypothesis?: string | null;
   known_class: string | null;
   final_class: string | null;
+  accepted_prediction?: string | null;
   calibrated_confidence: number | null;
+  calibration_status?: "CALIBRATED" | "DEGRADED" | "UNAVAILABLE" | string | null;
   normalized_entropy: number | null;
-  ood_status: "KNOWN_ACCEPTED" | "ENTROPY_REJECTED" | "OUTLIER_REJECTED" | "INSUFFICIENT_LENGTH" | null;
-  behavioral_anomaly_status: "NORMAL_BEHAVIOR" | "ANOMALOUS_BEHAVIOR" | null;
+  ood_status: "KNOWN_ACCEPTED" | "ENTROPY_REJECTED" | "OUTLIER_REJECTED" | "INSUFFICIENT_LENGTH" | "UNKNOWN_UNSEEN" | "OUT_OF_DISTRIBUTION" | "INSUFFICIENT_INPUT" | string | null;
+  behavioral_anomaly_status: "NORMAL_BEHAVIOR" | "STATISTICAL_BEHAVIORAL_ANOMALY" | "ANOMALOUS_BEHAVIOR" | "NOT_EVALUATED" | string | null;
+  anomaly_score?: number | null;
+  is_degraded?: boolean | null;
+  degraded_reason?: string | null;
   top_shap_features: Array<{ feature: string; importance: number }> | null;
 }
 
@@ -134,6 +191,9 @@ export interface TrafficSummaryResponseDTO {
   classes_detected: string[];
   ood_count: number;
   anomaly_count: number;
+  ml_run_status?: "NOT_CONFIGURED" | "BUNDLE_INVALID" | "RUNNING" | "COMPLETED" | "PARTIAL" | "NO_FLOWS" | "INSUFFICIENT_INPUT" | "FAILED" | string;
+  model_version?: string | null;
+  model_bundle_id?: string | null;
   flows: TrafficFlowItemDTO[];
 }
 
@@ -188,23 +248,118 @@ export interface SecurityScoreDTO {
   status: string;
 }
 
-export interface RiskAssessmentDTO {
-  analysis_id: string;
-  aggregate_risk_tier: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
-  risk_score: number;
+export type RiskTierType =
+  | "CRITICAL"
+  | "HIGH"
+  | "MEDIUM"
+  | "LOW"
+  | "NO_FINDINGS_UNDER_THIS_POLICY"
+  | "INSUFFICIENT_EVIDENCE"
+  | "UNKNOWN";
+
+export interface RiskFactorDetailDTO {
+  factor_name: string;
+  factor_value: string;
+  scale: string;
+  evidence_state: string;
+  source: string;
+  source_time: string;
+  contributes_to_aggregate: boolean;
+  aggregation_role: string;
   rationale: string;
 }
 
-export interface ThreatInstanceDTO {
-  threat_id: string;
-  title: string;
-  category: string;
+export interface RiskItemDTO {
+  finding_id: string;
+  rule_id: string;
+  severity: string;
   likelihood: string;
   impact: string;
-  risk_tier: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
-  mitre_technique_id: string;
-  nist_control: string;
+  risk_tier: RiskTierType;
   evidence_state: string;
+  threat_mapped: boolean;
+  rationale: string;
+  factors: RiskFactorDetailDTO[];
+  contributes_to_aggregate: boolean;
+  aggregation_role: string;
+  root_cause_key: string;
+  policy_version: string;
+  policy_hash: string;
+  methodology_type: string;
+}
+
+export interface RiskAssessmentDTO {
+  analysis_id: string;
+  risk_policy_id: string;
+  risk_policy_version: string;
+  risk_policy_hash: string;
+  overall_risk_tier: RiskTierType;
+  items: RiskItemDTO[];
+  evidence_coverage?: number | null;
+  evidence_gaps_count?: number;
+  methodology_type?: string;
+  disclaimer?: string;
+  // Backward compatibility
+  aggregate_risk_tier?: RiskTierType;
+  risk_score?: number;
+  rationale?: string;
+}
+
+export interface ThreatInstanceDTO {
+  finding_id?: string;
+  threat_id: string;
+  title?: string;
+  threat_name?: string;
+  category?: string;
+  attack_vector?: string;
+  likelihood: string;
+  impact: string;
+  risk_tier: RiskTierType;
+  mitre_technique_id?: string;
+  mitre_attack_id?: string | null;
+  mitre_attack_name?: string | null;
+  mitre_attack_url?: string | null;
+  mitre_attack_rationale?: string | null;
+  catalog_hash?: string | null;
+  nist_control?: string;
+  evidence_state?: string;
+}
+
+export interface ThreatIntelItemDTO {
+  cve_id: string;
+  cisa_kev_status: "PRESENT" | "NOT_PRESENT_IN_THIS_SNAPSHOT" | "NOT_CHECKED" | "STALE" | "UNAVAILABLE";
+  cisa_kev_record?: {
+    cve_id: string;
+    vendor_project: string;
+    product: string;
+    vulnerability_name: string;
+    date_added: string;
+    short_description: string;
+    required_action: string;
+    due_date: string;
+    known_ransomware_campaign_use?: string;
+    notes?: string;
+  } | null;
+  cisa_kev_as_of?: string | null;
+  cisa_kev_digest?: string | null;
+  epss_status: "PRESENT" | "NOT_PRESENT_IN_THIS_SNAPSHOT" | "NOT_CHECKED" | "STALE" | "UNAVAILABLE";
+  epss_record?: {
+    cve_id: string;
+    epss_score: number;
+    epss_percentile: number;
+    model_version: string;
+    date: string;
+  } | null;
+  epss_as_of?: string | null;
+  epss_digest?: string | null;
+  disclaimer: string;
+}
+
+export interface ThreatIntelResponseDTO {
+  analysis_id: string;
+  intel_items: ThreatIntelItemDTO[];
+  source_freshness: string;
+  disclaimer: string;
 }
 
 export interface FingerprintabilityDTO {
@@ -413,6 +568,9 @@ export interface RemediationRunResponseDTO {
   rollback_state: string;
   rollback_reason: string | null;
   error_message: string | null;
+  approval_metadata?: Record<string, any> | null;
+  pre_apply_spis?: string[] | null;
+  post_capture_hash?: string | null;
   steps: RemediationRunStepDTO[];
   executed_at: string;
   completed_at: string | null;
@@ -740,4 +898,438 @@ export interface IkeConcordanceDTO {
   evaluated_at: string;
 }
 
+export interface VulnerabilityReportPreviewResponseDTO {
+  report_id: string;
+  format_id: string | null;
+  format_version: string | null;
+  task_id: string | null;
+  task_name: string | null;
+  scan_config: string | null;
+  scanner_name: string | null;
+  scanner_version: string | null;
+  feed_status: string;
+  feed_type: string | null;
+  scan_started_at: string | null;
+  scan_ended_at: string | null;
+  raw_sha256: string;
+  raw_bytes_count: number;
+  total_findings_count: number;
+  unique_hosts_count: number;
+  host_mapping_summary: {
+    mapped_exact_ip: number;
+    ambiguous_multiple_matches: number;
+    unlinked_no_discovery_record: number;
+    out_of_scope: number;
+    total_unique_hosts: number;
+  };
+  host_mapping_details: Array<{
+    host_ip: string;
+    asset_link_state: string;
+    asset_link_rationale: string;
+    mapped_host_id: string | null;
+  }>;
+  severity_breakdown: Record<string, number>;
+  correlation_breakdown: Record<string, number>;
+  findings_sample: Array<{
+    source_result_id: string;
+    host_ip: string;
+    port: number | null;
+    protocol: string | null;
+    nvt_oid: string;
+    nvt_name: string;
+    source_severity: string;
+    cvss_base_score: number | null;
+    qod_value: number | null;
+    qod_type: string | null;
+    cves: string[];
+    cpes: string[];
+    asset_link_state: string;
+    correlation_status: string;
+    cve_applicability_state: string;
+    correlation_rationale: string;
+  }>;
+}
 
+export interface VulnerabilityReportDTO {
+  id: string;
+  report_source_id: string;
+  source_system: string;
+  report_format: string;
+  report_format_version: string | null;
+  task_id: string | null;
+  task_name: string | null;
+  scan_config: string | null;
+  port_list: string | null;
+  scanner_name: string | null;
+  scanner_version: string | null;
+  feed_type: string | null;
+  feed_version: string | null;
+  feed_status: string;
+  engagement_scope: string;
+  authorization_reference: string;
+  operator_id: string;
+  operator_attestation: string;
+  is_local_attestation: boolean;
+  status: string;
+  failure_reason: string | null;
+  raw_artifact_sha256: string;
+  raw_artifact_bytes: number;
+  storage_path: string | null;
+  duplicate_of_id: string | null;
+  scan_started_at: string | null;
+  scan_ended_at: string | null;
+  imported_at: string;
+  hosts_count: number;
+  results_count: number;
+}
+
+export interface VulnerabilityFindingDTO {
+  id: string;
+  report_id: string;
+  source_result_id: string;
+  host_ip: string;
+  host_name: string | null;
+  ip_version: string;
+  port: number | null;
+  protocol: string | null;
+  service_name: string | null;
+  nvt_oid: string;
+  nvt_name: string;
+  nvt_family: string | null;
+  cvss_version: string | null;
+  cvss_base_score: number | null;
+  cvss_vector: string | null;
+  source_severity: string;
+  qod_value: number | null;
+  qod_type: string | null;
+  detection_method: string | null;
+  reported_cves: string[];
+  reported_cpes: string[];
+  source_product_claim: string | null;
+  source_version_claim: string | null;
+  description: string | null;
+  summary: string | null;
+  solution: string | null;
+  solution_type: string | null;
+  source_timestamp: string | null;
+  status: string;
+  mapped_discovered_host_id: string | null;
+  asset_link_state: string;
+  asset_link_rationale: string;
+  correlation_status: string;
+  correlation_method: string;
+  cve_applicability_state: string;
+  correlation_rationale: string;
+  created_at: string;
+}
+
+export interface VulnerabilityReportListResponseDTO {
+  reports: VulnerabilityReportDTO[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+export interface VulnerabilityFindingListResponseDTO {
+  findings: VulnerabilityFindingDTO[];
+  total: number;
+  skip: number;
+  limit: number;
+}
+
+// -----------------------------------------------------------------------------
+// Continuous Monitoring Domain Types
+// -----------------------------------------------------------------------------
+
+export interface GatewayResponseDTO {
+  id: string;
+  name: string;
+  gateway_ip: string;
+  authorized_scope: string;
+  operator_id: string;
+  authorization_reference: string;
+  status: "ACTIVE" | "INACTIVE" | "REVOKED";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SensorResponseDTO {
+  id: string;
+  sensor_name: string;
+  sensor_type: "GATEWAY_COLLECTOR" | "CAPTURE_SENSOR";
+  gateway_id: string;
+  authorized_scope: string;
+  token_prefix: string;
+  freshness_window_seconds: number;
+  reporting_interval_seconds: number;
+  status: "ACTIVE" | "REVOKED" | "DISABLED";
+  created_at: string;
+  revoked_at: string | null;
+  last_heartbeat_at: string | null;
+}
+
+export interface RegisterSensorResponseDTO extends SensorResponseDTO {
+  raw_token: string;
+}
+
+export interface SensorHealthDTO {
+  sensor_id: string;
+  sensor_name: string;
+  sensor_type: "GATEWAY_COLLECTOR" | "CAPTURE_SENSOR";
+  gateway_id: string;
+  gateway_name: string;
+  authorized_scope: string;
+  current_health: "HEALTHY" | "DEGRADED" | "STALE" | "UNAVAILABLE" | "UNKNOWN" | "DISABLED";
+  health_reason: string;
+  last_source_timestamp: string | null;
+  last_received_at: string | null;
+  freshness_window_seconds: number;
+  reporting_interval_seconds: number;
+  total_events_received: number;
+  total_drops_reported: number;
+  sequence_gaps_count: number;
+  clock_skew_seconds: number;
+  active_quality_warnings: string[];
+  is_stale: boolean;
+}
+
+export interface MonitoredSAStateDTO {
+  id: string;
+  gateway_id: string;
+  gateway_name: string;
+  sensor_id: string;
+  sa_type: "IKE_SA" | "CHILD_SA";
+  initiator_spi: string;
+  responder_spi: string | null;
+  child_spi_in: string | null;
+  child_spi_out: string | null;
+  state: "INITIATING" | "ESTABLISHED" | "REKEYED" | "FAILED" | "EXPIRED" | "DELETED" | "STALE";
+  local_endpoint: string | null;
+  remote_endpoint: string | null;
+  cipher_suite: string | null;
+  established_at: string | null;
+  last_event_at: string;
+  is_stale: boolean;
+  staleness_reason: string | null;
+  evidence_grade: "OBSERVED" | "INFERRED" | "UNKNOWN" | "UNAVAILABLE";
+}
+
+export interface MonitoringEventItemDTO {
+  id: string;
+  event_id: string;
+  schema_version: string;
+  sensor_id: string;
+  gateway_id: string;
+  authorized_scope: string;
+  event_kind: string;
+  source_timestamp: string;
+  received_at: string;
+  clock_skew_seconds: number;
+  sequence_number: number | null;
+  evidence_grade: string;
+  raw_source_status: string | null;
+  ike_version: string | null;
+  local_endpoint: string | null;
+  remote_endpoint: string | null;
+  initiator_spi: string | null;
+  responder_spi: string | null;
+  child_spi_in: string | null;
+  child_spi_out: string | null;
+  cipher_suite: string | null;
+  failure_reason: string | null;
+  interface_name: string | null;
+  packet_count: number | null;
+  drop_count: number | null;
+  byte_count: number | null;
+  artifact_hash: string | null;
+}
+
+export interface MonitoringTimelineResponseDTO {
+  total_count: number;
+  offset: number;
+  limit: number;
+  items: MonitoringEventItemDTO[];
+}
+
+// ============================================================================
+// Configuration & Certificate Inventory Types
+// ============================================================================
+
+export type InventorySourceType =
+  | "CONFIGURED_FILE"
+  | "RUNTIME_ACTIVE"
+  | "PACKET_OBSERVED"
+  | "LAB_CONTROLLED";
+
+export type CertificateValidityStatus =
+  | "VALID"
+  | "EXPIRED"
+  | "NOT_YET_VALID"
+  | "EXPIRING_SOON";
+
+export type IdentityAssociationStatus =
+  | "MATCHED"
+  | "AMBIGUOUS"
+  | "UNASSOCIATED";
+
+export type ChainValidationStatus =
+  | "VALIDATED"
+  | "FAILED"
+  | "UNCHECKED";
+
+export type RevocationStatus =
+  | "REVOKED"
+  | "GOOD"
+  | "UNCHECKED";
+
+export type ComparisonStatus =
+  | "MATCHED"
+  | "DRIFT_DETECTED"
+  | "INCOMPARABLE";
+
+export type FieldDriftStatus =
+  | "MATCHED"
+  | "CHANGED"
+  | "MISSING_IN_OBSERVED"
+  | "NEW_IN_OBSERVED"
+  | "NOT_COMPARABLE"
+  | "UNKNOWN"
+  | "UNSUPPORTED";
+
+export interface FieldDriftItemDTO {
+  field_path: string;
+  baseline_value: any;
+  observed_value: any;
+  status: FieldDriftStatus;
+  description: string;
+}
+
+export interface ConfigurationSnapshotDTO {
+  id: string;
+  gateway_id: string | null;
+  gateway_identity: string;
+  authorized_scope: string;
+  source_type: InventorySourceType;
+  collection_method: string;
+  collector_version: string;
+  parser_version: string;
+  schema_version: string;
+  canonical_digest: string;
+  normalized_ir: {
+    format: string;
+    version: string;
+    connections: Record<string, any>;
+    secrets: Record<string, any>;
+  };
+  unsupported_directives: Array<{ path: string; value: string }>;
+  is_baseline: boolean;
+  baseline_version: number | null;
+  approved_by: string | null;
+  approval_reference: string | null;
+  source_observed_at: string | null;
+  provenance: Record<string, any>;
+  created_at: string;
+}
+
+export interface ConfigurationDriftDTO {
+  id: string;
+  gateway_identity: string;
+  baseline_snapshot_id: string;
+  observed_snapshot_id: string;
+  comparison_status: ComparisonStatus;
+  drift_summary: {
+    total_fields: number;
+    matched_count: number;
+    changed_count: number;
+    missing_count: number;
+    new_count: number;
+    not_comparable_count: number;
+    reason?: string;
+  };
+  field_drifts: FieldDriftItemDTO[];
+  created_at: string;
+}
+
+export interface GatewayCertificateDTO {
+  id: string;
+  gateway_id: string | null;
+  gateway_identity: string;
+  snapshot_id: string | null;
+  sha256_fingerprint: string;
+  serial_number: string;
+  subject_dn: string;
+  issuer_dn: string;
+  subject_alt_names: {
+    dns?: string[];
+    ip?: string[];
+    email?: string[];
+    directory_name?: string[];
+  };
+  not_valid_before: string;
+  not_valid_after: string;
+  validity_status: CertificateValidityStatus;
+  days_until_expiry: number;
+  public_key_algorithm: string;
+  public_key_bits: number;
+  signature_algorithm: string;
+  is_ca: boolean;
+  key_usages: string[];
+  extended_key_usages: string[];
+  associated_connection: string | null;
+  identity_association_status: IdentityAssociationStatus;
+  chain_validation_status: ChainValidationStatus;
+  trust_store_identifier: string | null;
+  trust_store_digest: string | null;
+  revocation_status: RevocationStatus;
+  source_alias: string;
+  epistemic_status: string;
+  created_at: string;
+}
+
+export interface GatewayInventorySummaryDTO {
+  gateway_identity: string;
+  authorized_scope: string;
+  has_baseline: boolean;
+  baseline_snapshot_id: string | null;
+  baseline_version: number | null;
+  latest_snapshot_id: string | null;
+  latest_snapshot_digest: string | null;
+  latest_snapshot_created_at: string | null;
+  latest_drift_status: string | null;
+  certificate_count: number;
+  expiring_soon_certificates: number;
+  expired_certificates: number;
+}
+
+export interface ConfigurationImportRequestDTO {
+  gateway_identity: string;
+  authorized_scope?: string;
+  source_type?: InventorySourceType;
+  config_text: string;
+  collection_method?: string;
+  operator_id: string;
+  authorization_reference: string;
+  source_observed_at?: string;
+}
+
+export interface BaselineDesignateRequestDTO {
+  operator_id: string;
+  approval_reference: string;
+  baseline_version?: number;
+}
+
+export interface DriftCompareRequestDTO {
+  baseline_snapshot_id: string;
+  observed_snapshot_id: string;
+}
+
+export interface CertificateImportRequestDTO {
+  gateway_identity: string;
+  snapshot_id?: string;
+  certificate_pem: string;
+  trust_store_pem?: string;
+  source_alias?: string;
+  epistemic_status?: string;
+  operator_id: string;
+  authorization_reference: string;
+}

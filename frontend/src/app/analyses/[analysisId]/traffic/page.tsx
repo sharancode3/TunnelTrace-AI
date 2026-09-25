@@ -118,15 +118,38 @@ export default function TrafficIntelligencePage({
         </p>
       </div>
 
+      {/* Model Deployment & Runtime Status Banner */}
+      {traffic.ml_run_status === "NOT_CONFIGURED" ? (
+        <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-300 font-mono space-y-1">
+          <div className="flex items-center space-x-2 font-bold uppercase">
+            <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>ML Inference Inactive: Model Bundle Not Deployed (STATUS: NOT_CONFIGURED)</span>
+          </div>
+          <p className="text-[11px] text-amber-700 dark:text-amber-400">
+            No validated production model bundle is deployed in <code>models/active/</code>. Flow classifications are unavailable to prevent ungrounded predictions. Deterministic protocol forensics and policy evaluations remain fully operational.
+          </p>
+        </div>
+      ) : traffic.ml_run_status === "BUNDLE_INVALID" ? (
+        <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-xs text-rose-800 dark:text-rose-300 font-mono space-y-1">
+          <div className="flex items-center space-x-2 font-bold uppercase">
+            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+            <span>ML Inference Error: Model Bundle Corrupted or Verification Failed (STATUS: BUNDLE_INVALID)</span>
+          </div>
+          <p className="text-[11px] text-rose-700 dark:text-rose-400">
+            Active model bundle failed cryptographic integrity or schema checks. Inference was halted safely.
+          </p>
+        </div>
+      ) : null}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card title="Total Encrypted Flows">
+        <Card title="Encrypted Flow Inference">
           <div className="space-y-1 font-mono">
             <div className="text-2xl font-bold text-neutral-900 dark:text-white">
-              {traffic.total_flows}
+              {traffic.classified_flows} / {traffic.total_flows}
             </div>
             <p className="text-[11px] text-neutral-500">
-              Classified: {traffic.classified_flows}
+              Run Status: <span className="font-semibold text-neutral-800 dark:text-neutral-200">{traffic.ml_run_status || "UNKNOWN"}</span>
             </p>
           </div>
         </Card>
@@ -142,24 +165,24 @@ export default function TrafficIntelligencePage({
           </div>
         </Card>
 
-        <Card title="OOD / Unknown Traffic">
+        <Card title="OOD / Rejected Flows">
           <div className="space-y-1 font-mono">
             <div className="text-2xl font-bold text-amber-600">
               {traffic.ood_count}
             </div>
             <p className="text-[11px] text-neutral-500">
-              Rejection via entropy or distance threshold.
+              Outside supported model distribution (Not an attack signal).
             </p>
           </div>
         </Card>
 
-        <Card title="Statistical Anomalies">
+        <Card title="Behavioral Anomalies">
           <div className="space-y-1 font-mono">
             <div className="text-2xl font-bold text-rose-600">
               {traffic.anomaly_count}
             </div>
             <p className="text-[11px] text-neutral-500">
-              Isolation Forest behavioral outliers.
+              Statistical behavioral outliers (Not an attack signal).
             </p>
           </div>
         </Card>
@@ -171,11 +194,19 @@ export default function TrafficIntelligencePage({
         <div className={selectedFlow ? "lg:col-span-8" : "lg:col-span-12"} space-y-6>
           {/* Class Distribution Chart */}
           <Card title="Inferred Traffic Class Distribution">
-            <EChartWrapper
-              options={chartOptions}
-              height="200px"
-              accessibleSummary="Bar chart showing distribution of inferred traffic classes"
-            />
+            {traffic.classified_flows > 0 ? (
+              <EChartWrapper
+                options={chartOptions}
+                height="200px"
+                accessibleSummary="Bar chart showing distribution of inferred traffic classes"
+              />
+            ) : (
+              <div className="py-10 text-center font-mono text-xs text-neutral-500">
+                {traffic.ml_run_status === "NOT_CONFIGURED"
+                  ? "No distribution chart: active model bundle not deployed in models/active/."
+                  : "No classified flows available for distribution plotting."}
+              </div>
+            )}
           </Card>
 
           {/* Flows Table */}
@@ -185,19 +216,23 @@ export default function TrafficIntelligencePage({
                 <TableHeader>
                   <tr>
                     <TableHead>SPI</TableHead>
-                    <TableHead>Inferred Class</TableHead>
+                    <TableHead>Supervised Hyp.</TableHead>
+                    <TableHead>Accepted Prediction</TableHead>
                     <TableHead>Calibrated Conf.</TableHead>
-                    <TableHead>Norm. Entropy</TableHead>
                     <TableHead>OOD State</TableHead>
                     <TableHead>Behavioral Anomaly</TableHead>
+                    <TableHead>Runtime / Input</TableHead>
                     <TableHead>Pkts / Bytes</TableHead>
                   </tr>
                 </TableHeader>
                 <TableBody>
                   {traffic.flows.map((flow) => {
                     const isOOD =
-                      flow.ood_status && flow.ood_status !== "KNOWN_ACCEPTED";
+                      flow.ood_status &&
+                      flow.ood_status !== "KNOWN_ACCEPTED" &&
+                      flow.ood_status !== "NOT_EVALUATED";
                     const isAnomaly =
+                      flow.behavioral_anomaly_status === "STATISTICAL_BEHAVIORAL_ANOMALY" ||
                       flow.behavioral_anomaly_status === "ANOMALOUS_BEHAVIOR";
 
                     return (
@@ -209,51 +244,72 @@ export default function TrafficIntelligencePage({
                         <TableCell mono>
                           <CopyableValue value={flow.spi} label="Flow SPI" />
                         </TableCell>
+                        <TableCell mono className="text-neutral-600 dark:text-neutral-400 text-xs">
+                          {flow.supervised_hypothesis || flow.known_class || (
+                            <span className="text-neutral-400 dark:text-neutral-600">UNAVAILABLE</span>
+                          )}
+                        </TableCell>
                         <TableCell mono>
                           <span
                             className={`font-bold ${
                               isOOD
                                 ? "text-amber-600 dark:text-amber-400"
-                                : "text-neutral-900 dark:text-white"
+                                : flow.final_class && flow.final_class !== "UNAVAILABLE"
+                                ? "text-neutral-900 dark:text-white"
+                                : "text-neutral-400 dark:text-neutral-600"
                             }`}
                           >
-                            {flow.final_class || flow.known_class || "UNKNOWN"}
+                            {flow.accepted_prediction || flow.final_class || "UNAVAILABLE"}
                           </span>
                         </TableCell>
                         <TableCell mono>
                           {flow.calibrated_confidence !== null &&
-                          flow.calibrated_confidence !== undefined ? (
+                          flow.calibrated_confidence !== undefined &&
+                          flow.calibrated_confidence > 0 ? (
                             <span>
                               {(flow.calibrated_confidence * 100).toFixed(1)}%
                             </span>
                           ) : (
-                            <span className="text-neutral-400">UNAVAILABLE</span>
+                            <span className="text-neutral-400 dark:text-neutral-600">UNAVAILABLE</span>
                           )}
                         </TableCell>
                         <TableCell mono>
-                          {flow.normalized_entropy !== null &&
-                          flow.normalized_entropy !== undefined ? (
-                            flow.normalized_entropy.toFixed(3)
+                          {flow.ood_status ? (
+                            isOOD ? (
+                              <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-700 text-[10px] font-bold">
+                                {flow.ood_status}
+                              </span>
+                            ) : (
+                              <span className="text-neutral-500 text-[11px]">{flow.ood_status}</span>
+                            )
                           ) : (
-                            <span className="text-neutral-400">-</span>
+                            <span className="text-neutral-400 dark:text-neutral-600 text-[11px]">NOT_RUN</span>
                           )}
                         </TableCell>
                         <TableCell mono>
-                          {isOOD ? (
-                            <span className="px-1.5 py-0.5 bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-300 dark:border-amber-700 text-[10px] font-bold">
-                              {flow.ood_status}
-                            </span>
+                          {flow.behavioral_anomaly_status ? (
+                            isAnomaly ? (
+                              <span className="px-1.5 py-0.5 bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-400 border border-rose-300 dark:border-rose-700 text-[10px] font-bold">
+                                ANOMALOUS
+                              </span>
+                            ) : flow.behavioral_anomaly_status === "NORMAL_BEHAVIOR" ? (
+                              <span className="text-neutral-500 text-[11px]">NORMAL</span>
+                            ) : (
+                              <span className="text-neutral-400 text-[11px]">{flow.behavioral_anomaly_status}</span>
+                            )
                           ) : (
-                            <span className="text-neutral-400 text-[11px]">KNOWN</span>
+                            <span className="text-neutral-400 dark:text-neutral-600 text-[11px]">NOT_RUN</span>
                           )}
                         </TableCell>
-                        <TableCell mono>
-                          {isAnomaly ? (
-                            <span className="px-1.5 py-0.5 bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-400 border border-rose-300 dark:border-rose-700 text-[10px] font-bold">
-                              ANOMALOUS
-                            </span>
+                        <TableCell mono className="text-[11px]">
+                          {flow.input_status === "INSUFFICIENT_INPUT" ? (
+                            <span className="text-amber-600 dark:text-amber-400">INSUFFICIENT_INPUT</span>
+                          ) : flow.is_degraded ? (
+                            <span className="text-amber-500">DEGRADED_SHORT</span>
+                          ) : flow.calibrated_confidence ? (
+                            <span className="text-emerald-600 dark:text-emerald-400">STANDARD</span>
                           ) : (
-                            <span className="text-neutral-400 text-[11px]">NORMAL</span>
+                            <span className="text-neutral-400 dark:text-neutral-600">NOT_RUN</span>
                           )}
                         </TableCell>
                         <TableCell mono className="text-neutral-500 text-[11px]">
@@ -282,7 +338,7 @@ export default function TrafficIntelligencePage({
               subtitle={`Duration: ${selectedFlow.duration_seconds.toFixed(2)}s`}
               badge={
                 <span className="px-1.5 py-0.5 font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700">
-                  {selectedFlow.final_class || "UNKNOWN"}
+                  {selectedFlow.accepted_prediction || selectedFlow.final_class || "UNAVAILABLE"}
                 </span>
               }
             >
@@ -290,22 +346,32 @@ export default function TrafficIntelligencePage({
                 {/* Inference Details */}
                 <div>
                   <span className="text-[10px] font-mono uppercase text-neutral-400 block mb-1">
-                    ML Model Prediction & Calibration
+                    ML Model Predictions & Provenance
                   </span>
                   <div className="space-y-1.5 font-mono text-xs bg-neutral-50 dark:bg-neutral-900 p-2.5 border border-neutral-200 dark:border-neutral-800">
                     <div className="flex justify-between">
-                      <span className="text-neutral-500">Inferred Class:</span>
+                      <span className="text-neutral-500">Supervised Hypothesis:</span>
                       <span className="font-bold text-neutral-900 dark:text-white">
-                        {selectedFlow.final_class || selectedFlow.known_class || "UNKNOWN"}
+                        {selectedFlow.supervised_hypothesis || selectedFlow.known_class || "UNAVAILABLE"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Final Accepted Class:</span>
+                      <span className="font-bold text-neutral-900 dark:text-white">
+                        {selectedFlow.accepted_prediction || selectedFlow.final_class || "UNAVAILABLE"}
                       </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-neutral-500">Calibrated Confidence:</span>
                       <span className="font-bold">
-                        {selectedFlow.calibrated_confidence !== null
+                        {selectedFlow.calibrated_confidence !== null && selectedFlow.calibrated_confidence > 0
                           ? `${(selectedFlow.calibrated_confidence * 100).toFixed(2)}%`
                           : "Unavailable"}
                       </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Calibration Status:</span>
+                      <span>{selectedFlow.calibration_status || "UNAVAILABLE"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-neutral-500">Normalized Entropy:</span>
@@ -317,13 +383,32 @@ export default function TrafficIntelligencePage({
                     </div>
                     <div className="flex justify-between">
                       <span className="text-neutral-500">OOD Evaluation:</span>
-                      <span>{selectedFlow.ood_status || "KNOWN_ACCEPTED"}</span>
+                      <span>{selectedFlow.ood_status || "NOT_EVALUATED"}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-neutral-500">Behavioral Outlier:</span>
-                      <span>{selectedFlow.behavioral_anomaly_status || "NORMAL"}</span>
+                      <span>{selectedFlow.behavioral_anomaly_status || "NOT_EVALUATED"}</span>
+                    </div>
+                    {selectedFlow.anomaly_score !== null && selectedFlow.anomaly_score !== undefined && (
+                      <div className="flex justify-between">
+                        <span className="text-neutral-500">Anomaly Score:</span>
+                        <span>{selectedFlow.anomaly_score.toFixed(4)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Runtime Pipeline:</span>
+                      <span>
+                        {selectedFlow.input_status === "INSUFFICIENT_INPUT"
+                          ? "Insufficient input"
+                          : selectedFlow.is_degraded
+                          ? `Degraded (${selectedFlow.degraded_reason || "Short flow"})`
+                          : "Standard Fusion"}
+                      </span>
                     </div>
                   </div>
+                  <p className="mt-1 text-[9px] font-mono text-neutral-400">
+                    Notice: Calibration applies to validation population only. OOD and Behavioral Anomaly indicate statistical divergence, not malicious attacks or system compromise.
+                  </p>
                 </div>
 
                 {/* XGBoost TreeSHAP Feature Attributions */}

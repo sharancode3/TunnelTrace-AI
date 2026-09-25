@@ -106,7 +106,7 @@ class TestPrivilegedLabIntegration:
     def test_tunnel_ipv4_netem_impairment(self, privileged_runner: SystemRunner) -> None:
         """
         Traffic Impairment (tc/netem):
-        Validates delay (40ms) and jitter (5ms) injection on the virtual WAN link.
+        Validates delay (40ms) and jitter (10ms) injection on the virtual WAN link.
         """
         scenario_file = os.path.join(
             os.path.dirname(__file__), "..", "..", "lab", "scenarios", "profiles", "05_tunnel_ipv4_netem_impairment.yaml"
@@ -169,4 +169,34 @@ class TestPrivilegedLabIntegration:
         tracker = LabResourceTracker(runner=privileged_runner)
         cleaned = tracker.clean_all_stale_resources()
         assert cleaned["namespaces"] == 0
+
+    def test_tunnel_ipv4_no_common_proposal_rejection(self, privileged_runner: SystemRunner) -> None:
+        """
+        Controlled Negative Test — Incompatible / Mismatched Proposals:
+        Initiator proposes AES-256-GCM / ECP-256 while responder strictly requires AES-256-CBC / MODP-2048.
+        Proves strongSwan rejects negotiation with NO_PROPOSAL_CHOSEN notify and yields VALIDATED
+        under the EXPECTED_REJECTION contract.
+        """
+        scenario_file = os.path.join(
+            os.path.dirname(__file__), "..", "..", "lab", "scenarios", "profiles", "08_tunnel_ipv4_no_common_proposal.yaml"
+        )
+        scenario = ScenarioLoader.load_from_yaml(scenario_file)
+
+        exp_runner = ExperimentRunner(runner=privileged_runner)
+        manifest = exp_runner.execute_scenario(scenario, cleanup_after=True)
+
+        # Expected outcome semantics: SA must NOT establish
+        assert manifest.sa_established is False, "SA unexpectedly established despite mismatched proposals!"
+        assert manifest.validation_status == "VALIDATED", f"Expected rejection validation failed: {manifest.status_summary}"
+        assert "Expected rejection verified" in manifest.status_summary
+
+        # Verify WAN capture recorded the IKE negotiation notify packets
+        wan_cap = next((c for c in manifest.captures if c.role == "WAN_ENCRYPTED"), None)
+        assert wan_cap is not None, "WAN capture artifact missing"
+        assert wan_cap.packet_count > 0, "Expected IKE exchange packets in WAN capture"
+
+        tracker = LabResourceTracker(runner=privileged_runner)
+        cleaned = tracker.clean_all_stale_resources()
+        assert cleaned["namespaces"] == 0
+
 

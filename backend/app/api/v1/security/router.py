@@ -19,11 +19,14 @@ from app.api.v1.security.schemas import (
     FingerprintabilityDTO,
     PolicyProfileSummaryDTO,
     RiskAssessmentDTO,
+    RiskFactorDetailDTO,
     RiskItemDTO,
     ScoreDeductionDTO,
     SecurityFindingDTO,
     SecurityScoreDTO,
     ThreatInstanceDTO,
+    ThreatIntelItemDTO,
+    ThreatIntelResponseDTO,
 )
 from app.core.errors import AnalysisNotFoundError
 from app.db.models.capture import AnalysisRun, Capture
@@ -39,6 +42,7 @@ from app.db.models.security import (
 )
 from app.db.session import get_db_session
 from app.security.service import SecurityAssessmentResult, SecurityAssessmentService
+from app.security.threat_intel import ThreatIntelService
 
 router = APIRouter(prefix="/security", tags=["security"])
 
@@ -103,6 +107,8 @@ async def _ensure_assessment_executed(
         child_sas=child_sas,
         flows=flows,
         profile_id=profile_id,
+        parent_analysis_id=str(analysis_run.parent_analysis_id) if analysis_run.parent_analysis_id else None,
+        replay_mode=analysis_run.replay_mode,
     )
 
     # Persist records transactionally
@@ -171,6 +177,10 @@ async def _ensure_assessment_executed(
         risk_policy_hash=ra.risk_policy_hash,
         overall_risk_tier=ra.overall_risk_tier.value,
         items={"items": [item.to_dict() for item in ra.items]},
+        evidence_coverage=ra.evidence_coverage,
+        evidence_gaps_count=ra.evidence_gaps_count,
+        methodology_type=ra.methodology_type,
+        external_context={"disclaimer": ra.disclaimer},
     )
     db.add(m_risk)
 
@@ -185,6 +195,11 @@ async def _ensure_assessment_executed(
             likelihood=thr.likelihood.value,
             impact=thr.impact.value,
             risk_tier=thr.risk_tier.value,
+            mitre_attack_id=thr.mitre_attack_id,
+            mitre_attack_name=thr.mitre_attack_name,
+            mitre_attack_url=thr.mitre_attack_url,
+            mitre_attack_rationale=thr.mitre_attack_rationale,
+            catalog_hash=thr.catalog_hash,
         )
         db.add(m_thr)
 
@@ -407,7 +422,7 @@ async def get_risk_assessment(
     db: AsyncSession = Depends(get_db_session),
     service: SecurityAssessmentService = Depends(get_security_service),
 ) -> RiskAssessmentDTO:
-    """Retrieve deterministic risk tiers and finding-specific impact/likelihood."""
+    """Retrieve deterministic risk tiers, factor breakdowns, and policy hashes."""
     await _ensure_assessment_executed(analysis_id, db, service)
 
     stmt = select(RiskAssessmentModel).where(RiskAssessmentModel.analysis_id == analysis_id)
@@ -418,6 +433,22 @@ async def get_risk_assessment(
     items_list = []
     if ra.items and "items" in ra.items:
         for it in ra.items["items"]:
+            factors_list = []
+            for f in it.get("factors", []):
+                factors_list.append(
+                    RiskFactorDetailDTO(
+                        factor_name=f.get("factor_name", ""),
+                        factor_value=f.get("factor_value", ""),
+                        scale=f.get("scale", ""),
+                        evidence_state=f.get("evidence_state", ""),
+                        source=f.get("source", ""),
+                        source_time=f.get("source_time", ""),
+                        contributes_to_aggregate=bool(f.get("contributes_to_aggregate", True)),
+                        aggregation_role=f.get("aggregation_role", ""),
+                        rationale=f.get("rationale", ""),
+                    )
+                )
+
             items_list.append(
                 RiskItemDTO(
                     finding_id=it.get("finding_id", ""),
@@ -429,6 +460,13 @@ async def get_risk_assessment(
                     evidence_state=it.get("evidence_state", ""),
                     threat_mapped=bool(it.get("threat_mapped", False)),
                     rationale=it.get("rationale", ""),
+                    factors=factors_list,
+                    contributes_to_aggregate=bool(it.get("contributes_to_aggregate", True)),
+                    aggregation_role=it.get("aggregation_role", "PRIMARY_DRIVER"),
+                    root_cause_key=it.get("root_cause_key", ""),
+                    policy_version=it.get("policy_version", "1.0.0"),
+                    policy_hash=it.get("policy_hash", ra.risk_policy_hash),
+                    methodology_type=it.get("methodology_type", "DETERMINISTIC_PRIORITIZATION_HEURISTIC"),
                 )
             )
 
@@ -436,8 +474,12 @@ async def get_risk_assessment(
         analysis_id=ra.analysis_id,
         risk_policy_id=ra.risk_policy_id,
         risk_policy_version=ra.risk_policy_version,
+        risk_policy_hash=ra.risk_policy_hash,
         overall_risk_tier=ra.overall_risk_tier,
         items=items_list,
+        evidence_coverage=ra.evidence_coverage,
+        evidence_gaps_count=ra.evidence_gaps_count or 0,
+        methodology_type=ra.methodology_type or "DETERMINISTIC_PRIORITIZATION_HEURISTIC",
     )
 
 
@@ -447,7 +489,7 @@ async def get_threat_matrix(
     db: AsyncSession = Depends(get_db_session),
     service: SecurityAssessmentService = Depends(get_security_service),
 ) -> list[ThreatInstanceDTO]:
-    """Retrieve catalog-mapped threat instances linked to observed violations."""
+    """Retrieve catalog-mapped threat instances linked to observed violations with verified ATT&CK context."""
     await _ensure_assessment_executed(analysis_id, db, service)
 
     stmt = select(ThreatInstanceModel).where(ThreatInstanceModel.analysis_id == analysis_id)
@@ -462,9 +504,56 @@ async def get_threat_matrix(
             likelihood=t.likelihood,
             impact=t.impact,
             risk_tier=t.risk_tier,
+            mitre_attack_id=t.mitre_attack_id,
+            mitre_attack_name=t.mitre_attack_name,
+            mitre_attack_url=t.mitre_attack_url,
+            mitre_attack_rationale=t.mitre_attack_rationale,
+            catalog_hash=t.catalog_hash,
         )
         for t in threats
     ]
+
+
+@router.get("/analyses/{analysis_id}/threat-intelligence", response_model=ThreatIntelResponseDTO)
+async def get_threat_intelligence(
+    analysis_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+    service: SecurityAssessmentService = Depends(get_security_service),
+) -> ThreatIntelResponseDTO:
+    """Retrieve offline CISA KEV and FIRST EPSS context with explicit source lineage and freshness."""
+    await _ensure_assessment_executed(analysis_id, db, service)
+
+    intel_service = ThreatIntelService()
+    # Relevant IPsec / strongSwan cryptographic protocol CVEs
+    target_cves = ["CVE-2016-2183", "CVE-2015-4000", "CVE-2023-41913", "CVE-2022-40617", "CVE-2018-5388"]
+
+    results = intel_service.lookup_multiple_cves(target_cves)
+    intel_items = [
+        ThreatIntelItemDTO(
+            cve_id=r.cve_id,
+            cisa_kev_status=r.cisa_kev_status.value,
+            cisa_kev_record=r.cisa_kev_record.to_dict() if r.cisa_kev_record else None,
+            cisa_kev_as_of=r.cisa_kev_as_of,
+            cisa_kev_digest=r.cisa_kev_digest,
+            epss_status=r.epss_status.value,
+            epss_record=r.epss_record.to_dict() if r.epss_record else None,
+            epss_as_of=r.epss_as_of,
+            epss_digest=r.epss_digest,
+            disclaimer=r.disclaimer,
+        )
+        for r in results
+    ]
+
+    return ThreatIntelResponseDTO(
+        analysis_id=analysis_id,
+        intel_items=intel_items,
+        source_freshness="OFFLINE_VERIFIED_SNAPSHOT",
+        disclaimer=(
+            "Threat intelligence is supplemental external context only. "
+            "Neither CISA KEV nor FIRST EPSS constitutes proof of gateway compromise, "
+            "target vulnerability, or alters deterministic policy scores."
+        ),
+    )
 
 
 @router.get("/analyses/{analysis_id}/metadata-fingerprintability", response_model=FingerprintabilityDTO)

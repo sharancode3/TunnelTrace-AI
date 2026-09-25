@@ -1,21 +1,25 @@
 """Stage 7 & Stage 9 ML Inference Pipeline Execution Service.
 
-Coordinates loading the active model bundle, extracting flow packet sequences,
-executing multimodal inference on CPU, and persisting FlowClassification records.
+Coordinates loading the active model bundle, extracting genuine flow packet sequences,
+executing multimodal inference on CPU, and persisting MLInferenceRun and FlowClassification records.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
 import logging
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from sqlalchemy import delete, select
+import torch
+from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.capture import ProtocolObservation
-from app.db.models.ml import FlowClassification
+from app.db.models.capture import AnalysisRun, ProtocolObservation
+from app.db.models.ml import FlowClassification, MLInferenceRun, ModelArtifact
 from app.db.models.reconstruction import ESPFlow
 from app.ml.bundle import ModelBundle, ModelBundleLoader
 from app.ml.inference_service import Stage7InferenceResult, Stage7InferenceService
@@ -30,7 +34,15 @@ def extract_flow_packets(
     observations: list[ProtocolObservation],
     flow: ESPFlow,
 ) -> list[dict[str, Any]]:
-    """Extract and orient packet sequence for a specific ESPFlow from protocol observations."""
+    """Extract and orient genuine packet sequences for a specific ESPFlow.
+
+    CRITICAL INTEGRITY RULES:
+    - Never synthesize or fabricate timestamps, lengths, or directions from summary aggregates.
+    - Never clamp packet lengths to artificial minimums (e.g. 64 bytes).
+    - Packets must be genuinely linked to the reconstructed flow by available frame,
+      protocol (ESP/NAT-T), SPI, direction, timestamp, and length evidence.
+    - If observations are absent or insufficient, returns an empty list without fabrication.
+    """
     packets_by_frame: dict[int, dict[str, Any]] = {}
 
     for obs in observations:
@@ -48,14 +60,20 @@ def extract_flow_packets(
 
         p = packets_by_frame[fn]
         if obs.field_name == "esp.spi":
-            p["spi"] = obs.normalized_value.lower()
-        elif obs.field_name in ("esp.packet_length", "esp.length", "frame.len"):
+            p["spi"] = obs.normalized_value.lower() if obs.normalized_value else None
+
+        if obs.field_name in ("esp.packet_length", "esp.length", "frame.len"):
             try:
                 p["packet_length"] = int(obs.normalized_value or obs.raw_value or 0)
             except (ValueError, TypeError):
                 pass
-        elif obs.extra_attributes and isinstance(obs.extra_attributes, dict):
-            len_val = obs.extra_attributes.get("packet_len_bytes") or obs.extra_attributes.get("length")
+
+        if obs.extra_attributes and isinstance(obs.extra_attributes, dict):
+            len_val = (
+                obs.extra_attributes.get("packet_len_bytes")
+                or obs.extra_attributes.get("length")
+                or obs.extra_attributes.get("frame_len")
+            )
             if len_val is not None:
                 try:
                     p["packet_length"] = int(len_val)
@@ -71,37 +89,31 @@ def extract_flow_packets(
         if not p["spi"]:
             continue
         pkt_spi = p["spi"]
+        pkt_len = p.get("packet_length", 0)
+        # Packet length must be a genuinely observed positive length
+        if pkt_len <= 0:
+            continue
+
         if pkt_spi == forward_spi:
             flow_packets.append({
                 "packet_time": p["packet_time"],
-                "packet_length": max(p["packet_length"], 64),
+                "packet_length": pkt_len,
                 "direction": 1,
                 "spi": pkt_spi,
             })
         elif reverse_spi and pkt_spi == reverse_spi:
             flow_packets.append({
                 "packet_time": p["packet_time"],
-                "packet_length": max(p["packet_length"], 64),
+                "packet_length": pkt_len,
                 "direction": -1,
                 "spi": pkt_spi,
             })
 
-    # Sort chronologically
+    # Sort chronologically by genuinely observed wire timestamp
     flow_packets.sort(key=lambda x: x["packet_time"])
 
-    # Fallback if no frame-level length was parsed: synthesize from flow summary bounds
-    if not flow_packets:
-        count = max(flow.packet_count, 1)
-        step = (flow.duration_seconds / count) if count > 1 else 0.01
-        avg_len = (flow.byte_count // count) if count > 0 and flow.byte_count > 0 else 128
-        for i in range(min(count, 32)):
-            flow_packets.append({
-                "packet_time": flow.start_time + (i * step),
-                "packet_length": avg_len,
-                "direction": 1,
-                "spi": forward_spi,
-            })
-
+    # Strict integrity: If no genuine frame-level packets exist, return empty list.
+    # NEVER synthesize fake packet sequences from flow summaries.
     return flow_packets
 
 
@@ -112,37 +124,149 @@ async def execute_flow_classification(
 ) -> int:
     """Execute ML inference for all reconstructed ESPFlows of an analysis.
 
-    Returns the number of flows successfully classified.
+    Persists an auditable MLInferenceRun record tracking run status, bundle lineage,
+    and flow prediction outcomes. Never fabricates predictions when models or packet
+    observations are absent.
     """
     resolved_model_dir = model_dir or DEFAULT_MODEL_DIR
     manifest_path = resolved_model_dir / "model_manifest.json"
 
-    if not manifest_path.exists():
-        logger.info(
-            "Model manifest not found at %s. ML inference bypassed (STATUS: UNAVAILABLE).",
-            manifest_path,
-        )
+    # Fetch AnalysisRun to obtain capture_id
+    res_analysis = await db.execute(
+        select(AnalysisRun).where(AnalysisRun.id == analysis_id)
+    )
+    analysis = res_analysis.scalar_one_or_none()
+    if not analysis:
+        logger.error("AnalysisRun %s not found for ML classification.", analysis_id)
         return 0
 
+    capture_id = analysis.capture_id
+    utc_now = datetime.now(timezone.utc)
+
+    # 1. Model Bundle Presence Check
+    if not manifest_path.exists():
+        logger.info(
+            "Model manifest not found at %s. ML inference run recorded as NOT_CONFIGURED.",
+            manifest_path,
+        )
+        await db.execute(
+            update(MLInferenceRun)
+            .where(MLInferenceRun.analysis_id == analysis_id)
+            .values(is_current=False)
+        )
+        run = MLInferenceRun(
+            id=uuid.uuid4(),
+            analysis_id=analysis_id,
+            capture_id=capture_id,
+            status="NOT_CONFIGURED",
+            status_reason=f"Model manifest not found at {manifest_path}. No active model bundle deployed.",
+            attempted_count=0,
+            classified_count=0,
+            skipped_count=0,
+            failed_count=0,
+            is_current=True,
+            started_at=utc_now,
+            completed_at=utc_now,
+        )
+        db.add(run)
+        await db.commit()
+        return 0
+
+    # 2. Bundle Loading & Verification Check
     try:
         bundle: ModelBundle = ModelBundleLoader.load_bundle(resolved_model_dir)
         service = Stage7InferenceService(bundle=bundle)
     except Exception as exc:
         logger.warning(
-            "Failed to load Stage 7 model bundle from %s: %s. ML inference bypassed.",
+            "Failed to load Stage 7 model bundle from %s: %s. ML inference run recorded as BUNDLE_INVALID.",
             resolved_model_dir,
             exc,
         )
+        await db.execute(
+            update(MLInferenceRun)
+            .where(MLInferenceRun.analysis_id == analysis_id)
+            .values(is_current=False)
+        )
+        run = MLInferenceRun(
+            id=uuid.uuid4(),
+            analysis_id=analysis_id,
+            capture_id=capture_id,
+            status="BUNDLE_INVALID",
+            status_reason=f"Model bundle verification failed: {exc}",
+            attempted_count=0,
+            classified_count=0,
+            skipped_count=0,
+            failed_count=0,
+            is_current=True,
+            started_at=utc_now,
+            completed_at=utc_now,
+        )
+        db.add(run)
+        await db.commit()
         return 0
 
-    # Fetch reconstructed flows
+    # 3. Flow Presence Check
     flows_res = await db.execute(
         select(ESPFlow).where(ESPFlow.analysis_id == analysis_id)
     )
     flows = list(flows_res.scalars().all())
     if not flows:
-        logger.info("No ESPFlow records found for analysis %s. Skipping ML inference.", analysis_id)
+        logger.info("No ESPFlow records found for analysis %s. ML inference run recorded as NO_FLOWS.", analysis_id)
+        await db.execute(
+            update(MLInferenceRun)
+            .where(MLInferenceRun.analysis_id == analysis_id)
+            .values(is_current=False)
+        )
+        run = MLInferenceRun(
+            id=uuid.uuid4(),
+            analysis_id=analysis_id,
+            capture_id=capture_id,
+            status="NO_FLOWS",
+            status_reason="No reconstructed ESPFlow records found for analysis",
+            bundle_id=bundle.bundle_id,
+            bundle_version=bundle.bundle_version,
+            attempted_count=0,
+            classified_count=0,
+            skipped_count=0,
+            failed_count=0,
+            is_current=True,
+            started_at=utc_now,
+            completed_at=utc_now,
+        )
+        db.add(run)
+        await db.commit()
         return 0
+
+    # 4. Initialize MLInferenceRun record (unfinalized until completed)
+    manifest_bytes = json.dumps(bundle.manifest, sort_keys=True).encode("utf-8")
+    manifest_digest = hashlib.sha256(manifest_bytes).hexdigest()
+
+    run = MLInferenceRun(
+        id=uuid.uuid4(),
+        analysis_id=analysis_id,
+        capture_id=capture_id,
+        status="RUNNING",
+        bundle_id=bundle.bundle_id,
+        bundle_version=bundle.bundle_version,
+        manifest_digest=manifest_digest,
+        feature_schema_hash=bundle.feature_schema.schema_hash(),
+        sequence_schema_hash=bundle.sequence_schema.schema_hash(),
+        anomaly_hash=bundle.anomaly_schema.schema_hash(),
+        inference_runtime=f"torch {torch.__version__} / xgboost / cpu",
+        environment_metadata={
+            "device": "cpu",
+            "model_dir": str(resolved_model_dir),
+            "manifest": bundle.manifest.get("frameworks", {}),
+        },
+        attempted_count=len(flows),
+        classified_count=0,
+        skipped_count=0,
+        failed_count=0,
+        is_current=False,
+        started_at=utc_now,
+    )
+    db.add(run)
+    await db.flush()
 
     # Fetch observations to extract flow packet sequences
     obs_res = await db.execute(
@@ -152,17 +276,51 @@ async def execute_flow_classification(
     )
     observations = list(obs_res.scalars().all())
 
-    # Clear prior classifications for idempotency
-    flow_ids = [f.id for f in flows]
-    await db.execute(
-        delete(FlowClassification).where(FlowClassification.flow_id.in_(flow_ids))
+    # Check if model artifact exists in DB for foreign key lineage
+    art_res = await db.execute(
+        select(ModelArtifact).where(ModelArtifact.model_version == bundle.bundle_version)
     )
-    await db.flush()
+    artifact_record = art_res.scalars().first()
+    artifact_id = artifact_record.id if artifact_record else None
 
     classified_count = 0
+    skipped_count = 0
+    failed_count = 0
+
     for flow in flows:
         packets = extract_flow_packets(observations, flow)
         flow_metadata = {"flow_id": str(flow.id), "spi": flow.spi}
+
+        if not packets:
+            # Insufficient genuine packet observations: do NOT synthesize or invent predictions
+            classification = FlowClassification(
+                id=uuid.uuid4(),
+                flow_id=flow.id,
+                run_id=run.id,
+                artifact_id=artifact_id,
+                input_status="INSUFFICIENT_INPUT",
+                supervised_hypothesis=None,
+                accepted_prediction="UNAVAILABLE",
+                calibration_status="UNAVAILABLE",
+                known_class="UNAVAILABLE",
+                final_class="UNAVAILABLE",
+                calibrated_confidence=0.0,
+                entropy=0.0,
+                normalized_entropy=0.0,
+                ood_status="INSUFFICIENT_INPUT",
+                rejection_reason="INSUFFICIENT_PACKET_OBSERVATIONS",
+                is_degraded=True,
+                degraded_reason="Flow lacks genuine frame-level packet observations",
+                behavioral_anomaly_status="NOT_EVALUATED",
+                anomaly_score=0.0,
+                transparency_data={
+                    "status": "INSUFFICIENT_INPUT",
+                    "reason": "Flow lacks genuine frame-level packet observations",
+                },
+            )
+            db.add(classification)
+            skipped_count += 1
+            continue
 
         try:
             result: Stage7InferenceResult = service.classify_flow(
@@ -178,6 +336,12 @@ async def execute_flow_classification(
             classification = FlowClassification(
                 id=uuid.uuid4(),
                 flow_id=flow.id,
+                run_id=run.id,
+                artifact_id=artifact_id,
+                input_status="VALID",
+                supervised_hypothesis=result.known_class_prediction,
+                accepted_prediction=result.final_class,
+                calibration_status="CALIBRATED" if not result.is_degraded else "DEGRADED",
                 known_class=result.known_class_prediction,
                 final_class=result.final_class,
                 calibrated_confidence=float(result.calibrated_confidence),
@@ -202,15 +366,42 @@ async def execute_flow_classification(
             db.add(classification)
             classified_count += 1
         except Exception as flow_err:
-            logger.error(
-                "Classification failed for flow %s: %s", flow.id, flow_err
-            )
+            logger.error("Classification failed for flow %s: %s", flow.id, flow_err)
+            failed_count += 1
+
+    # Update run outcome
+    completed_time = datetime.now(timezone.utc)
+    if classified_count == len(flows):
+        run.status = "COMPLETED"
+    elif classified_count > 0:
+        run.status = "PARTIAL"
+    elif skipped_count > 0:
+        run.status = "INSUFFICIENT_INPUT"
+    else:
+        run.status = "FAILED"
+
+    run.classified_count = classified_count
+    run.skipped_count = skipped_count
+    run.failed_count = failed_count
+    run.completed_at = completed_time
+
+    # Atomic switch of current run pointer: prior runs become is_current=False
+    await db.execute(
+        update(MLInferenceRun)
+        .where(MLInferenceRun.analysis_id == analysis_id, MLInferenceRun.id != run.id)
+        .values(is_current=False)
+    )
+    run.is_current = True
 
     await db.commit()
     logger.info(
-        "Successfully classified %d/%d flows for analysis %s.",
-        classified_count,
-        len(flows),
+        "ML Inference Run %s completed for analysis %s: status=%s, classified=%d, skipped=%d, failed=%d",
+        run.id,
         analysis_id,
+        run.status,
+        classified_count,
+        skipped_count,
+        failed_count,
     )
     return classified_count
+

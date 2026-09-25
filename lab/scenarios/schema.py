@@ -4,7 +4,7 @@ import re
 from enum import Enum
 from typing import Optional
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class TopologyType(str, Enum):
@@ -29,6 +29,15 @@ class IKEVersion(str, Enum):
     IKEV1 = "IKEV1"
 
 
+class ExpectedOutcome(str, Enum):
+    """Machine-readable expected result for scenario validation."""
+
+    SUCCESS = "SUCCESS"
+    EXPECTED_REJECTION = "EXPECTED_REJECTION"
+    EXPECTED_NEGATIVE = "EXPECTED_NEGATIVE"
+    UNSUPPORTED_ENVIRONMENT = "UNSUPPORTED_ENVIRONMENT"
+
+
 class CryptoProfile(str, Enum):
     """Controlled cryptographic suite configurations for IKE and ESP."""
 
@@ -37,6 +46,8 @@ class CryptoProfile(str, Enum):
     IKEV2_AES256CBC_SHA256_DH14_NOPFS = "IKEV2_AES256CBC_SHA256_DH14_NOPFS"
     IKEV2_AES128CBC_SHA1_DH2_NOPFS = "IKEV2_AES128CBC_SHA1_DH2_NOPFS"
     IKEV1_AES256CBC_SHA1_DH14 = "IKEV1_AES256CBC_SHA1_DH14"
+    IKEV1_3DES_SHA1_DH2 = "IKEV1_3DES_SHA1_DH2"
+    NO_COMMON_PROPOSAL = "NO_COMMON_PROPOSAL"
 
 
 class PFSMode(str, Enum):
@@ -121,6 +132,22 @@ class ScenarioDefinition(BaseModel):
         EncapsulationMode.NATIVE_ESP, description="ESP encapsulation (native vs UDP/4500)"
     )
 
+    expected_outcome: ExpectedOutcome = Field(
+        default=ExpectedOutcome.SUCCESS, description="Machine-readable contract defining expected negotiation/SA outcome"
+    )
+    is_negative_test: bool = Field(
+        default=False, description="Explicit flag declaring this scenario is an intentional negative/misconfigured test case"
+    )
+    allow_insecure_suite: bool = Field(
+        default=False, description="Safety gate requiring explicit opt-in to load insecure/weak suites in isolated lab"
+    )
+    expected_failure_reason: Optional[str] = Field(
+        default=None, description="Expected failure or rejection reason (e.g. 'NO_PROPOSAL_CHOSEN')"
+    )
+    peer_b_crypto_profile: Optional[CryptoProfile] = Field(
+        default=None, description="Optional peer-specific proposal suite to model asymmetric or mismatched proposals"
+    )
+
     netem: NetemConfig = Field(default_factory=NetemConfig, description="Optional WAN impairment profile")
     capture: CaptureProfile = Field(CaptureProfile.BOTH, description="Packet capture configuration")
     traffic_probe: TrafficProbeConfig = Field(default_factory=TrafficProbeConfig, description="Control traffic")
@@ -140,4 +167,22 @@ class ScenarioDefinition(BaseModel):
         if len(v) > 64:
             raise ValueError(f"scenario_id '{v}' exceeds maximum length of 64 characters.")
         return v
+
+    @model_validator(mode="after")
+    def validate_negative_and_insecure_guards(self) -> "ScenarioDefinition":
+        insecure_profiles = {
+            CryptoProfile.IKEV1_3DES_SHA1_DH2,
+            CryptoProfile.IKEV2_AES128CBC_SHA1_DH2_NOPFS,
+        }
+        if self.crypto_profile in insecure_profiles or self.expected_outcome == ExpectedOutcome.EXPECTED_NEGATIVE:
+            if not self.is_negative_test:
+                raise ValueError(
+                    f"Scenario '{self.scenario_id}' configures insecure suite '{self.crypto_profile.value}' "
+                    "but is_negative_test is False. Weak/insecure configurations must be explicitly marked as negative test cases."
+                )
+            if not self.allow_insecure_suite:
+                raise ValueError(
+                    f"Scenario '{self.scenario_id}' requires allow_insecure_suite=True to be executed in isolated lab."
+                )
+        return self
 

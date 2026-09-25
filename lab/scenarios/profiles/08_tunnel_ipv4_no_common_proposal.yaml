@@ -1,0 +1,22 @@
+scenario_id: "scn-08-tunnel-v4-no-common-proposal"
+scenario_version: "1.0"
+description: "Intentional negative test: Proposal mismatch between initiator (AES-256-GCM / ECP-256) and responder (AES-256-CBC / MODP-2048). Verifies strongSwan rejection with NO_PROPOSAL_CHOSEN."
+
+topology: "TUNNEL_SITE_TO_SITE"
+ip_version: "IPV4"
+ike_version: "IKEV2"
+crypto_profile: "IKEV2_AES256GCM_DH19_PFS"
+peer_b_crypto_profile: "IKEV2_AES256CBC_SHA256_DH14_NOPFS"
+pfs: "ENABLED"
+encapsulation: "NATIVE_ESP"
+capture: "BOTH"
+
+is_negative_test: true
+allow_insecure_suite: true
+expected_outcome: "EXPECTED_REJECTION"
+expected_failure_reason: "NO_PROPOSAL_CHOSEN"
+
+traffic_probe:
+  packet_count: 5
+  interval_sec: 0.2
+  payload_size_bytes: 64

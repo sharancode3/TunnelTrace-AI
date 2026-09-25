@@ -45,6 +45,7 @@ export default function RemediationTwinPage({
   const [editedConfig, setEditedConfig] = useState<string>("");
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [confirmControlledLab, setConfirmControlledLab] = useState(false);
+  const [operatorId, setOperatorId] = useState<string>("analyst-local");
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [expandedClaimId, setExpandedClaimId] = useState<string | null>(null);
 
@@ -79,7 +80,7 @@ export default function RemediationTwinPage({
     enabled: !!activeRunId,
     refetchInterval: (query) => {
       const data = query.state.data;
-      if (data && (data.status === "COMPLETED" || data.status === "FAILED" || data.status === "ROLLED_BACK")) {
+      if (data && (data.status === "COMPLETED" || data.status === "FAILED" || data.status === "ROLLED_BACK" || data.status === "ROLLBACK_FAILED")) {
         return false;
       }
       return 1500;
@@ -109,6 +110,7 @@ export default function RemediationTwinPage({
         twin_id: twin!.twin_id,
         proposal_hash: twin!.proposal_hash,
         lab_instance_id: "strongswan-lab-default",
+        operator_id: operatorId || "analyst-local",
         confirm_controlled_lab_only: true,
       }),
     onSuccess: (data) => {
@@ -118,7 +120,7 @@ export default function RemediationTwinPage({
     },
   });
 
-  const isExecuting = activeRun && !["COMPLETED", "FAILED", "ROLLED_BACK"].includes(activeRun.status);
+  const isExecuting = activeRun && !["COMPLETED", "FAILED", "ROLLED_BACK", "ROLLBACK_FAILED"].includes(activeRun.status);
 
   return (
     <div className="space-y-6">
@@ -212,10 +214,28 @@ export default function RemediationTwinPage({
             ))}
           </div>
 
-          {activeRun?.rollback_state !== "NONE" && (
+          {activeRun?.status === "ROLLBACK_FAILED" ? (
+            <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border-2 border-rose-600 text-rose-900 dark:text-rose-200 text-xs space-y-1">
+              <div className="flex items-center space-x-2 font-bold uppercase tracking-wider text-rose-700 dark:text-rose-400">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                <span>Critical: Rollback Verification Failed</span>
+              </div>
+              <p className="text-[11px]">
+                Automatic restoration could not be fully verified against baseline configuration digests. <strong>Manual lab testbed intervention required.</strong>
+              </p>
+              {activeRun?.error_message && <p className="text-[10px] text-rose-600 dark:text-rose-300 font-mono">{activeRun.error_message}</p>}
+            </div>
+          ) : activeRun?.rollback_state !== "NONE" ? (
             <div className="p-2.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-500 text-amber-900 dark:text-amber-200 text-xs">
               <span className="font-bold uppercase">Automatic Rollback State:</span> {activeRun?.rollback_state}
               {activeRun?.rollback_reason && <p className="text-[11px] mt-0.5">{activeRun?.rollback_reason}</p>}
+            </div>
+          ) : null}
+
+          {activeRun?.post_capture_hash && (
+            <div className="flex flex-wrap items-center justify-between text-[11px] text-neutral-500 pt-1 border-t border-neutral-200 dark:border-neutral-800">
+              <span>Verified PCAP Digest: <code className="text-neutral-700 dark:text-neutral-300 font-bold">{activeRun.post_capture_hash.slice(0, 16)}...</code></span>
+              {activeRun.pre_apply_spis && <span>Pre-Apply SAs: {activeRun.pre_apply_spis.length} observed</span>}
             </div>
           )}
         </div>
@@ -596,8 +616,30 @@ export default function RemediationTwinPage({
               <li>Automatically rollback if the tunnel negotiation or daemon crashes.</li>
             </ul>
 
-            <div className="p-3 bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-[11px]">
-              <label className="flex items-start space-x-2 cursor-pointer">
+            <div className="p-3 bg-neutral-100 dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-[11px] space-y-2">
+              <div className="grid grid-cols-2 gap-2 text-[10px]">
+                <div>
+                  <span className="text-neutral-500 uppercase block">Proposal Digest (SHA-256):</span>
+                  <code className="text-neutral-900 dark:text-white font-bold">{twin?.proposal_hash.slice(0, 20)}...</code>
+                </div>
+                <div>
+                  <span className="text-neutral-500 uppercase block">Lab Sandbox Target:</span>
+                  <code className="text-neutral-900 dark:text-white font-bold">strongswan-lab-default</code>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-neutral-500 uppercase text-[10px] mb-1">Authorizing Operator Identifier:</label>
+                <input
+                  type="text"
+                  value={operatorId}
+                  onChange={(e) => setOperatorId(e.target.value)}
+                  placeholder="e.g. security-engineer-1"
+                  className="w-full px-2 py-1 bg-white dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 font-mono text-xs text-neutral-900 dark:text-white focus:outline-none focus:border-[#FF3D00]"
+                />
+              </div>
+
+              <label className="flex items-start space-x-2 cursor-pointer pt-1 border-t border-neutral-200 dark:border-neutral-800">
                 <input
                   type="checkbox"
                   checked={confirmControlledLab}
@@ -609,6 +651,10 @@ export default function RemediationTwinPage({
                 </span>
               </label>
             </div>
+
+            <p className="text-[10px] text-neutral-400">
+              * Approval is bound cryptographically to this exact proposal hash, diff hash, and fresh authorization timestamp. Any subsequent edit immediately revokes authorization.
+            </p>
 
             <div className="flex items-center justify-end space-x-3 pt-2">
               <button

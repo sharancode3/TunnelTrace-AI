@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 import {
@@ -179,6 +180,13 @@ export default function DiscoveryPage() {
                 : "NMAP NOT INSTALLED (TEST MODE)"}
             </span>
           </div>
+          <Link
+            href="/vulnerabilities"
+            className="flex items-center space-x-1.5 px-3 py-1 rounded bg-indigo-950/40 hover:bg-indigo-900/40 border border-indigo-500/30 text-indigo-300 text-xs font-mono transition-colors"
+          >
+            <ShieldAlert className="w-3.5 h-3.5 text-indigo-400" />
+            <span>VULNERABILITY REPORTS</span>
+          </Link>
           <button
             onClick={() => refetchJobs()}
             className="p-1.5 rounded text-neutral-500 hover:text-neutral-900 dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800"

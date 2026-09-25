@@ -23,31 +23,9 @@ def analyze_capture_task(self, analysis_id_str: str) -> dict[str, str]:
     async def _run() -> None:
         factory = get_session_factory()
         async with factory() as db:
-            service = ProtocolForensicsService(db)
-            summary = await service.execute_analysis(analysis_id)
-            if summary.ipsec_detected:
-                from app.reconstruction.engine import ReconstructionEngine
+            from app.services.pipeline import execute_full_analysis_pipeline
 
-                engine = ReconstructionEngine(db)
-                await engine.execute_reconstruction(analysis_id)
-
-                # Stage 7/9: Execute ML flow classification if model bundle available
-                try:
-                    from app.ml.service import execute_flow_classification
-
-                    await execute_flow_classification(analysis_id, db)
-                except Exception as ml_err:
-                    logger.warning(
-                        f"ML classification skipped or encountered error for '{analysis_id}': {ml_err}"
-                    )
-
-                # Stage 8: Execute deterministic Policy-as-Code, Scoring & Evidence Graph
-                from app.api.v1.security.router import (
-                    _ensure_assessment_executed,
-                    get_security_service,
-                )
-                sec_service = get_security_service()
-                await _ensure_assessment_executed(analysis_id, db, sec_service)
+            await execute_full_analysis_pipeline(analysis_id, db)
 
     try:
         asyncio.run(_run())

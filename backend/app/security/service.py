@@ -93,6 +93,9 @@ class SecurityAssessmentService:
         ml_classifications: list[dict[str, Any]] | None = None,
         profile_id: str = "profile_nist_sp800_77",
         model_bundle_id: str | None = None,
+        parent_analysis_id: str | None = None,
+        replay_mode: str | None = None,
+        scenario_metadata: dict[str, Any] | None = None,
     ) -> SecurityAssessmentResult:
         """Execute end-to-end deterministic security assessment."""
         logger.info("Starting security assessment for analysis %s on profile %s", analysis_id, profile_id)
@@ -145,6 +148,8 @@ class SecurityAssessmentService:
         risk_assessment = self.risk_engine.assess_risks(
             analysis_id=analysis_id,
             findings=findings,
+            evidence_coverage=score_assessment.evidence_coverage.coverage_percentage,
+            evidence_gaps_count=len(evidence_gaps),
         )
 
         # 7. Threat Matrix Mapping
@@ -197,6 +202,8 @@ class SecurityAssessmentService:
             risk_assessment=risk_assessment,
             score_assessment=score_assessment,
             fingerprintability=fingerprintability,
+            parent_analysis_id=parent_analysis_id,
+            scenario_metadata=scenario_metadata,
         )
 
         # 10. Cryptographic Manifest
@@ -215,6 +222,8 @@ class SecurityAssessmentService:
             score_value=score_assessment.overall_score,
             coverage_percentage=score_assessment.evidence_coverage.coverage_percentage,
             fingerprintability_hash=fingerprintability.methodology_hash,
+            parent_analysis_id=parent_analysis_id,
+            replay_mode=replay_mode,
         )
 
         logger.info(

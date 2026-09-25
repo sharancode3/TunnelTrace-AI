@@ -15,12 +15,8 @@ export function Header({ onToggleSidebar }: HeaderProps) {
   const [theme, setTheme] = useState<"light" | "dark">("light");
 
   useEffect(() => {
-    // Check initial system or stored theme
-    if (
-      localStorage.theme === "dark" ||
-      (!("theme" in localStorage) &&
-        window.matchMedia("(prefers-color-scheme: dark)").matches)
-    ) {
+    // Default to light theme; only use dark if explicitly selected in localStorage
+    if (localStorage.theme === "dark") {
       document.documentElement.classList.add("dark");
       setTheme("dark");
     } else {

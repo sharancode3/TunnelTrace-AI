@@ -106,7 +106,7 @@ class TestSecurityPipelineIntegration:
         assert res.score_assessment.evidence_coverage.coverage_percentage >= 70.0
 
         # 2. Risk & Threats
-        assert res.risk_assessment.overall_risk_tier.value in ("INFORMATIONAL", "LOW")
+        assert res.risk_assessment.overall_risk_tier.value in ("NO_FINDINGS_UNDER_THIS_POLICY", "LOW")
         assert len(res.threat_instances) == 0
 
         # 3. Cryptographic Manifest

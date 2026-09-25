@@ -23,6 +23,7 @@ import {
   SecurityFindingDTO,
   SecurityScoreDTO,
   ThreatInstanceDTO,
+  ThreatIntelResponseDTO,
   TrafficSummaryResponseDTO,
   TwinResponseDTO,
   VerificationResponseDTO,
@@ -30,6 +31,8 @@ import {
   AIChatSessionHistoryDTO,
   EvidenceSearchResponseDTO,
   AIHealthResponseDTO,
+  ReplayExecutionResponseDTO,
+  ReplayLineageDTO,
 } from "./types";
 
 
@@ -170,6 +173,9 @@ export const api = {
     getThreats: async (id: string): Promise<ThreatInstanceDTO[]> => {
       return request<ThreatInstanceDTO[]>(`/analyses/${id}/threat-matrix`);
     },
+    getThreatIntelligence: async (id: string): Promise<ThreatIntelResponseDTO> => {
+      return request<ThreatIntelResponseDTO>(`/analyses/${id}/threat-intelligence`);
+    },
     getFingerprintability: async (id: string): Promise<FingerprintabilityDTO> => {
       return request<FingerprintabilityDTO>(
         `/analyses/${id}/metadata-fingerprintability`
@@ -177,6 +183,23 @@ export const api = {
     },
     getEvidenceGraph: async (id: string): Promise<EvidenceGraphDTO> => {
       return request<EvidenceGraphDTO>(`/analyses/${id}/evidence-graph`);
+    },
+    reAnalyze: async (
+      id: string,
+      options?: {
+        pinned_parser_engine?: string;
+        pinned_parser_version?: string;
+        pinned_policy_bundle_version?: string;
+        pinned_model_bundle_id?: string;
+      }
+    ): Promise<ReplayExecutionResponseDTO> => {
+      return request<ReplayExecutionResponseDTO>(`/analyses/${id}/re-analyze`, {
+        method: "POST",
+        body: JSON.stringify(options || {}),
+      });
+    },
+    getReplayLineage: async (id: string): Promise<ReplayLineageDTO> => {
+      return request<ReplayLineageDTO>(`/analyses/${id}/replay-lineage`);
     },
   },
 
@@ -246,7 +269,8 @@ export const api = {
       data: {
         twin_id: string;
         proposal_hash: string;
-        lab_instance_id?: string;
+        lab_instance_id: string;
+        operator_id: string;
         confirm_controlled_lab_only: boolean;
       }
     ): Promise<RemediationRunResponseDTO> => {
@@ -360,6 +384,227 @@ export const api = {
         method: "POST",
         body: JSON.stringify(data),
       });
+    },
+  },
+
+  vulnerabilities: {
+    previewReport: async (file: File, authorizedTargets?: string): Promise<import("./types").VulnerabilityReportPreviewResponseDTO> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      if (authorizedTargets) {
+        formData.append("authorized_targets", authorizedTargets);
+      }
+      return request<import("./types").VulnerabilityReportPreviewResponseDTO>("/vulnerabilities/reports/preview", {
+        method: "POST",
+        body: formData,
+      });
+    },
+    importReport: async (
+      file: File,
+      data: {
+        operator_id: string;
+        authorization_reference: string;
+        operator_attestation: string;
+        engagement_scope: string;
+        authorized_targets?: string;
+      }
+    ): Promise<import("./types").VulnerabilityReportDTO> => {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("operator_id", data.operator_id);
+      formData.append("authorization_reference", data.authorization_reference);
+      formData.append("operator_attestation", data.operator_attestation);
+      formData.append("engagement_scope", data.engagement_scope);
+      if (data.authorized_targets) {
+        formData.append("authorized_targets", data.authorized_targets);
+      }
+      return request<import("./types").VulnerabilityReportDTO>("/vulnerabilities/reports/import", {
+        method: "POST",
+        body: formData,
+      });
+    },
+    listReports: async (skip = 0, limit = 50, status?: string): Promise<import("./types").VulnerabilityReportListResponseDTO> => {
+      const params = new URLSearchParams({ skip: String(skip), limit: String(limit) });
+      if (status) params.append("status", status);
+      return request<import("./types").VulnerabilityReportListResponseDTO>(`/vulnerabilities/reports?${params.toString()}`);
+    },
+    getReport: async (reportId: string): Promise<import("./types").VulnerabilityReportDTO> => {
+      return request<import("./types").VulnerabilityReportDTO>(`/vulnerabilities/reports/${reportId}`);
+    },
+    listFindings: async (
+      reportId?: string,
+      params?: {
+        skip?: number;
+        limit?: number;
+        host_ip?: string;
+        severity?: string;
+        correlation_status?: string;
+        asset_link_state?: string;
+      }
+    ): Promise<import("./types").VulnerabilityFindingListResponseDTO> => {
+      const sp = new URLSearchParams();
+      if (params?.skip !== undefined) sp.append("skip", String(params.skip));
+      if (params?.limit !== undefined) sp.append("limit", String(params.limit));
+      if (params?.host_ip) sp.append("host_ip", params.host_ip);
+      if (params?.severity) sp.append("severity", params.severity);
+      if (params?.correlation_status) sp.append("correlation_status", params.correlation_status);
+      if (params?.asset_link_state) sp.append("asset_link_state", params.asset_link_state);
+      const url = reportId
+        ? `/vulnerabilities/reports/${reportId}/findings?${sp.toString()}`
+        : `/vulnerabilities/findings?${sp.toString()}`;
+      return request<import("./types").VulnerabilityFindingListResponseDTO>(url);
+    },
+    getFinding: async (reportId: string, findingId: string): Promise<import("./types").VulnerabilityFindingDTO> => {
+      return request<import("./types").VulnerabilityFindingDTO>(`/vulnerabilities/reports/${reportId}/findings/${findingId}`);
+    },
+  },
+
+  monitoring: {
+    registerGateway: async (data: {
+      name: string;
+      gateway_ip: string;
+      authorized_scope: string;
+      operator_id: string;
+      authorization_reference: string;
+    }): Promise<import("./types").GatewayResponseDTO> => {
+      return request<import("./types").GatewayResponseDTO>("/monitoring/gateways", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    listGateways: async (): Promise<import("./types").GatewayResponseDTO[]> => {
+      return request<import("./types").GatewayResponseDTO[]>("/monitoring/gateways");
+    },
+    registerSensor: async (data: {
+      sensor_name: string;
+      sensor_type: "GATEWAY_COLLECTOR" | "CAPTURE_SENSOR";
+      gateway_id: string;
+      authorized_scope: string;
+      freshness_window_seconds?: number;
+      reporting_interval_seconds?: number;
+    }): Promise<import("./types").RegisterSensorResponseDTO> => {
+      return request<import("./types").RegisterSensorResponseDTO>("/monitoring/sensors", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    listSensors: async (gatewayId?: string): Promise<import("./types").SensorResponseDTO[]> => {
+      const url = gatewayId ? `/monitoring/sensors?gateway_id=${gatewayId}` : "/monitoring/sensors";
+      return request<import("./types").SensorResponseDTO[]>(url);
+    },
+    revokeSensor: async (sensorId: string): Promise<import("./types").SensorResponseDTO> => {
+      return request<import("./types").SensorResponseDTO>(`/monitoring/sensors/${sensorId}/revoke`, {
+        method: "POST",
+      });
+    },
+    getHealth: async (): Promise<import("./types").SensorHealthDTO[]> => {
+      return request<import("./types").SensorHealthDTO[]>("/monitoring/health");
+    },
+    getSAStates: async (gatewayId?: string): Promise<import("./types").MonitoredSAStateDTO[]> => {
+      const url = gatewayId ? `/monitoring/sa-states?gateway_id=${gatewayId}` : "/monitoring/sa-states";
+      return request<import("./types").MonitoredSAStateDTO[]>(url);
+    },
+    getTimeline: async (params?: {
+      gateway_id?: string;
+      sensor_id?: string;
+      event_kind?: string;
+      limit?: number;
+      offset?: number;
+    }): Promise<import("./types").MonitoringTimelineResponseDTO> => {
+      const sp = new URLSearchParams();
+      if (params?.gateway_id) sp.append("gateway_id", params.gateway_id);
+      if (params?.sensor_id) sp.append("sensor_id", params.sensor_id);
+      if (params?.event_kind) sp.append("event_kind", params.event_kind);
+      if (params?.limit !== undefined) sp.append("limit", String(params.limit));
+      if (params?.offset !== undefined) sp.append("offset", String(params.offset));
+      return request<import("./types").MonitoringTimelineResponseDTO>(`/monitoring/timeline?${sp.toString()}`);
+    },
+  },
+
+  inventory: {
+    importConfiguration: async (
+      data: import("./types").ConfigurationImportRequestDTO
+    ): Promise<import("./types").ConfigurationSnapshotDTO> => {
+      return request<import("./types").ConfigurationSnapshotDTO>("/inventory/configurations/import", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    designateBaseline: async (
+      snapshotId: string,
+      data: import("./types").BaselineDesignateRequestDTO
+    ): Promise<import("./types").ConfigurationSnapshotDTO> => {
+      return request<import("./types").ConfigurationSnapshotDTO>(`/inventory/configurations/${snapshotId}/baseline`, {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    listSnapshots: async (params?: {
+      gateway_identity?: string;
+      is_baseline?: boolean;
+      limit?: number;
+    }): Promise<import("./types").ConfigurationSnapshotDTO[]> => {
+      const sp = new URLSearchParams();
+      if (params?.gateway_identity) sp.append("gateway_identity", params.gateway_identity);
+      if (params?.is_baseline !== undefined) sp.append("is_baseline", String(params.is_baseline));
+      if (params?.limit !== undefined) sp.append("limit", String(params.limit));
+      const qs = sp.toString();
+      return request<import("./types").ConfigurationSnapshotDTO[]>(`/inventory/configurations/snapshots${qs ? `?${qs}` : ""}`);
+    },
+    getSnapshot: async (
+      snapshotId: string
+    ): Promise<import("./types").ConfigurationSnapshotDTO> => {
+      return request<import("./types").ConfigurationSnapshotDTO>(`/inventory/configurations/snapshots/${snapshotId}`);
+    },
+    compareDrift: async (
+      data: import("./types").DriftCompareRequestDTO
+    ): Promise<import("./types").ConfigurationDriftDTO> => {
+      return request<import("./types").ConfigurationDriftDTO>("/inventory/configurations/drift/compare", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    getDriftHistory: async (params?: {
+      gateway_identity?: string;
+      limit?: number;
+    }): Promise<import("./types").ConfigurationDriftDTO[]> => {
+      const sp = new URLSearchParams();
+      if (params?.gateway_identity) sp.append("gateway_identity", params.gateway_identity);
+      if (params?.limit !== undefined) sp.append("limit", String(params.limit));
+      const qs = sp.toString();
+      return request<import("./types").ConfigurationDriftDTO[]>(`/inventory/configurations/drift/history${qs ? `?${qs}` : ""}`);
+    },
+    importCertificate: async (
+      data: import("./types").CertificateImportRequestDTO
+    ): Promise<import("./types").GatewayCertificateDTO[]> => {
+      return request<import("./types").GatewayCertificateDTO[]>("/inventory/certificates/import", {
+        method: "POST",
+        body: JSON.stringify(data),
+      });
+    },
+    listCertificates: async (params?: {
+      gateway_identity?: string;
+      validity_status?: string;
+      snapshot_id?: string;
+      limit?: number;
+    }): Promise<import("./types").GatewayCertificateDTO[]> => {
+      const sp = new URLSearchParams();
+      if (params?.gateway_identity) sp.append("gateway_identity", params.gateway_identity);
+      if (params?.validity_status) sp.append("validity_status", params.validity_status);
+      if (params?.snapshot_id) sp.append("snapshot_id", params.snapshot_id);
+      if (params?.limit !== undefined) sp.append("limit", String(params.limit));
+      const qs = sp.toString();
+      return request<import("./types").GatewayCertificateDTO[]>(`/inventory/certificates${qs ? `?${qs}` : ""}`);
+    },
+    getCertificate: async (
+      certId: string
+    ): Promise<import("./types").GatewayCertificateDTO> => {
+      return request<import("./types").GatewayCertificateDTO>(`/inventory/certificates/${certId}`);
+    },
+    getGatewaySummary: async (
+      gatewayIdentity: string
+    ): Promise<import("./types").GatewayInventorySummaryDTO> => {
+      return request<import("./types").GatewayInventorySummaryDTO>(`/inventory/gateways/${encodeURIComponent(gatewayIdentity)}/summary`);
     },
   },
 

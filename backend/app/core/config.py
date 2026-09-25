@@ -3,7 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field, SecretStr, field_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -92,7 +92,12 @@ class Settings(BaseSettings):
     # HTTP & CORS Security Settings
     # --------------------------------------------------------------------------
     CORS_ALLOWED_ORIGINS: list[str] = Field(
-        default_factory=lambda: ["http://localhost:3000", "http://127.0.0.1:3000"],
+        default_factory=lambda: [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:3002",
+            "http://127.0.0.1:3002",
+        ],
         description="List of allowed CORS origins (never wildcard * in production)",
     )
     CORS_ALLOW_CREDENTIALS: bool = Field(default=True, description="Allow credentials in CORS")
@@ -259,6 +264,87 @@ class Settings(BaseSettings):
         default=True,
         description="Enable lexical/keyword hybrid retrieval alongside pgvector",
     )
+
+    # --------------------------------------------------------------------------
+    # Continuous Monitoring Settings
+    # --------------------------------------------------------------------------
+    MONITORING_ENABLED: bool = Field(
+        default=True,
+        description="Master toggle for the continuous monitoring subsystem",
+    )
+    MONITORING_DEFAULT_FRESHNESS_WINDOW_SECONDS: int = Field(
+        default=60,
+        description="Time in seconds without events before a sensor is declared STALE",
+    )
+    MONITORING_DEFAULT_REPORTING_INTERVAL_SECONDS: int = Field(
+        default=30,
+        description="Expected heartbeat/reporting cadence in seconds for sensors",
+    )
+    MONITORING_MAX_BATCH_SIZE: int = Field(
+        default=100,
+        description="Maximum event count permitted in a single ingestion batch",
+    )
+    MONITORING_MAX_EVENT_PAYLOAD_BYTES: int = Field(
+        default=65536,
+        description="Maximum byte size permitted for an individual event payload",
+    )
+    MONITORING_ALLOW_UNAUTHENTICATED_LOCAL: bool = Field(
+        default=True,
+        description="Allow local development/test clients to submit events without sensor token",
+    )
+    MONITORING_CLOCK_SKEW_TOLERANCE_SECONDS: float = Field(
+        default=5.0,
+        description="Clock skew threshold in seconds triggering DEGRADED quality warning",
+    )
+
+    # --------------------------------------------------------------------------
+    # Data Retention & Lifecycle Settings
+    # --------------------------------------------------------------------------
+    RETENTION_PCAP_DAYS: int = Field(
+        default=30,
+        description="Default retention period in days for raw packet captures (0 for indefinite)",
+    )
+    RETENTION_REPORT_DAYS: int = Field(
+        default=90,
+        description="Default retention period in days for generated HTML/PDF reports",
+    )
+    RETENTION_TEMP_FILES_HOURS: int = Field(
+        default=24,
+        description="Default retention period in hours for temporary staging files in storage/tmp",
+    )
+    RETENTION_AUDIT_LOG_DAYS: int = Field(
+        default=365,
+        description="Default retention period in days for operational security audit records",
+    )
+
+    @model_validator(mode="after")
+    def validate_production_security(self) -> "Settings":
+        """Fail closed on insecure configurations in production mode."""
+        if self.is_production:
+            secret = self.APP_SECRET_KEY.get_secret_value()
+            if secret == "insecure-local-dev-secret-change-in-production-min32chars":
+                raise ValueError(
+                    "Security Violation: APP_SECRET_KEY must be overridden with a secure secret in production (APP_ENV=production)."
+                )
+            if len(secret) < 32:
+                raise ValueError(
+                    "Security Violation: APP_SECRET_KEY must be at least 32 characters in production."
+                )
+            if self.APP_DEBUG:
+                raise ValueError("Security Violation: APP_DEBUG must be False in production.")
+            if "*" in self.CORS_ALLOWED_ORIGINS:
+                raise ValueError(
+                    "Security Violation: Wildcard '*' in CORS_ALLOWED_ORIGINS is prohibited in production."
+                )
+            if self.MONITORING_ALLOW_UNAUTHENTICATED_LOCAL:
+                raise ValueError(
+                    "Security Violation: MONITORING_ALLOW_UNAUTHENTICATED_LOCAL must be False in production."
+                )
+            if self.DISCOVERY_ALLOW_UNAUTHENTICATED_LOCAL:
+                raise ValueError(
+                    "Security Violation: DISCOVERY_ALLOW_UNAUTHENTICATED_LOCAL must be False in production."
+                )
+        return self
 
     @field_validator("CORS_ALLOWED_ORIGINS", mode="before")
     @classmethod

@@ -51,5 +51,18 @@ api_v1_router.include_router(discovery_router)
 from app.api.v1.protocol.ike_router import router as ike_router
 api_v1_router.include_router(ike_router)
 
+# Mount External Vulnerability Assessment Reports (Greenbone/OpenVAS) endpoints
+from app.api.v1.vulnerabilities.router import router as vulnerabilities_router
+api_v1_router.include_router(vulnerabilities_router)
+
+# Mount Continuous Monitoring endpoints
+from app.api.v1.monitoring.router import router as monitoring_router
+api_v1_router.include_router(monitoring_router)
+
+# Mount Configuration and Certificate Inventory endpoints
+from app.api.v1.inventory.router import router as inventory_router
+api_v1_router.include_router(inventory_router, prefix="/inventory")
+
+
 
 

@@ -1,13 +1,18 @@
 """Pre-Authored, Authoritative Threat Catalog.
 
 Guarantees that operational threat scenarios, exploitation vectors, and CIA impacts
-are strictly sourced from verified cybersecurity literature and RFCs without any LLM invention.
+are strictly sourced from verified cybersecurity literature, RFCs, and authoritative
+MITRE ATT&CK techniques without any LLM invention.
 """
 
 from __future__ import annotations
 
+import hashlib
+import json
+from typing import Any
+
 from app.security.risk.models import Impact, Likelihood
-from app.security.threats.models import ThreatCatalogEntry
+from app.security.threats.models import MitreAttackMapping, ThreatCatalogEntry
 
 THREAT_CATALOG: dict[str, ThreatCatalogEntry] = {
     "THR-001": ThreatCatalogEntry(
@@ -24,8 +29,9 @@ THREAT_CATALOG: dict[str, ThreatCatalogEntry] = {
         cia_impact="Complete loss of confidentiality and integrity for parent IKE and derived Child SAs.",
         default_likelihood=Likelihood.HIGH,
         default_impact=Impact.HIGH,
-        mapped_root_cause_keys=("DH_GROUP_WEAK_LOGJAM",),
+        mapped_root_cause_keys=("DH_GROUP_WEAK_LOGJAM", "RC_DH_WEAK_GROUP"),
         authoritative_reference="NIST SP 800-77 Rev. 1 Section 5.1.2; RFC 8247 Section 3.2.4",
+        mitre_attack=None,  # Intentionally unmapped: pure cryptanalytic weakness, not an adversary execution technique
         mitre_attack_id=None,
     ),
     "THR-002": ThreatCatalogEntry(
@@ -44,6 +50,7 @@ THREAT_CATALOG: dict[str, ThreatCatalogEntry] = {
         default_impact=Impact.HIGH,
         mapped_root_cause_keys=("CIPHER_DEPRECATED_DES", "RC_CIPHER_3DES"),
         authoritative_reference="RFC 9395 Section 2; CVE-2016-2183 (Sweet32)",
+        mitre_attack=None,  # Intentionally unmapped: cryptographic block collision property, not an ATT&CK technique
         mitre_attack_id=None,
     ),
     "THR-003": ThreatCatalogEntry(
@@ -60,9 +67,21 @@ THREAT_CATALOG: dict[str, ThreatCatalogEntry] = {
         cia_impact="Identity leakage, offline credential recovery, and gateway impersonation.",
         default_likelihood=Likelihood.HIGH,
         default_impact=Impact.HIGH,
-        mapped_root_cause_keys=("PROTOCOL_LEGACY_IKEV1",),
+        mapped_root_cause_keys=("PROTOCOL_LEGACY_IKEV1", "RC_PROTOCOL_IKEV1"),
         authoritative_reference="RFC 7296 Section 1.2; RFC 8247 Section 3",
-        mitre_attack_id=None,
+        mitre_attack=MitreAttackMapping(
+            technique_id="T1110.002",
+            technique_name="Password Cracking",
+            domain="Enterprise",
+            dataset_version="v15.1",
+            mapping_type="EXPLOITS_WEAKNESS",
+            rationale=(
+                "Adversaries intercept IKEv1 Aggressive Mode authentication exchanges over the wire "
+                "and perform offline dictionary or brute-force cracking against pre-shared key (PSK) hashes."
+            ),
+            source_url="https://attack.mitre.org/techniques/T1110/002/",
+            verification_date="2026-09-25",
+        ),
     ),
     "THR-004": ThreatCatalogEntry(
         threat_id="THR-004",
@@ -78,8 +97,9 @@ THREAT_CATALOG: dict[str, ThreatCatalogEntry] = {
         cia_impact="Bypass of message authentication and potential unauthorized tunnel establishment.",
         default_likelihood=Likelihood.MEDIUM,
         default_impact=Impact.HIGH,
-        mapped_root_cause_keys=("INTEGRITY_DEPRECATED_HASH",),
+        mapped_root_cause_keys=("INTEGRITY_DEPRECATED_HASH", "RC_INTEGRITY_WEAK_HASH"),
         authoritative_reference="NIST SP 800-131A Rev. 2; NIST SP 800-77 Rev. 1 Section 5.1.1",
+        mitre_attack=None,  # Intentionally unmapped: mathematical hash collision forgery
         mitre_attack_id=None,
     ),
     "THR-005": ThreatCatalogEntry(
@@ -95,10 +115,22 @@ THREAT_CATALOG: dict[str, ThreatCatalogEntry] = {
         attack_vector="Active in-flight packet modification.",
         cia_impact="Undetected data tampering, packet payload corruption, and route redirection.",
         default_likelihood=Likelihood.HIGH,
-        default_impact=Impact.CRITICAL if hasattr(Impact, "CRITICAL") else Impact.HIGH,
-        mapped_root_cause_keys=("INTEGRITY_MISSING_NON_AEAD",),
+        default_impact=Impact.HIGH,
+        mapped_root_cause_keys=("INTEGRITY_MISSING_NON_AEAD", "RC_ESP_INTEGRITY_NONE"),
         authoritative_reference="RFC 4303 Section 3.3.2; RFC 7296 Section 3.3.2",
-        mitre_attack_id=None,
+        mitre_attack=MitreAttackMapping(
+            technique_id="T1565.002",
+            technique_name="Transmitted Data Manipulation",
+            domain="Enterprise",
+            dataset_version="v15.1",
+            mapping_type="EXPLOITS_WEAKNESS",
+            rationale=(
+                "Active on-path adversaries manipulate ESP ciphertext in transit when CBC encryption is "
+                "deployed without cryptographic integrity protection (bit-flipping attack)."
+            ),
+            source_url="https://attack.mitre.org/techniques/T1565/002/",
+            verification_date="2026-09-25",
+        ),
     ),
     "THR-006": ThreatCatalogEntry(
         threat_id="THR-006",
@@ -117,6 +149,7 @@ THREAT_CATALOG: dict[str, ThreatCatalogEntry] = {
         default_impact=Impact.LOW,
         mapped_root_cause_keys=("METADATA_FINGERPRINTABILITY_HIGH",),
         authoritative_reference="RFC 4303 Section 2.6 (Traffic Flow Confidentiality); NTRO PS 160",
+        mitre_attack=None,  # Intentionally unmapped: statistical traffic analysis without specific ATT&CK technique
         mitre_attack_id=None,
     ),
     "THR-007": ThreatCatalogEntry(
@@ -133,8 +166,9 @@ THREAT_CATALOG: dict[str, ThreatCatalogEntry] = {
         cia_impact="Denial of service, connection teardown, or receiver state corruption.",
         default_likelihood=Likelihood.LOW,
         default_impact=Impact.MEDIUM,
-        mapped_root_cause_keys=("REPLAY_SEQUENCE_NON_MONOTONIC",),
+        mapped_root_cause_keys=("REPLAY_SEQUENCE_NON_MONOTONIC", "RC_REPLAY_ANOMALY"),
         authoritative_reference="RFC 4303 Section 3.3.3",
+        mitre_attack=None,  # Intentionally unmapped: sequence desynchronization anomaly
         mitre_attack_id=None,
     ),
     "THR-008": ThreatCatalogEntry(
@@ -153,9 +187,54 @@ THREAT_CATALOG: dict[str, ThreatCatalogEntry] = {
         default_impact=Impact.HIGH,
         mapped_root_cause_keys=("CIPHER_NULL_CLEARTEXT", "RC_ESP_NULL_CIPHER"),
         authoritative_reference="RFC 8221 Section 4; RFC 4303 Section 3.3",
-        mitre_attack_id=None,
+        mitre_attack=MitreAttackMapping(
+            technique_id="T1040",
+            technique_name="Network Sniffing",
+            domain="Enterprise",
+            dataset_version="v15.1",
+            mapping_type="EXPLOITS_WEAKNESS",
+            rationale=(
+                "Passive network observers capture and inspect cleartext application traffic traversing "
+                "IPsec tunnels configured with NULL encryption (RFC 8221 non-compliance)."
+            ),
+            source_url="https://attack.mitre.org/techniques/T1040/",
+            verification_date="2026-09-25",
+        ),
     ),
 }
+
+
+def compute_catalog_hash() -> str:
+    """Compute deterministic canonical SHA-256 hash over all threat catalog entries."""
+    canonical_list: list[dict[str, Any]] = []
+
+    for threat_id in sorted(THREAT_CATALOG.keys()):
+        entry = THREAT_CATALOG[threat_id]
+        mitre_dict = entry.mitre_attack.to_dict() if entry.mitre_attack else None
+        canonical_list.append(
+            {
+                "threat_id": entry.threat_id,
+                "version": entry.version,
+                "name": entry.name,
+                "description": entry.description,
+                "affected_asset": entry.affected_asset,
+                "preconditions": entry.preconditions,
+                "attack_vector": entry.attack_vector,
+                "cia_impact": entry.cia_impact,
+                "default_likelihood": entry.default_likelihood.value,
+                "default_impact": entry.default_impact.value,
+                "mapped_root_cause_keys": sorted(entry.mapped_root_cause_keys),
+                "authoritative_reference": entry.authoritative_reference,
+                "mitre_attack": mitre_dict,
+            }
+        )
+
+    serialized = json.dumps(canonical_list, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
+
+
+# Authoritative precomputed hash for quick reference
+THREAT_CATALOG_CANONICAL_HASH: str = compute_catalog_hash()
 
 
 def get_threat_by_id(threat_id: str) -> ThreatCatalogEntry | None:

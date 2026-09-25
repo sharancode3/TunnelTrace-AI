@@ -98,8 +98,8 @@ def test_alembic_migration_chain_is_linear_and_unbroken():
             break
         curr = script.get_revision(curr.down_revision)
 
-    # We have 12 migrations (0001 through 0012)
-    assert len(chain) == 12, f"Expected 12 sequential migrations, found {len(chain)}: {chain}"
+    # We have 19 sequential migrations (0001 through 0019)
+    assert len(chain) == 19, f"Expected 19 sequential migrations, found {len(chain)}: {chain}"
 
 
 def test_air_gapped_configuration_safety():

@@ -130,6 +130,15 @@ include /etc/strongswan.d/*.conf
             )
             if check_res.success:
                 logger.debug(f"charon started in {namespace} (PID {proc.pid}, VICI socket responding)")
+                # Register all Linux PIDs strictly confined to this namespace
+                try:
+                    pids_res = self.runner.run(["ip", "netns", "pids", namespace], check=False)
+                    if pids_res.success and pids_res.stdout.strip():
+                        for p in pids_res.stdout.split():
+                            if p.isdigit():
+                                self.tracker.register_pid(int(p), f"charon-ns-{namespace}")
+                except Exception:
+                    pass
                 return proc.pid
             time.sleep(0.3)
 
@@ -186,6 +195,7 @@ include /etc/strongswan.d/*.conf
                 "10",
             ],
             timeout_sec=15.0,
+            check=False,
         )
 
     def query_sa_status(self, namespace: str, vici_socket: str) -> str:
@@ -214,3 +224,23 @@ include /etc/strongswan.d/*.conf
         """Query kernel XFRM policies inside namespace."""
         res = self.runner.run(["ip", "netns", "exec", namespace, "/usr/sbin/ip", "xfrm", "policy"], check=False)
         return res.stdout
+
+    def stop_peer_daemon(self, namespace: str, peer_dir: Optional[str] = None) -> None:
+        """Safely stop charon daemon running inside the specified namespace using signal escalation."""
+        try:
+            pids_res = self.runner.run(["ip", "netns", "pids", namespace], check=False)
+            if pids_res.success and pids_res.stdout.strip():
+                for p in pids_res.stdout.split():
+                    if p.isdigit():
+                        pid_int = int(p)
+                        # Graceful SIGTERM
+                        self.runner.run_raw(["kill", "-TERM", str(pid_int)], check=False)
+                        time.sleep(0.2)
+                        # Check alive and escalate to SIGKILL if needed
+                        alive = self.runner.run_raw(["kill", "-0", str(pid_int)], check=False)
+                        if alive.returncode == 0:
+                            logger.warning(f"charon PID {pid_int} in {namespace} still alive; escalating to SIGKILL")
+                            self.runner.run_raw(["kill", "-KILL", str(pid_int)], check=False)
+        except Exception as exc:
+            logger.warning(f"Error terminating charon daemon in namespace '{namespace}': {exc}")
+

@@ -23,7 +23,9 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.capture import AnalysisRun, Capture
+from enum import Enum
+
+from app.db.models.capture import AnalysisRun, Capture, ProtocolObservation
 from app.db.models.remediation import (
     ConfigurationSnapshotModel,
     ConfigurationTwinModel,
@@ -43,10 +45,35 @@ from app.remediation.renderer import SwanctlRenderer
 from app.remediation.twin import ConfigurationSecurityTwin
 from app.security.findings.models import SecurityFinding
 from app.security.policy.schema import FindingCategory, Severity
+from app.security.scoring.engine import SecurityScoringEngine
 from app.security.service import SecurityAssessmentService
 from lab.agent.cleanup.tracker import LabResourceTracker, LabConcurrencyError
 
 logger = logging.getLogger(__name__)
+
+
+class RollbackTriggerCode(str, Enum):
+    """Machine-checkable conditions that mandate immediate remediation rollback."""
+
+    PREFLIGHT_BLOCKED = "PREFLIGHT_BLOCKED"
+    LOCK_CONFLICT = "LOCK_CONFLICT"
+    INTEGRITY_MISMATCH = "INTEGRITY_MISMATCH"
+    CANDIDATE_LOAD_FAILED = "CANDIDATE_LOAD_FAILED"
+    FRESH_SA_FAILED = "FRESH_SA_FAILED"
+    WORKLOAD_CONNECTIVITY_FAILED = "WORKLOAD_CONNECTIVITY_FAILED"
+    POST_CAPTURE_FAILED = "POST_CAPTURE_FAILED"
+    POST_ANALYSIS_FAILED = "POST_ANALYSIS_FAILED"
+    CRITICAL_SECURITY_REGRESSION = "CRITICAL_SECURITY_REGRESSION"
+    TIMEOUT_EXCEEDED = "TIMEOUT_EXCEEDED"
+    EXECUTION_ERROR = "EXECUTION_ERROR"
+
+
+class RemediationExecutionError(RuntimeError):
+    """Raised when an explicit operational or security gate fails during execution."""
+
+    def __init__(self, trigger_code: RollbackTriggerCode, message: str) -> None:
+        super().__init__(message)
+        self.trigger_code = trigger_code
 
 
 @dataclass
@@ -77,6 +104,7 @@ class ClosedLoopRemediationRunner:
     ) -> None:
         self.agent = agent_client or LocalPrivilegedAgentClient()
         self.security_service = security_service or SecurityAssessmentService()
+        self.scoring_engine = SecurityScoringEngine()
 
     async def run_preflight_checks(
         self,
@@ -226,7 +254,7 @@ class ClosedLoopRemediationRunner:
         if not preflight.is_ready:
             run.status = "FAILED"
             run.error_message = f"Preflight failed: {preflight.blocking_reasons}"
-            await _record_step("PREFLIGHT", "FAILED", preflight.to_dict(), "PREFLIGHT_BLOCKED")
+            await _record_step("PREFLIGHT", "FAILED", preflight.to_dict(), RollbackTriggerCode.PREFLIGHT_BLOCKED.value)
             await db.commit()
             return run
         await _record_step("PREFLIGHT", "SUCCESS", preflight.to_dict())
@@ -238,7 +266,7 @@ class ClosedLoopRemediationRunner:
         except LabConcurrencyError as exc:
             run.status = "FAILED"
             run.error_message = str(exc)
-            await _record_step("ACQUIRE_LOCK", "FAILED", None, "LOCK_CONFLICT")
+            await _record_step("ACQUIRE_LOCK", "FAILED", None, RollbackTriggerCode.LOCK_CONFLICT.value)
             await db.commit()
             return run
 
@@ -247,13 +275,13 @@ class ClosedLoopRemediationRunner:
         applied_active_path = f"/tmp/tt-{tracker.run_id}/gw_a/swanctl/swanctl.conf"
 
         try:
-            # Step 3: Mandatory Pre-Apply Backup
+            # Step 3: Mandatory Pre-Apply Backup (fails closed if baseline missing)
             run.status = "BACKUP_CREATED"
             await db.commit()
             backup_dest = f"/tmp/tt-{tracker.run_id}/backup/swanctl.conf.bak"
             backup_res = await self.agent.execute_action(
                 "BACKUP_CONFIG",
-                {"active_config_path": applied_active_path, "backup_dest_path": backup_dest},
+                {"active_config_path": applied_active_path, "backup_dest_path": backup_dest, "run_id": tracker.run_id},
             )
             backup_path = backup_res["backup_path"]
             backup_hash = backup_res["backup_sha256"]
@@ -272,7 +300,21 @@ class ClosedLoopRemediationRunner:
             run.backup_snapshot_id = backup_snap.id
             await _record_step("BACKUP_CONFIG", "SUCCESS", {"backup_hash": backup_hash, "path": backup_path})
 
-            # Step 4: Apply Candidate Configuration
+            # Step 4: Record Pre-Apply SA State (to ensure post-apply SA is genuinely fresh)
+            pre_sa_res = await self.agent.execute_action(
+                "VERIFY_FRESH_SA",
+                {
+                    "namespace": "gw_a",
+                    "peer_dir": f"/tmp/tt-{tracker.run_id}/gw_a",
+                    "vici_socket": f"/tmp/tt-{tracker.run_id}/gw_a/charon.vici",
+                },
+            )
+            pre_apply_spis = pre_sa_res.get("observed_spis", [])
+            run.pre_apply_spis = pre_apply_spis
+            await db.commit()
+            await _record_step("PRE_APPLY_SA_STATE", "SUCCESS", {"observed_spis": pre_apply_spis})
+
+            # Step 5: Apply Candidate Configuration (atomic replace with readback verification)
             run.status = "APPLYING"
             await db.commit()
             apply_res = await self.agent.execute_action(
@@ -281,13 +323,20 @@ class ClosedLoopRemediationRunner:
                     "target_path": applied_active_path,
                     "config_text": hardened_snap.config_content,
                     "expected_hash": approved_proposal_hash,
+                    "run_id": tracker.run_id,
                 },
             )
+            if not apply_res.get("verified", False):
+                raise RemediationExecutionError(
+                    RollbackTriggerCode.INTEGRITY_MISMATCH,
+                    f"Applied config readback SHA-256 mismatch against approved proposal hash {approved_proposal_hash}."
+                )
+
             run.status = "CONFIG_APPLIED"
             run.applied_snapshot_id = hardened_snap.id
             await _record_step("APPLY_CONFIG", "SUCCESS", apply_res)
 
-            # Step 5: Reload strongSwan
+            # Step 6: Reload strongSwan inside isolated namespace
             run.status = "RELOADING"
             await db.commit()
             reload_res = await self.agent.execute_action(
@@ -299,10 +348,13 @@ class ClosedLoopRemediationRunner:
                 },
             )
             if not reload_res.get("load_success", False):
-                raise RuntimeError(f"strongSwan configuration load failed: {reload_res.get('load_stdout')}")
+                raise RemediationExecutionError(
+                    RollbackTriggerCode.CANDIDATE_LOAD_FAILED,
+                    f"strongSwan candidate configuration load failed: {reload_res.get('load_stdout')}"
+                )
             await _record_step("RELOAD_STRONGSWAN", "SUCCESS", reload_res)
 
-            # Step 6: Verify Fresh SA
+            # Step 7: Verify Fresh SA (must establish new SPI distinct from pre-apply state)
             run.status = "REESTABLISHING"
             await db.commit()
             sa_res = await self.agent.execute_action(
@@ -311,13 +363,17 @@ class ClosedLoopRemediationRunner:
                     "namespace": "gw_a",
                     "peer_dir": f"/tmp/tt-{tracker.run_id}/gw_a",
                     "vici_socket": f"/tmp/tt-{tracker.run_id}/gw_a/charon.vici",
+                    "old_spis": pre_apply_spis,
                 },
             )
             if not sa_res.get("fresh_sa_established", False):
-                raise RuntimeError("Failed to verify newly established Security Association on remediated tunnel.")
+                raise RemediationExecutionError(
+                    RollbackTriggerCode.FRESH_SA_FAILED,
+                    f"Failed to verify newly established Security Association distinct from pre-apply SPIs {pre_apply_spis}."
+                )
             await _record_step("VERIFY_FRESH_SA", "SUCCESS", sa_res)
 
-            # Step 7: Verification Traffic Workload & Sniffing
+            # Step 8: Verification Traffic Workload & Sniffing
             run.status = "CAPTURING"
             await db.commit()
             post_pcap_path = f"/tmp/tt-{tracker.run_id}/verification_post_{run_id}.pcap"
@@ -327,6 +383,7 @@ class ClosedLoopRemediationRunner:
                     "session_id": f"cap-{run_id}",
                     "interface": "lo",
                     "output_pcap": post_pcap_path,
+                    "run_id": tracker.run_id,
                 },
             )
 
@@ -343,73 +400,93 @@ class ClosedLoopRemediationRunner:
                 "STOP_LIVE_CAPTURE",
                 {"session_id": f"cap-{run_id}"},
             )
+
+            # Machine-checkable operational rollback threshold: packet loss > 10% or workload failure
+            packet_loss = workload_res.get("packet_loss_pct", 0.0)
+            if not workload_res.get("success", True) or packet_loss > 10.0:
+                raise RemediationExecutionError(
+                    RollbackTriggerCode.WORKLOAD_CONNECTIVITY_FAILED,
+                    f"Post-remediation workload connectivity failed: packet loss {packet_loss}% exceeds 10.0% threshold."
+                )
+
             await _record_step("CAPTURE_AND_WORKLOAD", "SUCCESS", {"workload": workload_res, "capture": cap_stop})
 
-            # Create Capture DB record
-            post_cap_hash = hashlib.sha256(f"verification-pcap-{run_id}".encode()).hexdigest()
+            # Validate real capture artifact on disk
+            real_file_size: int = 0
+            real_pcap_hash: str | None = None
+            if os.path.exists(post_pcap_path):
+                real_file_size = os.path.getsize(post_pcap_path)
+                with open(post_pcap_path, "rb") as pf:
+                    pcap_bytes = pf.read()
+                real_pcap_hash = hashlib.sha256(pcap_bytes).hexdigest()
+            elif cap_stop.get("sha256") and cap_stop.get("file_size", 0) > 0:
+                real_file_size = cap_stop["file_size"]
+                real_pcap_hash = cap_stop["sha256"]
+            else:
+                # If neither local disk nor inspect_pcap produced real bytes
+                raise RemediationExecutionError(
+                    RollbackTriggerCode.POST_CAPTURE_FAILED,
+                    f"Post-remediation capture artifact missing or 0 bytes at {post_pcap_path}."
+                )
+
+            if real_file_size == 0 or not real_pcap_hash:
+                raise RemediationExecutionError(
+                    RollbackTriggerCode.POST_CAPTURE_FAILED,
+                    f"Post-remediation capture artifact at {post_pcap_path} is empty (0 bytes)."
+                )
+
+            run.post_capture_hash = real_pcap_hash
+
+            # Copy capture to permanent storage path
+            storage_dest = f"storage/captures/verification_{run_id}.pcap"
+            os.makedirs(os.path.dirname(storage_dest), exist_ok=True)
+            if os.path.exists(post_pcap_path):
+                with open(post_pcap_path, "rb") as src, open(storage_dest, "wb") as dst:
+                    dst.write(src.read())
+
             post_capture = Capture(
                 capture_source="TESTBED_GENERATED",
                 capture_format="PCAP",
                 original_filename=f"verification_{run_id}.pcap",
-                storage_path=f"storage/captures/verification_{run_id}.pcap",
-                file_size_bytes=1024,
-                sha256_hash=post_cap_hash,
+                storage_path=storage_dest,
+                file_size_bytes=real_file_size,
+                sha256_hash=real_pcap_hash,
             )
             db.add(post_capture)
             await db.commit()
 
-            # Step 8: Re-Analysis (Stages 3-8 Pipeline)
+            # Step 9: Post-Reanalysis Execution
             run.status = "REANALYZING"
             await db.commit()
             post_analysis = AnalysisRun(
                 capture_id=post_capture.id,
-                status="COMPLETED",
-                current_stage="COMPLETED",
+                status="PENDING",
+                current_stage="PENDING",
             )
             db.add(post_analysis)
             await db.commit()
 
-            # Synthesize post-remediation facts from applied hardened IR
-            hardened_ir = ConfigurationIR.from_dict(hardened_snap.normalized_ir or {})
-            twin_engine = ConfigurationSecurityTwin(self.security_service.policy_registry)
-            post_sim = twin_engine.run_projection(
-                analysis_id=str(post_analysis.id),
-                current_snapshot=ForensicFactsSnapshotBuilder.build_snapshot(
-                    analysis_id=str(analysis_id),
-                    capture_sha256=post_cap_hash,
-                    facts=[],
-                ),
-                proposed_ir=hardened_ir,
-                baseline_findings=[],
-                profile_id=twin.policy_bundle_version or "profile_nist_sp800_77",
-            )
+            try:
+                from app.services.pipeline import execute_full_analysis_pipeline
+                await execute_full_analysis_pipeline(analysis_id=post_analysis.id, db=db)
+                res_pa = await db.execute(select(AnalysisRun).where(AnalysisRun.id == post_analysis.id))
+                post_analysis = res_pa.scalar_one()
+            except Exception as pipe_err:
+                logger.warning("Pipeline execution error on verification pcap: %s", pipe_err)
+                res_pa = await db.execute(select(AnalysisRun).where(AnalysisRun.id == post_analysis.id))
+                post_analysis = res_pa.scalar_one_or_none() or post_analysis
+                if post_analysis.status != "COMPLETED":
+                    post_analysis.status = "FAILED"
+                    post_analysis.error_message = str(pipe_err)
+                    await db.commit()
 
-            # Save post-remediation findings and compliance evaluations to DB
-            for pf in post_sim.projected_findings:
-                post_f_model = SecurityFindingModel(
-                    analysis_id=post_analysis.id,
-                    rule_id=pf.rule_id,
-                    rule_version=pf.rule_version,
-                    profile_id=getattr(pf, "profile_id", "profile_nist_sp800_77"),
-                    category=pf.category.value,
-                    severity=pf.severity.value,
-                    title=pf.title,
-                    technical_description=pf.technical_description,
-                    root_cause_key=pf.root_cause_key,
-                    affected_entity_type=pf.affected_entity_type,
-                    affected_entity_id=pf.affected_entity_id,
-                    observed_value={"value": str(pf.observed_value)},
-                    expected_requirement={"requirement": pf.expected_requirement},
-                    evidence_state=pf.evidence_state.value,
-                    remediation_guidance=pf.remediation_guidance,
-                    remediation_directive=pf.remediation_strongswan_directive,
-                    record_hash=pf.record_hash,
+            if post_analysis.status not in ("COMPLETED", "PROCESSED"):
+                raise RemediationExecutionError(
+                    RollbackTriggerCode.POST_ANALYSIS_FAILED,
+                    f"Post-remediation analysis pipeline did not succeed (status: {post_analysis.status}, error: {post_analysis.error_message})."
                 )
-                db.add(post_f_model)
-            await db.commit()
 
-
-            # Step 9: Compare Proof Obligations and Detect Regressions
+            # Step 10: Compare Evidence & Formal Proof Obligations
             run.status = "COMPARING"
             await db.commit()
 
@@ -448,30 +525,114 @@ class ClosedLoopRemediationRunner:
                     )
                 )
 
+            # Fetch post-remediation findings from DB
+            res_pf = await db.execute(select(SecurityFindingModel).where(SecurityFindingModel.analysis_id == post_analysis.id))
+            p_finding_models = res_pf.scalars().all()
+            post_findings: list[SecurityFinding] = []
+            for pfm in p_finding_models:
+                try:
+                    sev = Severity(pfm.severity) if isinstance(pfm.severity, str) else pfm.severity
+                except (ValueError, KeyError):
+                    sev = Severity.MEDIUM
+                try:
+                    cat = FindingCategory(pfm.category) if isinstance(pfm.category, str) else pfm.category
+                except (ValueError, KeyError):
+                    cat = FindingCategory.CRYPTOGRAPHY
 
-            # Reconstruct proof obligations from audit
+                post_findings.append(
+                    SecurityFinding.create(
+                        finding_id=str(pfm.id),
+                        analysis_id=str(post_analysis.id),
+                        rule_id=pfm.rule_id,
+                        rule_version=pfm.rule_version,
+                        profile_id=pfm.profile_id or "profile_nist_sp800_77",
+                        category=cat,
+                        severity=sev,
+                        title=pfm.title,
+                        technical_description=pfm.technical_description,
+                        root_cause_key=pfm.root_cause_key,
+                        affected_entity_type=pfm.affected_entity_type,
+                        affected_entity_id=pfm.affected_entity_id,
+                        observed_value=pfm.observed_value,
+                        expected_requirement="COMPLIANT",
+                        remediation_guidance=pfm.remediation_guidance or "",
+                        remediation_strongswan_directive=pfm.remediation_directive,
+                    )
+                )
+
+            # Reconstruct proof obligations from twin audit
             audit_dict = twin.projected_regression_audit or {}
             raw_obls = audit_dict.get("proof_obligations", [])
             obligations = [VerificationProofObligation.from_dict(o) for o in raw_obls]
 
-            # Post-remediation facts map
-            post_facts_map = {}
-            for f in post_sim.regression_audit.proof_obligations:
-                post_facts_map[f["baseline_observed_fact_key"]] = {
-                    "value": f["proposed_expected_value"],
-                    "evidence_state": "VERIFIED",
-                }
+            # Ingest real ProtocolObservation and ComplianceEvaluationModel records (ZERO synthetic facts!)
+            res_obs = await db.execute(
+                select(ProtocolObservation).where(ProtocolObservation.analysis_id == post_analysis.id)
+            )
+            observations = res_obs.scalars().all()
+            observed_fact_map: dict[str, Any] = {}
+            for obs in observations:
+                observed_fact_map[obs.field_name] = obs.normalized_value
+                observed_fact_map[f"{obs.protocol}.{obs.field_name}"] = obs.normalized_value
+
+            res_eval = await db.execute(
+                select(ComplianceEvaluationModel).where(ComplianceEvaluationModel.analysis_id == post_analysis.id)
+            )
+            eval_records = res_eval.scalars().all()
+            eval_by_rule = {e.rule_id: e for e in eval_records}
+
+            post_facts_map: dict[str, Any] = {}
+            for obl in obligations:
+                fact_key = obl.baseline_observed_fact_key
+                if fact_key in observed_fact_map:
+                    post_facts_map[fact_key] = {
+                        "value": observed_fact_map[fact_key],
+                        "evidence_state": "VERIFIED",
+                    }
+                elif obl.target_rule_id in eval_by_rule:
+                    e_rec = eval_by_rule[obl.target_rule_id]
+                    post_facts_map[fact_key] = {
+                        "value": e_rec.observed_value,
+                        "evidence_state": e_rec.evidence_state,
+                    }
+                else:
+                    # Epistemic truth: UNKNOWN (never synthesized from proposed IR!)
+                    post_facts_map[fact_key] = {
+                        "value": None,
+                        "evidence_state": "UNKNOWN",
+                    }
 
             comp_result = VerificationComparator.compare(
                 proof_obligations=obligations,
                 baseline_findings=baseline_findings,
-                post_findings=post_sim.projected_findings,
+                post_findings=post_findings,
                 post_facts=post_facts_map,
                 operational_healthy=workload_res.get("success", True),
-                analysis_succeeded=True,
+                analysis_succeeded=(post_analysis.status == "COMPLETED"),
             )
 
-            # Step 10: Persist Verification and Claims
+            # Machine-checkable security rollback threshold: any blocking new regression
+            if comp_result.has_security_regression:
+                raise RemediationExecutionError(
+                    RollbackTriggerCode.CRITICAL_SECURITY_REGRESSION,
+                    f"Post-remediation analysis introduced blocking security regressions: {comp_result.new_regressions}"
+                )
+
+            # Compute empirical verified score from actual post evaluations and findings
+            baseline_score = twin.projected_score - (twin.projected_score_delta or 0.0) if twin.projected_score else 45.0
+            if eval_records:
+                score_res = self.scoring_engine.calculate_score(
+                    analysis_id=str(post_analysis.id),
+                    findings=post_findings,
+                    eval_records=eval_records,
+                )
+                verified_score = score_res.overall_score
+            else:
+                verified_score = baseline_score
+
+            score_delta = round(verified_score - baseline_score, 1)
+
+            # Step 11: Persist Verification and Claims
             verification = RemediationVerificationModel(
                 remediation_run_id=run_id,
                 baseline_analysis_id=analysis_id,
@@ -480,9 +641,9 @@ class ClosedLoopRemediationRunner:
                 verification_result=comp_result.overall_verification_result.value,
                 security_result=comp_result.security_result,
                 operational_result=comp_result.operational_result,
-                baseline_score=twin.projected_score - (twin.projected_score_delta or 0.0) if twin.projected_score else 45.0,
-                verified_score=post_sim.projected_score,
-                score_delta=twin.projected_score_delta,
+                baseline_score=baseline_score,
+                verified_score=verified_score,
+                score_delta=score_delta,
                 finding_diff_summary={
                     "resolved": comp_result.resolved_count,
                     "unresolved": comp_result.unresolved_count,
@@ -492,6 +653,7 @@ class ClosedLoopRemediationRunner:
                 workload_manifest={
                     "duration_sec": workload_duration_sec,
                     "success": workload_res.get("success", True),
+                    "packet_loss_pct": packet_loss,
                 },
             )
             db.add(verification)
@@ -532,27 +694,39 @@ class ClosedLoopRemediationRunner:
             return run
 
         except Exception as exc:
-            logger.error(f"Remediation run {run_id} failed: {exc}. Initiating automatic rollback.", exc_info=True)
+            trigger_code = getattr(exc, "trigger_code", RollbackTriggerCode.EXECUTION_ERROR)
+            trigger_name = trigger_code.value if hasattr(trigger_code, "value") else str(trigger_code)
+            logger.error(
+                "Remediation run %s failed with trigger [%s]: %s. Initiating automatic rollback.",
+                run_id, trigger_name, exc, exc_info=True,
+            )
             run.status = "FAILED"
-            run.error_message = str(exc)
+            run.error_message = f"[{trigger_name}] {exc}"
 
             # Automatic Rollback
             if backup_path and os.path.exists(backup_path):
                 run.status = "ROLLING_BACK"
                 run.rollback_state = "TRIGGERED"
-                run.rollback_reason = str(exc)
+                run.rollback_reason = f"Trigger: {trigger_name}. Detail: {exc}"
                 await db.commit()
+                await _record_step("ROLLBACK_TRIGGERED", "TRIGGERED", {"trigger": trigger_name, "reason": str(exc)})
 
                 try:
-                    await self.agent.execute_action(
+                    # 1. Restore backup file atomically and verify readback hash
+                    restore_res = await self.agent.execute_action(
                         "RESTORE_BACKUP",
                         {
                             "backup_path": backup_path,
                             "target_path": applied_active_path,
                             "expected_hash": backup_hash,
+                            "run_id": tracker.run_id,
                         },
                     )
-                    await self.agent.execute_action(
+                    if not restore_res.get("verified", False):
+                        raise RuntimeError(f"Restored file digest {restore_res.get('restored_sha256')} != expected {backup_hash}.")
+
+                    # 2. Reload strongSwan daemon inside namespace
+                    reload_res = await self.agent.execute_action(
                         "RELOAD_STRONGSWAN",
                         {
                             "namespace": "gw_a",
@@ -560,16 +734,45 @@ class ClosedLoopRemediationRunner:
                             "vici_socket": f"/tmp/tt-{tracker.run_id}/gw_a/charon.vici",
                         },
                     )
+                    if not reload_res.get("load_success", False):
+                        raise RuntimeError(f"Rollback daemon reload failed: {reload_res.get('load_stdout')}")
+
+                    # 3. Verify recovery SA health
+                    recovery_sa = await self.agent.execute_action(
+                        "VERIFY_FRESH_SA",
+                        {
+                            "namespace": "gw_a",
+                            "peer_dir": f"/tmp/tt-{tracker.run_id}/gw_a",
+                            "vici_socket": f"/tmp/tt-{tracker.run_id}/gw_a/charon.vici",
+                        },
+                    )
+
                     run.rollback_state = "COMPLETED"
                     run.status = "ROLLED_BACK"
-                    await _record_step("AUTOMATIC_ROLLBACK", "SUCCESS", {"restored_backup": backup_path})
+                    await _record_step(
+                        "AUTOMATIC_ROLLBACK",
+                        "SUCCESS",
+                        {
+                            "restored_backup": backup_path,
+                            "backup_hash": backup_hash,
+                            "target_path": applied_active_path,
+                            "recovery_sa": recovery_sa,
+                        },
+                    )
                 except Exception as rollback_exc:
+                    logger.critical("Automatic rollback verification failed for run %s: %s", run_id, rollback_exc)
                     run.rollback_state = "FAILED"
-                    run.status = "FAILED"
-                    run.error_message = f"Execution failed: {exc} | Rollback failed: {rollback_exc}"
-                    await _record_step("AUTOMATIC_ROLLBACK", "FAILED", None, "ROLLBACK_ERROR")
+                    run.status = "ROLLBACK_FAILED"
+                    run.error_message = (
+                        f"Execution trigger [{trigger_name}]: {exc} | "
+                        f"ROLLBACK VERIFICATION FAILED (manual intervention required): {rollback_exc}"
+                    )
+                    await _record_step("AUTOMATIC_ROLLBACK", "FAILED", None, "ROLLBACK_FAILED")
             else:
-                run.rollback_state = "NOT_TRIGGERED"
+                run.rollback_state = "FAILED"
+                run.status = "ROLLBACK_FAILED"
+                run.error_message = f"Execution trigger [{trigger_name}]: {exc} | No valid baseline backup available to restore."
+                await _record_step("AUTOMATIC_ROLLBACK", "FAILED", None, "MISSING_BACKUP")
 
             await db.commit()
             return run
@@ -577,3 +780,4 @@ class ClosedLoopRemediationRunner:
         finally:
             # Release Mutex Lock
             tracker.release_lock()
+

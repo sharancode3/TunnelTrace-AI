@@ -42,6 +42,12 @@ class LeakageAuditor:
         r"^.*nat_t.*$",  # is_nat_t
         r"^.*netem.*$",  # netem impairment profile
         r"^.*impairment.*$",
+        r"^.*security.*$",  # security_score, security_findings, etc.
+        r"^.*policy.*$",  # policy_rules, policy_evaluations
+        r"^.*score.*$",  # score_policy, cvss_score, etc.
+        r"^.*cve.*$",  # cve_id, cve_findings
+        r"^.*finding.*$",  # finding_severity
+        r"^.*vulnerability.*$",
         r"^.*label.*$",  # target label columns
         r"^.*ground_truth.*$",
         r"^y$",

@@ -119,6 +119,18 @@ class AnalysisRun(Base):
     error_message: Mapped[str | None] = mapped_column(
         Text, nullable=True
     )
+    parent_analysis_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("analysis_runs.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
+    replay_mode: Mapped[str | None] = mapped_column(
+        String(32), nullable=True
+    )  # FORENSIC_REANALYSIS, SCENARIO_REPLAY
+    provenance_metadata: Mapped[dict[str, Any] | None] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -126,6 +138,12 @@ class AnalysisRun(Base):
     # Relationships
     capture: Mapped[Capture] = relationship(
         "Capture", back_populates="analyses"
+    )
+    parent_analysis: Mapped[AnalysisRun | None] = relationship(
+        "AnalysisRun",
+        remote_side=[id],
+        foreign_keys=[parent_analysis_id],
+        backref="child_analyses",
     )
     observations: Mapped[list[ProtocolObservation]] = relationship(
         "ProtocolObservation", back_populates="analysis", cascade="all, delete-orphan"

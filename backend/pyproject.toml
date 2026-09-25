@@ -34,6 +34,11 @@ dev = [
     "ruff>=0.3.4",
     "mypy>=1.9.0"
 ]
+lab = [
+    # GNU GPL v2. Optional dependency strictly isolated for defensive lab testing
+    # and offline PCAP mutation; never loaded in web or production worker runtimes.
+    "scapy>=2.5.0"
+]
 
 [tool.setuptools.packages.find]
 where = ["."]

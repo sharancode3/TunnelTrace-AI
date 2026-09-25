@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, String
+from sqlalchemy import JSON, Boolean, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -111,6 +111,96 @@ class ModelArtifact(Base):
     )
 
 
+class MLInferenceRun(Base):
+    """Tracks an ML inference execution run and its complete provenance and artifact lineage."""
+
+    __tablename__ = "ml_inference_runs"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    analysis_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("analysis_runs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    capture_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("captures.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="NOT_CONFIGURED"
+    )  # NOT_CONFIGURED, BUNDLE_INVALID, RUNNING, COMPLETED, PARTIAL, NO_FLOWS, INSUFFICIENT_INPUT, FAILED
+    status_reason: Mapped[str | None] = mapped_column(
+        String(256), nullable=True
+    )
+    bundle_id: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    bundle_version: Mapped[str | None] = mapped_column(
+        String(32), nullable=True
+    )
+    bundle_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    manifest_digest: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    feature_schema_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    sequence_schema_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    calibration_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    ood_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    anomaly_hash: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    inference_runtime: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    environment_metadata: Mapped[dict | None] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=True
+    )
+    attempted_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
+    classified_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
+    skipped_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
+    failed_count: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )
+    is_current: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=True, index=True
+    )
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+    completed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
+    )
+
+    # Relationships
+    classifications: Mapped[list[FlowClassification]] = relationship(
+        "FlowClassification", back_populates="run", cascade="all, delete-orphan"
+    )
+
+
 class FlowClassification(Base):
     """Stores inference predictions and transparency records for encrypted ESP flows."""
 
@@ -125,12 +215,30 @@ class FlowClassification(Base):
         nullable=False,
         index=True,
     )
+    run_id: Mapped[uuid.UUID | None] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("ml_inference_runs.id", ondelete="CASCADE"),
+        nullable=True,
+        index=True,
+    )
     artifact_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("model_artifacts.id", ondelete="SET NULL"),
         nullable=True,
         index=True,
     )
+    input_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="VALID"
+    )  # VALID, INSUFFICIENT_INPUT
+    supervised_hypothesis: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    accepted_prediction: Mapped[str | None] = mapped_column(
+        String(64), nullable=True
+    )
+    calibration_status: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="CALIBRATED"
+    )  # CALIBRATED, DEGRADED, UNAVAILABLE
     known_class: Mapped[str] = mapped_column(
         String(64), nullable=False
     )
@@ -174,5 +282,8 @@ class FlowClassification(Base):
     # Relationships
     artifact: Mapped[ModelArtifact | None] = relationship(
         "ModelArtifact", back_populates="classifications"
+    )
+    run: Mapped[MLInferenceRun | None] = relationship(
+        "MLInferenceRun", back_populates="classifications"
     )
 

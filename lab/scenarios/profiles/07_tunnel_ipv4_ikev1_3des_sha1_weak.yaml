@@ -1,0 +1,21 @@
+scenario_id: "scn-07-tunnel-v4-ikev1-3des-sha1-weak"
+scenario_version: "1.0"
+description: "Intentional negative test: Legacy IKEv1 Site-to-Site Tunnel Mode with weak 3DES-CBC and SHA-1 transforms in DH Group 2 (MODP-1024). Strictly confined to isolated lab namespace."
+
+topology: "TUNNEL_SITE_TO_SITE"
+ip_version: "IPV4"
+ike_version: "IKEV1"
+crypto_profile: "IKEV1_3DES_SHA1_DH2"
+pfs: "DISABLED"
+encapsulation: "NATIVE_ESP"
+capture: "BOTH"
+
+is_negative_test: true
+allow_insecure_suite: true
+expected_outcome: "EXPECTED_NEGATIVE"
+expected_failure_reason: "WEAK_CRYPTO_SUITE"
+
+traffic_probe:
+  packet_count: 5
+  interval_sec: 0.2
+  payload_size_bytes: 64

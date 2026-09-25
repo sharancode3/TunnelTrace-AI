@@ -1,10 +1,10 @@
 # TunnelTrace AI — Project Memory / Master Context
-**Last Updated:** 2026-09-24T21:30:00+05:30  
-**Current Phase:** USER-DEFINED STAGE 2 — AUTHORIZED ASSET DISCOVERY (NMAP)  
-**Current Status:** Stage 1 baseline verified (`test_stage1_as_built_trace.py` passing 100%). Stage 2 (Authorized Asset Discovery with Nmap) implemented and fully validated (33/33 discovery tests passing, 322/322 unit tests passing, Next.js frontend build passing across all routes). Subprocess bounds, authorization attestation, ambiguity preservation, `defusedxml` parser, and truthful `TOOL_UNAVAILABLE` fallback verified. Durable baseline report created at `docs/verification/STAGE2_AUTHORIZED_ASSET_DISCOVERY.md`. Zero git commit, zero git push.  
-**Current Active Stage:** Completed Stage 2 (Authorized Asset Discovery); ready for Stage 3 (IKE/IPsec Negotiation Assessment).  
+**Last Updated:** 2026-09-25T21:40:00+05:30  
+**Current Phase:** END-TO-END ACCEPTANCE AND DEMO REHEARSAL (UI REORGANIZATION, DUAL-ACTIVE SELECTION RESOLUTION, LIGHT THEME DEFAULT, REHEARSED INGESTION PIPELINE & FORENSIC ARTIFACT INTEGRITY)  
+**Current Status:** Completed End-to-End Acceptance and Demo Rehearsal phase. Reorganized frontend sidebar into 5 clear feature pillars (Operations & Telemetry, Investigations, Active Run Forensics, Remediation & Testbed, Reporting & Copilot) with descriptive subtitles. Resolved dual-active link selection bug between Command Center and Analysis History. Enforced Light Theme as default across application layout. Rehearsed real analyst-to-lab workflow: ingested verified capture fixture tests/fixtures/captures/real_tunnel_gcm.pcapng (SHA-256 949531329196d1fbc836ee0685efe8a204c68d6d8da5a5b75ecaa0128c59e04d, 3,048 bytes, 12 packets) resulting in Analysis ID 162b260f-e24a-403e-baf4-4267fc12dec6 (Score 100.0, 0 findings, 1 Child SA, 1 flow) contrasted against vulnerable Analysis ID 9a79a13b-e0a7-46e4-ad40-d1c67debf4fe (Score 74.0, 1 Critical, 1 High finding, Configuration Twin diff). Verified all 18 Next.js frontend routes returning HTTP 200 OK. Backend test suite passing 100% (479/479 passed). Documented operational architecture, testbed inner working, and multi-tier SOC output. Durable verification report generated at docs/verification/END_TO_END_ACCEPTANCE_DEMO_REHEARSAL.md. Zero git commits, zero git pushes.  
+**Current Active Stage:** End-to-End Acceptance and Demo Rehearsal complete. Ready for next scheduled phase.  
 **Repository State Verified:** VERIFIED & LOCAL (Working tree clean of external regressions; all user work preserved).  
-**Memory Confidence:** HIGH — All code, migrations (0011 -> 0010), tests, and frontend verified with reproducible command runs.  
+**Memory Confidence:** HIGH — All code, migrations, tests, and frontend builds verified with reproducible runs.  
 
 ---
 
@@ -86,6 +86,211 @@ The Stage 12 result above records the prior reported release-candidate run. It h
   - Private mount namespace isolation (`unshare -m`) used to isolate `/var/run` tmpfs per charon instance, eliminating global PID file collisions.
   - Concurrency lock (`lab/runtime/lab.lock`) prevents overlapping runs.
   - Idempotent teardown verified: 0 dangling namespaces or processes after run completion.
+
+### Controlled IPsec Lab Extension — User-Defined Phase 4 (2026-09-24)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Real Execution on Linux Kernel)`
+- **Safety Remediation & Process Ownership:**
+  - Completely eradicated global `pkill` / `killall` calls from `lab/agent/experiment.py`, `lab/agent/cleanup/tracker.py`, and `lab/agent/capture/manager.py`.
+  - Enforced strict process ownership: `start_charon` discovers and registers PIDs confined to each namespace via `ip netns pids <ns>`. `stop_peer_daemon` and `clean_all_stale_resources` terminate only those exact namespace-owned PIDs using safe signal escalation (`SIGTERM` -> `SIGKILL`).
+  - `CaptureManager` tracks tcpdump via written PID files (`/tmp/.../tcpdump_<capture_id>.pid`) and signal escalation.
+  - `SystemRunner.validate_safety` strictly rejects `pkill` and `killall` with `SecurityViolationError`.
+  - **Empirical Host Safety Check:** Host-level charon daemon (PID 214) on WSL2 remained active, healthy, and untouched across all test executions. 0 dangling namespaces.
+- **Scenario Schema & Catalog Extension:**
+  - Added machine-readable `ExpectedOutcome` enum: `SUCCESS`, `EXPECTED_REJECTION`, `EXPECTED_NEGATIVE`, `UNSUPPORTED_ENVIRONMENT`.
+  - Added `is_negative_test`, `allow_insecure_suite`, `peer_b_crypto_profile`, and `expected_failure_reason` fields with schema validators.
+  - Extended catalog to 8 profiles:
+    - `07_tunnel_ipv4_ikev1_3des_sha1_weak.yaml`: IKEv1, 3DES-CBC, SHA1, DH2, gated by `allow_insecure_suite: true`.
+    - `08_tunnel_ipv4_no_common_proposal.yaml`: Asymmetric crypto proposal (Initiator GCM/ECP-256 vs Responder CBC/MODP-2048), `ExpectedOutcome.EXPECTED_REJECTION` (`NO_PROPOSAL_CHOSEN`).
+  - Reconciled Profile 05 Netem jitter discrepancy to 10 ms across YAML and integration test.
+- **Scapy Mutation Harness & Optional Dependency:**
+  - Scapy declared strictly as optional lab dependency in `backend/pyproject.toml` (`[project.optional-dependencies] lab = ["scapy>=2.5.0"]`). Excluded from production web/worker runtimes.
+  - Built `PcapMutator` with 5 typed operators (`TRUNCATE_HEADER`, `CORRUPT_SPI`, `REORDER_PACKETS`, `CORRUPT_CHECKSUM`, `CORRUPT_PAYLOAD_LENGTH`).
+  - Implemented pure-Python fallback supporting both classic Libpcap (`0xA1B2C3D4`) and PCAPNG (`0x0A0D0D0A`) Enhanced Packet Blocks (EPBs) with 32-bit word alignment padding.
+  - Strict live injection boundary guards (`transmit_mutated_live_guard`) strictly enforcing `tt-*` namespaces, rejecting physical interfaces, and capping packet count to <= 10.
+- **Automated Tests Executed:**
+  - Lab unit tests: `pytest tests/unit/test_lab_*.py` → **38 PASSED, 0 FAILED** (100% pass).
+  - Privileged integration tests: `pytest tests/integration/test_lab_privileged.py -v` → **7 PASSED, 0 FAILED** in 88.42s (100% pass).
+  - Core regression tests: 341 passed, 0 failed.
+  - TShark forensic concordance: `ProtocolForensicsService` successfully parsed real negative-test PCAP capturing `NO_PROPOSAL_CHOSEN` notify exchange without errors.
+- **Durable Documentation:** Comprehensive verification report saved at `docs/verification/CONTROLLED_IPSEC_LAB_EXTENSION.md`. Zero git commits, zero git pushes.
+
+### Configuration and Certificate Inventory — User-Defined Extension (2026-09-25)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (strongSwan Baseline, Drift Engine & X.509 Intelligence)`
+- **strongSwan Configuration Ingestion & Safety:**
+  - `SafeSwanctlParser` enforces strict safety bounds: 1MB max content, 10,000 lines, 4,096 char line limit, max nesting depth 8.
+  - Automatic scrubbing of sensitive credentials (`secret`, `password`, `key`, `rsa_key`, `ecdsa_key`, `private_key`, `pkcs12`, `file`) to `[REDACTED_SECRET]` with `is_redacted = True`.
+  - Unmodeled/unsupported directives tracked explicitly in `unsupported_directives` list (zero silent discards or fabrications).
+  - Deterministic SHA-256 canonical digest computed over sorted public connections IR, strictly omitting secrets block to prevent offline hash guessing.
+- **Evidence-Based Configuration Drift Engine:**
+  - `ConfigurationDriftEngine` evaluates field-level differences across compatible snapshots: `MATCHED`, `CHANGED`, `MISSING_IN_OBSERVED`, `NEW_IN_OBSERVED`, `NOT_COMPARABLE`, `UNSUPPORTED`.
+  - Identity mismatch checks return `INCOMPARABLE`.
+  - Strict isolation: Drift produces audit records only; zero mutation of `SecurityFindingModel` or security score.
+- **X.509 Certificate Intelligence & Security Boundary:**
+  - `SafeCertificateParser` uses `cryptography.x509` with an active rejection boundary: raises `CertificateSecurityViolation` if private key headers are encountered.
+  - Extracts public metadata: SHA-256 fingerprint, serial, subject/issuer DN, SANs, UTC validity windows, public key algorithm/bits, signature algorithm, basic constraints, and key usages.
+  - Validity state machine: `VALID`, `EXPIRING_SOON` (<= 30 days), `EXPIRED`, `NOT_YET_VALID`.
+  - Connection mapping: maps certificate identities against strongSwan connection IDs (`MATCHED`, `AMBIGUOUS`, `UNASSOCIATED`).
+  - Trust store chain validation evaluated against explicitly supplied CA store digests; revocation defaults strictly to `UNCHECKED`.
+- **Database Schema & Linear Migration:**
+  - Migration `0015_configuration_certificate_inventory.py` creates `gateway_configuration_snapshots`, `gateway_configuration_drifts`, and `gateway_certificates` tables.
+  - Verified linear chain: `0015 -> 0014 -> ... -> 0001`.
+- **Full-Stack Frontend Workbench:**
+  - Built reactive Next.js 16 UI at `/inventory` featuring Snapshots & Baselines tab, Configuration Drift diff viewer, Certificate Inventory table with validity badges, and Ingestion forms with operator attestation.
+- **Automated Validation Results:**
+  - 29 phase unit/integration tests passing (100% pass).
+  - Full backend unit suite: **400 PASSED, 0 FAILED** in 68.90s.
+  - Next.js 16 Turbopack production build: **Compiled cleanly with 0 TypeScript and 0 ESLint errors**.
+  - Durable verification report saved at `docs/verification/CONFIGURATION_CERTIFICATE_INVENTORY.md`. Zero git commits, zero git pushes.
+
+### ML Validation and Integration — User-Defined Extension (Stage 17) (2026-09-25)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (De-Fabricated Packet Extraction, Model Lifecycle & Concept Separation)`
+- **Active Model Availability & Production Gate:**
+  - Audited `models/active/`: Contains only `.gitkeep` (28 bytes). Zero production models deployed.
+  - Runtime returns `ml_run_status = "NOT_CONFIGURED"`. No test or synthetic bundles promoted to active.
+  - Protocol analysis status is strictly decoupled from ML status: an unconfigured or failing model never fails protocol forensics, and successful protocol forensics never implies ML ran.
+- **De-Fabrication & True Observation Extraction:**
+  - Audited `extract_flow_packets` in `backend/app/ml/service.py`: Completely removed synthetic packet sequence generation (which previously fabricated packets from flow aggregates) and removed artificial 64-byte clamping.
+  - Fixed observation parsing bug where `elif obs.field_name == "frame.len"` was missed when `obs.field_name == "esp.spi"`.
+  - True wire packet lengths and directions extracted directly from frame observations. Missing observations return `[]`, triggering `input_status="INSUFFICIENT_INPUT"` and `final_class="UNAVAILABLE"` (zero hallucinated classes).
+- **Execution Path Consolidation:**
+  - Consolidated analysis dispatch into canonical `execute_full_analysis_pipeline` in `backend/app/services/pipeline.py`.
+  - Both public `create_analysis` route and Celery `analyze_capture_task` invoke this unified pipeline in deterministic sequence: Protocol Forensics -> Reconstruction -> ML Inference -> Security Assessment.
+- **ML Inference Run Lifecycle & Database Schema (`0017`):**
+  - Added `MLInferenceRun` ORM model in `backend/app/db/models/ml.py` and exported in `__init__.py`.
+  - Additive migration `0017_ml_inference_lifecycle.py` created `ml_inference_runs` table and enriched `flow_classifications` with `run_id`, `input_status`, `supervised_hypothesis`, `accepted_prediction`, and `calibration_status`.
+  - Idempotent reruns: preserves prior runs and atomically toggles `is_current = True` only upon successful commit.
+- **Four Distinct Output Concepts:**
+  - Explicitly separated across DB, API DTOs, reporting snapshot, and frontend `/traffic` UI:
+    1. Supervised known-class hypothesis (`supervised_hypothesis`).
+    2. Final accepted/rejected prediction (`accepted_prediction` / `final_class`).
+    3. Model confidence and calibration (`calibrated_confidence`, `calibration_status`).
+    4. Out-of-distribution & Behavioral Anomaly (`ood_status`, `behavioral_anomaly_status`, `anomaly_score`).
+  - Fixed enum mismatch in traffic API (`STATISTICAL_BEHAVIORAL_ANOMALY` vs `ANOMALOUS_BEHAVIOR`).
+  - Eliminated fallback to `KNOWN_ACCEPTED` when OOD is unrun/unavailable in frontend. Added amber warning banner when model is `NOT_CONFIGURED`.
+- **Model Bundle Security & Trust:**
+  - `ModelBundleLoader` enhanced with directory traversal protection, manifest schema validation, schema hash verification (`feature_schema_hash`, `sequence_schema_hash`, `anomaly_schema_hash`), canonical class order enforcement, and non-finite prediction checks.
+- **Security Authority Non-Interference:**
+  - ML strictly restricted to traffic application classification without payload decryption.
+  - Deterministic Policy-as-Code engine remains sole authority for security findings and 0–100 scoring.
+  - `LeakageAuditor.FORBIDDEN_PATTERNS` blocks security, policy, score, CVE, finding, vulnerability terms.
+- **Automated Verification:**
+  - 10 dedicated Stage 17 tests: `pytest backend/tests/unit/test_ml_validation_and_integration.py` → **10 PASSED** in 11.83s.
+  - Real-capture end-to-end integration test: `pytest backend/tests/integration/test_stage1_as_built_trace.py` → **1 PASSED** in 23.96s (100% real packet extraction).
+  - Stage 5/6/7 pipeline tests: `pytest tests/integration/test_stage5_*.py test_stage6_*.py test_stage7_*.py` → **ALL PASSED**.
+  - Durable verification report saved at `docs/verification/ML_VALIDATION_AND_INTEGRATION.md`. Zero git commits, zero git pushes.
+
+### Configuration Twin and Safe Remediation — User-Defined Audit & Hardening (2026-09-25)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (De-Fabricated Evidence, Strict Jail Containment & Machine-Checkable Rollback)`
+- **Core Safety Hardening & Containment:**
+  - `validate_lab_path` in `backend/app/integrations/privileged_agent/local.py` enforces canonical realpath containment within `/tmp/tt-{clean_run_id}` or `storage/lab/runs/{clean_run_id}`, rejecting directory traversals, symlink escapes, sibling tricks (`/tmp_evil`, `/tmp/tt-evil`), and host system directories (`/etc`, `/var`, `/usr`, `C:\Windows`, etc.).
+  - `BACKUP_CONFIG`: Removed placeholder comment fabrication (`# Auto-generated empty baseline configuration\n`). Fails closed by raising `FileNotFoundError` if the baseline configuration is absent or unreadable.
+  - `APPLY_CONFIG`: Added atomic replace via PID-tagged temp file + `os.replace` + `fsync`, with post-apply readback SHA-256 verification against approved proposal hash.
+  - `RESTORE_BACKUP`: Verified target containment, expected backup hash match, atomic restore, and readback hash verification.
+  - `RELOAD_STRONGSWAN`: Rejects host/default namespaces, validates sandbox containment of `peer_dir` and `vici_socket`.
+  - `VERIFY_FRESH_SA`: Fixed critical logic bug; strictly requires newly negotiated SPIs distinct from pre-apply state (`new_spis = [s for s in found if s not in old_spis]`).
+- **De-Fabrication & Authentic Evidence Ingestion:**
+  - `ClosedLoopRemediationRunner` in `backend/app/remediation/runner.py`:
+    - Queries active SPIs before apply and records them in `run.pre_apply_spis` to prevent stale SAs from passing fresh SA check.
+    - Captures post-remediation traffic on verified lab interface, asserts PCAP exists on disk with `size > 0`, and calculates authentic SHA-256 digest directly from file bytes (eradicating string format hashes and hardcoded 1024-byte sizes).
+    - Runs `execute_full_analysis_pipeline` on authentic verification capture, persisting truthful pipeline status.
+    - Completely eradicated synthetic post facts: builds `post_facts_map` purely from actual observations in `ProtocolObservation` and `ComplianceEvaluationModel`. Unobserved facts remain `UNKNOWN`, maintaining `ProofOutcome.UNKNOWN` under `FAIL -> UNKNOWN` guard.
+    - Verified score is computed by `SecurityScoringEngine` from post evaluations, not twin projections.
+- **Machine-Checkable Rollback Criteria & Recovery Proof:**
+  - Implemented `RollbackTriggerCode` taxonomy (`CANDIDATE_LOAD_FAILED`, `FRESH_SA_FAILED`, `WORKLOAD_CONNECTIVITY_FAILED`, `POST_CAPTURE_FAILED`, `POST_ANALYSIS_FAILED`, `CRITICAL_SECURITY_REGRESSION`, `INTEGRITY_MISMATCH`).
+  - Automatic rollback restores baseline backup atomically, reloads daemon, and verifies recovery SA health.
+  - If restore or recovery verification fails, sets `run.status = "ROLLBACK_FAILED"`, `run.rollback_state = "FAILED"`, alerting operators that manual testbed intervention is required.
+- **Server-Side Environment & Cryptographic Approval Gate:**
+  - `ApplyRemediationRequest` in `backend/app/api/v1/remediation/router.py` removes default strings, requiring explicit `operator_id` and `lab_instance_id`.
+  - Server-side environment gate: rejects apply when `APP_ENV == "production"` without verified auth provider (`403 Forbidden`).
+  - Records fresh confirmation timestamp: `approval_timestamp = datetime.now(timezone.utc)`.
+  - Binds cryptographic `approval_metadata` containing `twin_id`, `approved_proposal_hash`, `diff_hash`, `policy_projection_hash`, `operator_id`, `lab_instance_id`, `approval_timestamp`, `expiry_timestamp` (+15 min), and unique `execution_token`.
+- **Database Schema & Linear Migration:**
+  - Migration `0018_remediation_approval_and_containment.py` adds `approval_metadata` (`JSON`), `pre_apply_spis` (`JSON`), and `post_capture_hash` (`String(64)`) to `RemediationRunModel`.
+  - Verified 18-head unbroken linear chain (`0018 -> 0017 -> ... -> 0001`).
+- **Frontend Remediation Workbench:**
+  - Updated `frontend/src/app/analyses/[analysisId]/remediation/page.tsx` with operator identity input, proposal/diff digest display, fresh timestamp notice, `ROLLBACK_FAILED` critical alert banner, and verified PCAP digest display.
+- **Automated Verification Results:**
+  - Dedicated unit tests: `pytest backend/tests/unit/test_remediation_twin_and_safe_runner.py` → **9 PASSED, 0 FAILED** (100% pass).
+  - Remediation test suite: `pytest backend/tests/unit/test_remediation_*.py backend/tests/unit/test_proof_obligations.py backend/tests/unit/test_stage12_security_remediation_guards.py` → **28 PASSED, 0 FAILED** in 5.51s.
+  - Migration lineage tests: `pytest backend/tests/unit/test_migrations.py backend/tests/unit/test_stage12_hardening_and_integrity.py` → **5 PASSED, 0 FAILED**.
+  - Frontend production build: `npm run build` in `frontend/` compiled cleanly across 20 routes with 0 TypeScript/ESLint errors.
+  - Comprehensive verification report saved at `docs/verification/CONFIGURATION_TWIN_SAFE_REMEDIATION.md`. Zero git commits, zero git pushes.
+
+### Replay and Evidence Chain — User-Defined Extension (Stage 18 Part 1) (2026-09-25)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Fail-Closed Integrity, Non-Overwriting Child Runs & Lineage DAG)`
+- **Core Scope & Architectural Separation:**
+  - Strict architectural separation between deterministic forensic re-analysis of immutable capture artifacts and controlled semantic scenario replays in isolated strongSwan lab namespaces.
+  - Fail-closed capture SHA-256 integrity verification (`verify_capture_integrity`) halts execution with HTTP 422 `CaptureIntegrityError` if capture file is tampered with, truncated, or missing.
+  - Non-overwriting replay lineage: creates immutable child analysis runs linked via `replayed_from_analysis_id` in `analyses` table, preserving historical records.
+  - Secret redaction (`redact_secrets`) scrubs PSKs, RSA/ECDSA private keys, and authorization tokens to `[REDACTED_SECRET]`.
+  - Canonical configuration digest (`compute_canonical_config_digest`) calculated from sorted public configuration IR, omitting volatile runtime tokens.
+  - Evidence DAG extended with `REPLAY_RUN` (`REPLAYED_FROM`) and `SCENARIO` (`GENERATED_BY`) nodes.
+  - Replay Comparators: `ForensicReplayComparator` (deterministic zero-variance check normalizing volatile timestamps) and `ScenarioReplayComparator` (semantic assertions with tolerated runtime nonces/SPIs).
+  - API & UI: `POST /analyses/{id}/re-analyze`, `GET /analyses/{id}/replay-lineage`, and dedicated Replay Lineage UI tab in `/analyses/[id]/evidence?view=replay`.
+  - Automated Tests: 20 dedicated unit tests passing. Durable report at `docs/verification/REPLAY_AND_EVIDENCE_CHAIN.md`.
+
+### SOC-Oriented UI and Reporting — User-Defined Extension (Stage 18 Part 2) (2026-09-25)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED IN REAL BROWSER (Unified Lifecycle, Multi-Source Badging & Sandboxed HTML Preview)`
+- **Unified 7-Step Investigation Lifecycle:**
+  - Built `SocWorkflowBanner` component implemented across:
+    1. `[1. Scope & Telemetry]` (`/monitoring`)
+    2. `[2. Asset Inventory]` (`/inventory?gateway_identity=...`)
+    3. `[3. Timeline & Events]` (`/monitoring?tab=timeline`)
+    4. `[4. Findings Triage]` (`/analyses/[id]/security`)
+    5. `[5. Evidence DAG]` (`/analyses/[id]/evidence`)
+    6. `[6. Replay & Lineage]` (`/analyses/[id]/evidence?view=replay`)
+    7. `[7. Audit Report]` (`/analyses/[id]/reports`)
+  - Dynamic context chips: Active gateway identity, IP address, authorized scope CIDR, sensor freshness status (`HEALTHY`, `DEGRADED`, `STALE`, `UNKNOWN`), analysis run ID, and evidence coverage percentage.
+- **Truthful Operational States & Multi-Source Provenance:**
+  - Differentiates empty search results, offline sensors, stale SAs retained under non-deletion invariants, and unassessed policy rules.
+  - Findings Triage surfaces explicit **Source Provenance Badges**: `DETERMINISTIC_POLICY` (RFC 8221 / NIST SP 800-77), `SCANNER (SUPPLEMENTAL)` (Greenbone/OpenVAS CVEs), `CONFIG INVENTORY` (baseline configuration drift), and `THREAT INTEL` (tactical MITRE ATT&CK / STRIDE mapping).
+  - Inspector drawers provide quick action transitions across telemetry, inventory, evidence, and reporting.
+- **Publication-Grade Reporting & Safe Sandboxed Preview:**
+  - Added "Report Target Scope & Evidence Audit Gate" pre-check card in `/reports` displaying evaluated policy engine, observed posture score, coverage percentage, and immutable SHA-256 match status.
+  - Integrated safe sandboxed `<iframe>` (`sandbox="allow-same-origin"`) for immediate HTML audit report preview.
+- **Real-Browser Verification via Chrome DevTools MCP:**
+  - Backend running live on port 8002 (`http://127.0.0.1:8002`) and frontend on port 3002 (`http://localhost:3002`).
+  - Exercised end-to-end analyst journey in real browser: telemetry entry point -> gateway drawer -> inventory cross-filter -> certificate inventory -> findings triage -> evidence DAG -> replay lineage -> report generation & sandboxed HTML preview modal.
+- **Automated Verification Results:**
+  - Backend unit tests: **41 PASSED, 0 FAILED** in 3.07s.
+  - Next.js 16 Turbopack production build: **Compiled cleanly with 0 TypeScript/ESLint errors** across 20 routes.
+  - Durable verification report saved at `docs/verification/SOC_ORIENTED_UI_REPORTING.md`. Zero git commits, zero git pushes.
+
+### Deployment and Operations Hardening — User-Defined Extension (Stage 19) (2026-09-25)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Privilege Boundaries, Production Security Rules, Audit Logging, Lifecycle & Backups)`
+- **Evidence-Based Threat & Boundary Review:**
+  - Audited Class A (unprivileged web, API, worker: UID 10001, `cap_drop: ALL`, no docker socket, 127.0.0.1 bindings) vs Class B (privileged lab: isolated strongSwan namespaces, protected physical interfaces).
+  - Traced capture, discovery, replay, remediation, and reporting workflows through API, queues, and filesystem.
+- **Privileged Operations & Input Hardening:**
+  - `CaptureManager.start_capture`: Eradicated shell concatenation; sanitized `capture_id` (`[a-zA-Z0-9_\-]`); validated `bpf_filter` against forbidden shell metacharacters (`;`, `&`, `|`, `` ` ``, `$`, `()`, `>`, `<`, `\n`, `\r`, `\t`, `\\`) and safe regex (`^[a-zA-Z0-9\s_\-\.:/]+$`); composed execution arrays using `shlex.quote`.
+  - `StartLiveCaptureRequestDTO`: Added Pydantic field validators on `interface_id` (`^[a-zA-Z0-9_\-\.]+$`, length <= 32), `bpf_filter` (length <= 256, no shell characters), and `duration_sec` (`ge=1, le=300`).
+  - `RUN_REMEDIATION_WORKLOAD`: Added strict `ipaddress.ip_address` parsing, namespace regex matching (`^[a-zA-Z0-9_\-]+$`), rejection of `host`/`default`/`root`, and clamped packet count (`1 <= n <= 20`).
+- **Production Environment Security Fail-Closed Gates:**
+  - Added `@model_validator(mode="after")` to `Settings` in `app/core/config.py`:
+    - Rejects default insecure development secret key under `APP_ENV=production`.
+    - Rejects secrets shorter than 32 characters in production.
+    - Rejects `APP_DEBUG=True` in production.
+    - Rejects wildcard `'*'` in `CORS_ALLOWED_ORIGINS` in production.
+    - Rejects unauthenticated monitoring or discovery local bypasses in production.
+- **Operational Security Audit Logging Subsystem (`app/core/audit.py`):**
+  - Implemented `SecurityAuditLogger` with structured `AuditEvent` model (actor, UTC timestamp, action, target resource, authorized scope, outcome `SUCCESS`/`DENIED`/`FAILED`/`TIMEOUT`, correlation ID, evidence ref).
+  - Enforces recursive secret scrubbing (`password`, `psk`, `token`, `key`, `secret`, `auth`) to `[REDACTED_SECRET]`.
+  - Atomically appends to `storage/audit/audit_events.jsonl` and emits to `tunneltrace.audit` log stream. Documented as application-level operational logging protected by OS permissions (UID 10001), not hardware HSM.
+- **Data Retention & Storage Lifecycle Subsystem (`app/core/lifecycle.py`):**
+  - Implemented `DataLifecycleManager` defining lifecycle and retention across all 6 data classes: `RAW_PCAP` (30d), `DERIVED_OBSERVATIONS` (analysis-bound), `REPORTS` (90d), `TEMPORARY_LAB_FILES` (24h), `AUDIT_LOGS` (365d), `CONFIG_CERT_SNAPSHOTS` (historical lineage).
+  - Enforces transactional DB metadata sync on artifact purge: unlinks file, sets `Capture.status = "PURGED"` and `file_available = False`, preventing evidence DAG from claiming deleted files are intact.
+- **Database Backup & Disaster Recovery (`app/core/backup.py`):**
+  - Implemented `DatabaseBackupManager` using SQLite Online Backup API for transactional consistency.
+  - Post-backup integrity verification: checks `PRAGMA foreign_key_check`, computes SHA-256 digest, and detects tampered backup artifacts.
+- **Empirical Toolchain & Resource Requirements:**
+  - Empirical runtime checks: Python 3.10.11 (Host) / 3.14.4 (WSL), Node.js v24.11.0, Next.js 16.3.6 (Turbopack), strongSwan swanctl & charon 6.0.4 (WSL), TShark 4.6.4 (WSL), tcpdump 4.99.6 (WSL), Docker 29.7.2, Docker Compose v5.5.0. Scapy, Nmap, IKE-scan, and Greenbone documented truthfully as supported fallbacks or XML report integrations rather than claiming uninstalled binaries.
+  - Measured resource footprints: FastAPI idle ~48MB / active ~82MB RAM, Next.js dev ~180MB RAM / build 340MB peak heap, strongSwan lab ~38MB RAM across namespaces.
+- **Automated Verification Results:**
+  - 21 dedicated hardening unit tests: **21 PASSED, 0 FAILED** in 6.07s.
+  - Relevant security & operations suite: **69 PASSED, 0 FAILED** in 4.70s.
+  - Migration lineage verified: Exactly **19 sequential, unbroken migrations** from `0001` to `0019`.
+  - Next.js 16 production build: **Compiled cleanly with 0 TypeScript/ESLint errors** across 20 routes.
+  - Durable verification report saved at `docs/verification/DEPLOYMENT_OPERATIONS_HARDENING.md`. Zero git commits, zero git pushes.
 
 ### Stage 3 Verified Implementation Reality (2026-09-23)
 - **Status:** `IMPLEMENTED — FULLY VALIDATED`
@@ -420,8 +625,34 @@ The Stage 12 result above records the prior reported release-candidate run. It h
   - Next.js 16 production build: **16/16 routes compiled successfully** with exit code 0 (`npm run build`).
   - Linter: `npm run lint` $\to$ **0 errors**.
 
+### Replay and Evidence Chain Verified Implementation Reality (2026-09-25)
+- **Status:** `IMPLEMENTED — FULLY VALIDATED (Strict Forensic Re-Analysis vs Controlled Scenario Replay Separation, Fail-Closed SHA-256 Integrity Gate, Parent-Child Immutable Lineage, Secret Redaction & Canonical Config Hashing, Relational Evidence DAG Lineage Nodes, Alembic Migration 0019, Dedicated Evidence Replay UI, 20/20 Dedicated Tests Passing)`
+- **Architectural Separation of Concerns:**
+  - **Forensic Re-Analysis:** Deterministically re-executes packet parsing, normalization, protocol reconstruction, policy evaluation, and scoring over the **exact same immutable packet capture artifact**. Normalizes volatile fields (`id`, `analysis_id`, `created_at`, `timestamp`) while requiring exact agreement across substantive facts, SAs, findings, and score.
+  - **Controlled Scenario Replay:** Re-runs a versioned scenario definition strictly inside the **owned, isolated strongSwan lab namespaces**, validating semantic assertions (`sa_established`, `traffic_probe_passed`, `validation_status`) while explicitly accepting physical runtime variance (ephemeral SPIs, cryptographic nonces, timestamps, wire jitter). Emits `ENVIRONMENT_MISMATCH` with blocked status when Linux testbed tools/namespaces are missing without fabricating execution.
+- **Fail-Closed Capture Integrity Gate:**
+  - `ReplayService.verify_capture_integrity` verifies SHA-256 on read prior to execution. If bytes are missing or tampered, execution strictly aborts with a `CaptureIntegrityError` (HTTP 422) and creates no partial records.
+- **Secret Redaction & Canonical Configuration Hashing (`backend/app/replay/redaction.py`):**
+  - PSKs, passwords, and private keys are redacted (`[REDACTED_SECRET]`) prior to persistence, logging, or hashing.
+  - Computes `canonical_config_digest` strictly over sanitized configuration, documented as distinct from secret-bearing bytes.
+- **Database Schema & Provenance Models (`backend/app/db/models/replay.py` & Migration `0019`):**
+  - Tables: `analysis_runs` extended with `parent_analysis_id` (foreign key to `analysis_runs.id`), `replay_mode`, and `provenance_metadata`.
+  - Table: `replay_comparisons` with `parent_run_id`, `child_run_id`, `comparison_status`, `artifact_integrity`, `differences`, `metrics`, `summary`.
+  - Alembic migration `0019_replay_lineage_and_provenance.py` verified in sequence (`0019 -> 0018 -> ... -> 0001`).
+- **Evidence Provenance DAG & Manifest Sealing:**
+  - Extended `EvidenceGraphBuilder` with `REPLAY_RUN` (`REPLAYED_FROM`) and `SCENARIO` (`GENERATED_BY`) nodes and relations.
+  - Sealed `parent_analysis_id` and `replay_mode` into `AssessmentManifest` canonical hash.
+- **REST APIs & Next.js Frontend Workspace:**
+  - Endpoints: `POST /api/v1/analyses/{id}/re-analyze`, `GET /api/v1/analyses/{id}/replay-lineage`.
+  - UI: "Replay Lineage" view in `/analyses/[analysisId]/evidence` exposing Artifact Integrity Gate, Lineage Tree, Version Pins, and Deterministic Diff viewer.
+- **Automated Validation Results:**
+  - 20 dedicated unit tests passing (`backend/tests/unit/test_replay_and_evidence_chain.py`).
+  - Alembic migration chain test passing 100%.
+  - Full Next.js 16.3.6 Turbopack production build passing exit code 0 (`npm run build`).
+  - Durable verification report at `docs/verification/REPLAY_AND_EVIDENCE_CHAIN.md`.
+
 ### What is currently being worked on
-- Stage 11 completed and fully validated. Ready for **Stage 12: End-to-End Validation, Hardening & SIH Demo Readiness**.
+- Replay and Evidence Chain completed and fully validated. Ready for next scheduled phase.
 
 ### What is next
 - **Stage 12 — End-to-End Validation, Hardening & SIH Demo Readiness:**
@@ -1261,6 +1492,7 @@ ls -la "c:\SHARAN PROJECTS\TunnelTrace AI\docs"
 | 2026-09-24 18:30 | Principal IPsec Automation Architect & Security Twin Engineer | Stage 10 Configuration Security Twin & Closed-Loop Remediation | Implemented Configuration Security Twin with counterfactual Policy-as-Code projection, Typed Configuration IR with 4 epistemic states, versioned deterministic template registry covering all 8 Stage 8 rules, formal Verification Proof Obligations, SAGA step journal runner with mandatory pre-apply backups & automatic rollback on failure, hash-bound operator approvals, fresh-SA establishment verification, dual-axis comparator, finding-level Verification Claim Ledger, Alembic migration 0009, 3-column Next.js frontend workbench, zero LLM calls in Stage 10, zero git commit/push. 15/15 Stage 10 tests passing, 269/269 total backend tests passing, Next.js build clean across all 16 routes with exit code 0. | Hand off to Stage 11 |
 | 2026-09-24 19:30 | Principal AI Systems Architect & Grounded RAG Engineer | Stage 11 Grounded AI Analyst / Local RAG | Implemented Grounded AI Analyst subsystem with evidence-first hybrid RAG over 7 normative standards (17 chunks), FactLock Context Assembler with SHA-256 state binding, Alembic migration 0010 (pgvector 768d + SQLite fallback), Ollama provider with semaphore concurrency limit & repair parser, empirical benchmark of Gemma 3 4B (150.0 Primary) and Qwen 3 4B (130.0 Fallback), Citation Integrity Gate, Claim Validation Gate, Answer Provenance Ledger, canonical abstention, full 2-column Next.js frontend workspace, zero LLM security authority, zero cloud API calls, zero git commit/push. 15/15 Stage 11 tests passing, 275/275 total backend tests passing, Next.js build clean across all 16 routes with exit code 0. | Hand off to Stage 12 |
 | 2026-09-24 19:55 | Principal Verification, Release & Systems Hardening Lead | Stage 12 End-to-End Validation, Hardening & SIH Demo Readiness | Executed full system validation and hardening across Stages 1–11. Authored 21 dedicated Stage 12 tests across protocol reconstruction, security guards, hardening/subprocess/secrets audits, and AI isolation/resilience (all 21 passed). Validated 305/305 tests passing across entire backend suite (100% pass rate in 42.41s). Validated Next.js 16.3.6 Turbopack production build with exit code 0 across 16 routes. Audited RTM (104 requirements tracked, 87 validated with zero false completion). Cryptographically verified 6/6 golden capture fixtures. Authored scripts/verify_rtm.py, scripts/demo_health.py, scripts/demo_reset.py, scripts/generate_release_manifest.py. Produced authoritative release_candidate_manifest.json (TT-SIH2026-RC1). Multi-tier demo resilience verified (L1 Live Testbed, L2 Validated PCAP, L3 Golden Cached Analysis). Air-gapped self-containment verified. Release candidate frozen. ZERO GIT COMMIT / ZERO GIT PUSH. | SIH 2026 Grand Finale Live Evaluation Rehearsal / Defect Fixing Only |
+| 2026-09-24 23:20 | Principal Telemetry & Operations Architect | Continuous Monitoring Intelligence & Telemetry Ingestion | Implemented real-time gateway and sensor telemetry ingestion subsystem, zero-trust token issuance with SHA-256 storage, strict CIDR scope boundary validation, SA non-deletion invariant during sensor staleness, deterministic score non-interference, transparent capture drop tracking, Alembic migration 0014, WebSocket live telemetry feed, and Next.js 16 reactive workbench at /monitoring. 13/13 monitoring unit tests passing, 380/380 total backend tests passing, frontend production build cleanly verified. ZERO GIT COMMIT / ZERO GIT PUSH. | Ready for next task |
 
 ---
 

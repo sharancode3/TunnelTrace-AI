@@ -14,6 +14,7 @@ from app.db.models.dataset import (
 )
 from app.db.models.ml import (
     FlowClassification,
+    MLInferenceRun,
     ModelArtifact,
     TrainingExperiment,
 )
@@ -51,7 +52,24 @@ from app.db.models.ike_assessment import (
     IkeConcordanceRecord,
     IkeProbeResult,
 )
+from app.db.models.vulnerability import (
+    VulnerabilityReport,
+    VulnerabilityReportFinding,
+)
+from app.db.models.monitoring import (
+    MonitoredGateway,
+    MonitoredSensor,
+    MonitoringEvent,
+    SensorHealthState,
+    MonitoredSAState,
+)
+from app.db.models.inventory import (
+    GatewayCertificate,
+    GatewayConfigurationDrift,
+    GatewayConfigurationSnapshot,
+)
 from app.db.models.report import ReportModel
+from app.db.models.replay import ReplayComparisonModel
 from app.db.models.security import (
     ComplianceEvaluationModel,
     EvidenceGraphModel,
@@ -66,6 +84,7 @@ from app.db.models.security import (
 __all__ = [
     "Capture",
     "AnalysisRun",
+    "ReplayComparisonModel",
     "ProtocolObservation",
     "LiveCaptureSession",
     "IKESession",
@@ -80,6 +99,7 @@ __all__ = [
     "TrainingExperiment",
     "ModelArtifact",
     "FlowClassification",
+    "MLInferenceRun",
     "PolicyBundleModel",
     "ComplianceEvaluationModel",
     "SecurityFindingModel",
@@ -108,5 +128,15 @@ __all__ = [
     "IkeAssessmentJob",
     "IkeProbeResult",
     "IkeConcordanceRecord",
+    "VulnerabilityReport",
+    "VulnerabilityReportFinding",
+    "MonitoredGateway",
+    "MonitoredSensor",
+    "MonitoringEvent",
+    "SensorHealthState",
+    "MonitoredSAState",
+    "GatewayConfigurationSnapshot",
+    "GatewayConfigurationDrift",
+    "GatewayCertificate",
 ]
 

@@ -125,6 +125,67 @@ def cmd_run_scenario(args: argparse.Namespace) -> int:
     return 0 if manifest.validation_status == "VALIDATED" else 1
 
 
+def cmd_replay_scenario(args: argparse.Namespace) -> int:
+    """Reruns a previously recorded scenario, linking provenance and checking semantic reproducibility."""
+    from lab.agent.models.manifest import RunManifest
+
+    parent_manifest_path = args.parent_manifest
+    if not os.path.isfile(parent_manifest_path):
+        candidate = os.path.join("storage", "lab", "runs", parent_manifest_path, "manifest.json")
+        if os.path.isfile(candidate):
+            parent_manifest_path = candidate
+        else:
+            print(f"Error: Parent manifest not found at {parent_manifest_path}")
+            return 1
+
+    with open(parent_manifest_path, "r", encoding="utf-8") as f:
+        parent_manifest = RunManifest.model_validate_json(f.read())
+
+    scenario_path = args.scenario_path
+    if not scenario_path:
+        profiles_dir = os.path.join(os.path.dirname(__file__), "scenarios", "profiles")
+        candidate = None
+        for fname in os.listdir(profiles_dir):
+            if fname.endswith(".yaml") or fname.endswith(".yml"):
+                p = os.path.join(profiles_dir, fname)
+                try:
+                    sc = ScenarioLoader.load_from_yaml(p)
+                    if sc.scenario_id == parent_manifest.scenario_id:
+                        candidate = p
+                        break
+                except Exception:
+                    continue
+        if candidate:
+            scenario_path = candidate
+        else:
+            print(f"Error: Could not automatically locate scenario profile for '{parent_manifest.scenario_id}'. Specify --scenario-path.")
+            return 1
+
+    scenario = ScenarioLoader.load_from_yaml(scenario_path)
+    runner = SystemRunner()
+    exp_runner = ExperimentRunner(runner=runner)
+
+    print(f"\n[+] Replaying scenario {scenario.scenario_id} (Parent Run: {parent_manifest.run_id})...")
+    child_manifest, comparison = exp_runner.replay_scenario(
+        scenario=scenario,
+        parent_manifest=parent_manifest,
+        cleanup_after=not args.no_cleanup,
+    )
+
+    print("\n" + "=" * 70)
+    print(f"SCENARIO REPLAY COMPLETED: {child_manifest.run_id}")
+    print("=" * 70)
+    print(f"Replay Mode:           {child_manifest.replay_mode}")
+    print(f"Parent Run ID:         {child_manifest.parent_run_id}")
+    print(f"Comparison Status:     {comparison.get('comparison_status')}")
+    print(f"Comparison Summary:    {comparison.get('summary')}")
+    print(f"Validation Status:     {child_manifest.validation_status}")
+    print(f"Summary:               {child_manifest.status_summary}")
+    print("=" * 70 + "\n")
+
+    return 0 if comparison.get("comparison_status") == "SEMANTIC_MATCH" else 1
+
+
 def cmd_clean_stale(args: argparse.Namespace) -> int:
     """Safely cleans up any leaked or stale tt-* namespaces and locks."""
     runner = SystemRunner()
@@ -153,6 +214,13 @@ def main(argv: List[str] = None) -> int:
     p_run.add_argument("scenario_path", help="Path or profile filename of scenario YAML")
     p_run.add_argument("--no-cleanup", action="store_true", help="Preserve namespaces after run for debugging")
     p_run.set_defaults(func=cmd_run_scenario)
+
+    # replay-scenario
+    p_rep = subparsers.add_parser("replay-scenario", help="Replay a previously recorded scenario and check semantic reproducibility")
+    p_rep.add_argument("parent_manifest", help="Parent run ID or path to parent manifest.json")
+    p_rep.add_argument("--scenario-path", help="Optional explicit path to scenario YAML")
+    p_rep.add_argument("--no-cleanup", action="store_true", help="Preserve namespaces after run")
+    p_rep.set_defaults(func=cmd_replay_scenario)
 
     # clean-stale
     p_clean = subparsers.add_parser("clean-stale", help="Purge any stale tt-* testbed namespaces and processes")

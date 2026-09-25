@@ -65,6 +65,16 @@ class CryptoProposalMapper:
             esp = "aes256-sha1-modp2048" if pfs_enabled else "aes256-sha1"
             return CryptoProposals((ike, esp))
 
+        elif profile == CryptoProfile.IKEV1_3DES_SHA1_DH2:
+            ike = "3des-sha1-modp1024"
+            esp = "3des-sha1-modp1024" if pfs_enabled else "3des-sha1"
+            return CryptoProposals((ike, esp))
+
+        elif profile == CryptoProfile.NO_COMMON_PROPOSAL:
+            ike = "aes256gcm16-prfsha256-ecp256"
+            esp = "aes256gcm16-ecp256" if pfs_enabled else "aes256gcm16"
+            return CryptoProposals((ike, esp))
+
         # Fallback default
         return CryptoProposals(("aes256gcm16-prfsha256-ecp256", "aes256gcm16-ecp256"))
 
@@ -106,9 +116,13 @@ class SwanctlConfigGenerator:
             remote_ts = f"{remote_wan_ip}/128" if is_ipv6 else f"{remote_wan_ip}/32"
             child_mode = "transport"
 
-        # Proposals
+        # Proposals: select peer-specific proposal suite to support deliberate mismatch testing
+        active_crypto_profile = scenario.crypto_profile
+        if not is_peer_a and scenario.peer_b_crypto_profile is not None:
+            active_crypto_profile = scenario.peer_b_crypto_profile
+
         ike_proposals, esp_proposals = CryptoProposalMapper.get_proposals(
-            scenario.crypto_profile, scenario.pfs
+            active_crypto_profile, scenario.pfs
         )
 
         encap_directive = "yes" if scenario.encapsulation == EncapsulationMode.NAT_T else "no"

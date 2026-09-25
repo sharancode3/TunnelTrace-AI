@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.db.models.capture import AnalysisRun, ProtocolObservation
-from app.db.models.ml import FlowClassification
+from app.db.models.ml import FlowClassification, MLInferenceRun
 from app.db.models.reconstruction import (
     ChildSecurityAssociation,
     ESPFlow,
@@ -141,28 +141,42 @@ class AnalysisSnapshotBuilder:
             ],
         }
 
-        # 4. Fetch Stage 7 ML Classifications
+        # 4. Fetch Stage 7/17 ML Classifications and Run Lifecycle
+        stmt_run = (
+            select(MLInferenceRun)
+            .where(MLInferenceRun.analysis_id == analysis_id, MLInferenceRun.is_current == True)  # noqa: E712
+            .order_by(MLInferenceRun.created_at.desc())
+        )
+        res_run = await self.db.execute(stmt_run)
+        current_run = res_run.scalars().first()
+
         stmt_ml = (
             select(FlowClassification)
             .join(ESPFlow, FlowClassification.flow_id == ESPFlow.id)
-            .where(ESPFlow.analysis_id == analysis_id)
+            .where(ESPFlow.analysis_id == analysis_id, FlowClassification.is_current == True)  # noqa: E712
         )
         res_ml = await self.db.execute(stmt_ml)
         ml_records = res_ml.scalars().all()
 
+        classified_records = [m for m in ml_records if m.input_status == "COMPLETE"]
         traffic_summary = {
-            "classified_flows": len(ml_records),
-            "classes_detected": sorted({m.final_class for m in ml_records}),
+            "ml_run_status": current_run.status if current_run else ("COMPLETED" if ml_records else "NOT_CONFIGURED"),
+            "model_version": current_run.model_version if current_run else (ml_records[0].model_version if ml_records else None),
+            "model_bundle_id": current_run.model_bundle_id if current_run else (ml_records[0].model_bundle_id if ml_records else None),
+            "total_flows": len(ml_records),
+            "classified_flows": len(classified_records),
+            "skipped_flows": current_run.skipped_flows if current_run else sum(1 for m in ml_records if m.input_status != "COMPLETE"),
+            "classes_detected": sorted({m.final_class for m in classified_records if m.final_class not in ["UNKNOWN", "UNAVAILABLE"]}),
             "avg_calibrated_confidence": (
-                round(sum(m.calibrated_confidence for m in ml_records) / len(ml_records), 4)
-                if ml_records
+                round(sum(m.calibrated_confidence for m in classified_records) / len(classified_records), 4)
+                if classified_records
                 else None
             ),
-            "ood_count": sum(1 for m in ml_records if m.ood_status != "KNOWN_ACCEPTED"),
-            "anomaly_count": sum(1 for m in ml_records if m.behavioral_anomaly_status == "ANOMALOUS_BEHAVIOR"),
+            "ood_count": sum(1 for m in classified_records if m.ood_status in ["OOD_REJECTED", "UNKNOWN_UNSEEN"]),
+            "anomaly_count": sum(1 for m in classified_records if m.behavioral_anomaly_status in ["ANOMALOUS_BEHAVIOR", "STATISTICAL_BEHAVIORAL_ANOMALY"]),
             "class_distribution": {},
         }
-        for m in ml_records:
+        for m in classified_records:
             traffic_summary["class_distribution"][m.final_class] = (
                 traffic_summary["class_distribution"].get(m.final_class, 0) + 1
             )
@@ -260,6 +274,12 @@ class AnalysisSnapshotBuilder:
             "overall_risk_tier": getattr(risk_row, "overall_risk_tier", "LOW") if risk_row else "LOW",
             "risk_score": getattr(risk_row, "risk_score", 0.0) if risk_row else 0.0,
             "rationale": getattr(risk_row, "rationale", "No severe security violations observed.") if risk_row else "No severe security violations observed.",
+            "risk_policy_id": getattr(risk_row, "risk_policy_id", "risk_policy_canonical_v1") if risk_row else "risk_policy_canonical_v1",
+            "risk_policy_version": getattr(risk_row, "risk_policy_version", "1.0.0") if risk_row else "1.0.0",
+            "risk_policy_hash": getattr(risk_row, "risk_policy_hash", "") if risk_row else "",
+            "evidence_coverage": getattr(risk_row, "evidence_coverage", None) if risk_row else None,
+            "evidence_gaps_count": getattr(risk_row, "evidence_gaps_count", 0) if risk_row else 0,
+            "methodology_type": getattr(risk_row, "methodology_type", "DETERMINISTIC_PRIORITIZATION_HEURISTIC") if risk_row else "DETERMINISTIC_PRIORITIZATION_HEURISTIC",
         }
 
         stmt_threats = (
@@ -279,7 +299,11 @@ class AnalysisSnapshotBuilder:
                 "likelihood": getattr(t, "likelihood", "LOW"),
                 "impact": getattr(t, "impact", "LOW"),
                 "risk_tier": getattr(t, "risk_tier", "LOW"),
-                "mitre_technique_id": getattr(t, "mitre_technique_id", "N/A"),
+                "mitre_technique_id": getattr(t, "mitre_attack_id", getattr(t, "mitre_technique_id", "N/A")),
+                "mitre_attack_id": getattr(t, "mitre_attack_id", None),
+                "mitre_attack_name": getattr(t, "mitre_attack_name", None),
+                "mitre_attack_url": getattr(t, "mitre_attack_url", None),
+                "catalog_hash": getattr(t, "catalog_hash", None),
                 "nist_control": getattr(t, "nist_control", "N/A"),
                 "evidence_state": getattr(t, "evidence_state", "VERIFIED"),
             }

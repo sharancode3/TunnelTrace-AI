@@ -156,6 +156,14 @@ class RiskAssessmentModel(Base):
     items: Mapped[dict | None] = mapped_column(
         JSON().with_variant(JSONB, "postgresql"), nullable=True
     )
+    evidence_coverage: Mapped[float | None] = mapped_column(Float, nullable=True)
+    evidence_gaps_count: Mapped[int | None] = mapped_column(Integer, nullable=True, default=0)
+    methodology_type: Mapped[str | None] = mapped_column(
+        String(64), nullable=True, default="DETERMINISTIC_PRIORITIZATION_HEURISTIC"
+    )
+    external_context: Mapped[dict | None] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )
@@ -182,6 +190,11 @@ class ThreatInstanceModel(Base):
     likelihood: Mapped[str] = mapped_column(String(32), nullable=False)
     impact: Mapped[str] = mapped_column(String(32), nullable=False)
     risk_tier: Mapped[str] = mapped_column(String(32), nullable=False)
+    mitre_attack_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    mitre_attack_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    mitre_attack_url: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    mitre_attack_rationale: Mapped[str | None] = mapped_column(Text, nullable=True)
+    catalog_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc)
     )

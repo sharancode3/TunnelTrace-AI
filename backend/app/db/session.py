@@ -23,15 +23,18 @@ def get_engine() -> AsyncEngine:
     global _engine
     if _engine is None:
         settings = get_settings()
-        _engine = create_async_engine(
-            settings.DATABASE_URL,
-            pool_size=settings.DATABASE_POOL_SIZE,
-            max_overflow=settings.DATABASE_MAX_OVERFLOW,
-            pool_timeout=settings.DATABASE_POOL_TIMEOUT,
-            echo=settings.DATABASE_ECHO,
-            future=True,
-        )
-        logger.info("Initialized asynchronous PostgreSQL engine pool.")
+        kwargs: dict = {
+            "echo": settings.DATABASE_ECHO,
+            "future": True,
+        }
+        if "sqlite" not in settings.DATABASE_URL:
+            kwargs.update({
+                "pool_size": settings.DATABASE_POOL_SIZE,
+                "max_overflow": settings.DATABASE_MAX_OVERFLOW,
+                "pool_timeout": settings.DATABASE_POOL_TIMEOUT,
+            })
+        _engine = create_async_engine(settings.DATABASE_URL, **kwargs)
+        logger.info("Initialized asynchronous engine for %s.", settings.DATABASE_URL.split('@')[-1] if '@' in settings.DATABASE_URL else settings.DATABASE_URL)
     return _engine
 
 

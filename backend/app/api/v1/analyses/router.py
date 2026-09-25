@@ -13,8 +13,13 @@ from app.api.v1.schemas import (
     AnalysisOverviewDTO,
     AnalysisRunResponseDTO,
     CreateAnalysisRequestDTO,
+    ReplayExecutionResponseDTO,
     TrafficFlowItemDTO,
     TrafficSummaryResponseDTO,
+)
+from app.replay.models import (
+    ForensicReanalysisRequestDTO,
+    ReplayLineageDTO,
 )
 from app.api.v1.security.router import (
     get_compliance_summary,
@@ -79,9 +84,10 @@ async def create_analysis(
     await db.commit()
     await db.refresh(analysis)
 
-    # Execute deterministic analysis
-    service = ProtocolForensicsService(db)
-    await service.execute_analysis(analysis.id)
+    # Execute deterministic analysis pipeline (dispatches protocol forensics -> reconstruction -> ML inference -> security assessment)
+    from app.services.pipeline import execute_full_analysis_pipeline
+
+    await execute_full_analysis_pipeline(analysis.id, db)
 
     # Reload fresh state
     res_updated = await db.execute(select(AnalysisRun).where(AnalysisRun.id == analysis.id))
@@ -99,6 +105,9 @@ async def create_analysis(
         completed_at=analysis.completed_at,
         error_code=analysis.error_code,
         error_message=analysis.error_message,
+        parent_analysis_id=analysis.parent_analysis_id,
+        replay_mode=analysis.replay_mode,
+        provenance_metadata=analysis.provenance_metadata,
         created_at=analysis.created_at,
     )
 
@@ -153,6 +162,8 @@ async def list_analyses(
             security_score=score_map.get(r.id),
             critical_findings=crit_map.get(r.id, 0),
             high_findings=high_map.get(r.id, 0),
+            parent_analysis_id=r.parent_analysis_id,
+            replay_mode=r.replay_mode,
         )
         for r in runs
     ]
@@ -185,6 +196,9 @@ async def get_analysis(
         completed_at=analysis.completed_at,
         error_code=analysis.error_code,
         error_message=analysis.error_message,
+        parent_analysis_id=analysis.parent_analysis_id,
+        replay_mode=analysis.replay_mode,
+        provenance_metadata=analysis.provenance_metadata,
         created_at=analysis.created_at,
     )
 
@@ -315,9 +329,27 @@ async def get_analysis_traffic(
     stmt_flows = select(ESPFlow).where(ESPFlow.analysis_id == analysis_id).order_by(ESPFlow.start_time)
     flows = (await db.execute(stmt_flows)).scalars().all()
 
+    # Query current MLInferenceRun deterministically
+    from app.db.models.ml import MLInferenceRun
+    stmt_run = select(MLInferenceRun).where(
+        MLInferenceRun.analysis_id == analysis_id,
+        MLInferenceRun.is_current.is_(True),
+    )
+    current_run = (await db.execute(stmt_run)).scalars().first()
+
     flow_ids = [f.id for f in flows]
-    stmt_ml = select(FlowClassification).where(FlowClassification.flow_id.in_(flow_ids)) if flow_ids else None
-    ml_records = (await db.execute(stmt_ml)).scalars().all() if stmt_ml is not None else []
+    if current_run and flow_ids:
+        stmt_ml = select(FlowClassification).where(
+            FlowClassification.run_id == current_run.id,
+            FlowClassification.flow_id.in_(flow_ids),
+        )
+        ml_records = (await db.execute(stmt_ml)).scalars().all()
+    elif flow_ids:
+        stmt_ml = select(FlowClassification).where(FlowClassification.flow_id.in_(flow_ids))
+        ml_records = (await db.execute(stmt_ml)).scalars().all()
+    else:
+        ml_records = []
+
     ml_map = {m.flow_id: m for m in ml_records}
 
     flow_items = []
@@ -327,18 +359,25 @@ async def get_analysis_traffic(
 
     for f in flows:
         ml = ml_map.get(f.id)
+        input_status = ml.input_status if ml else None
         known_class = ml.known_class if ml else None
         final_class = ml.final_class if ml else None
+        supervised_hyp = ml.supervised_hypothesis if ml else None
+        accepted_pred = ml.accepted_prediction if ml else None
         calib_conf = ml.calibrated_confidence if ml else None
+        calib_status = ml.calibration_status if ml else None
         norm_entropy = ml.normalized_entropy if ml else None
         ood_status = ml.ood_status if ml else None
         anomaly_status = ml.behavioral_anomaly_status if ml else None
+        anomaly_score = ml.anomaly_score if ml else None
+        is_deg = ml.is_degraded if ml else None
+        deg_reason = ml.degraded_reason if ml else None
 
-        if final_class:
+        if final_class and final_class not in ("UNAVAILABLE", "UNKNOWN_UNSEEN", "OUT_OF_DISTRIBUTION"):
             classes_detected.add(final_class)
-        if ood_status and ood_status != "KNOWN_ACCEPTED":
+        if ood_status and ood_status not in ("KNOWN_ACCEPTED", "UNAVAILABLE"):
             ood_count += 1
-        if anomaly_status == "ANOMALOUS_BEHAVIOR":
+        if anomaly_status in ("STATISTICAL_BEHAVIORAL_ANOMALY", "ANOMALOUS_BEHAVIOR"):
             anomaly_count += 1
 
         top_shap = None
@@ -362,23 +401,90 @@ async def get_analysis_traffic(
                 packet_count=f.packet_count,
                 byte_count=f.byte_count,
                 association_state=f.association_state,
+                input_status=input_status,
+                supervised_hypothesis=supervised_hyp,
                 known_class=known_class,
                 final_class=final_class,
+                accepted_prediction=accepted_pred,
                 calibrated_confidence=calib_conf,
+                calibration_status=calib_status,
                 normalized_entropy=norm_entropy,
                 ood_status=ood_status,
                 behavioral_anomaly_status=anomaly_status,
+                anomaly_score=anomaly_score,
+                is_degraded=is_deg,
+                degraded_reason=deg_reason,
                 top_shap_features=top_shap,
             )
         )
 
+    ml_run_status = current_run.status if current_run else ("NO_FLOWS" if not flows else "NOT_CONFIGURED")
+
     return TrafficSummaryResponseDTO(
         analysis_id=analysis_id,
         total_flows=len(flows),
-        classified_flows=len(ml_records),
+        classified_flows=current_run.classified_count if current_run else len(ml_records),
         classes_detected=sorted(classes_detected),
         ood_count=ood_count,
         anomaly_count=anomaly_count,
+        ml_run_status=ml_run_status,
+        model_version=current_run.bundle_version if current_run else None,
+        model_bundle_id=current_run.bundle_id if current_run else None,
         flows=flow_items,
     )
+
+
+@router.post(
+    "/{analysis_id}/re-analyze",
+    response_model=ReplayExecutionResponseDTO,
+    status_code=status.HTTP_200_OK,
+    summary="Execute deterministic forensic re-analysis over an immutable capture",
+)
+async def re_analyze(
+    analysis_id: uuid.UUID,
+    req: ForensicReanalysisRequestDTO | None = None,
+    db: AsyncSession = Depends(get_db_session),
+) -> ReplayExecutionResponseDTO:
+    """Reruns forensic analysis on the exact same verified capture artifact, creating an immutable child run."""
+    from fastapi import HTTPException
+    from app.replay.models import CaptureIntegrityError
+    from app.replay.service import ReplayService
+
+    service = ReplayService(db)
+    try:
+        child, comparison = await service.execute_forensic_reanalysis(analysis_id, req)
+    except CaptureIntegrityError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(exc),
+        )
+
+    return ReplayExecutionResponseDTO(
+        child_analysis_id=child.id,
+        parent_analysis_id=child.parent_analysis_id or analysis_id,
+        replay_mode=child.replay_mode or "FORENSIC_REANALYSIS",
+        status=child.status,
+        artifact_integrity=comparison.artifact_integrity,
+        comparison_status=comparison.comparison_status,
+        summary=comparison.summary,
+        differences=comparison.differences,
+        metrics=comparison.metrics,
+        created_at=comparison.created_at,
+    )
+
+
+@router.get(
+    "/{analysis_id}/replay-lineage",
+    response_model=ReplayLineageDTO,
+    summary="Retrieve replay provenance lineage and integrity status",
+)
+async def get_replay_lineage(
+    analysis_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db_session),
+) -> ReplayLineageDTO:
+    """Retrieve full parent/child replay lineage, capture SHA-256 integrity, and version pins."""
+    from app.replay.service import ReplayService
+
+    service = ReplayService(db)
+    return await service.get_replay_lineage(analysis_id)
 

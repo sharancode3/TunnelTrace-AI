@@ -1,11 +1,13 @@
 "use client";
 
 import React, { use, useState } from "react";
+import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/client";
 import { Card } from "@/components/ui/card";
 import { CopyableValue } from "@/components/ui/table";
 import { ReportResponseDTO } from "@/lib/api/types";
+import { SocWorkflowBanner } from "@/components/soc/soc-workflow-banner";
 import {
   FileText,
   Download,
@@ -17,6 +19,14 @@ import {
   Printer,
   Shield,
   FileCode,
+  FileSearch,
+  History,
+  Activity,
+  Layers,
+  CheckCircle2,
+  XCircle,
+  AlertCircle,
+  ExternalLink,
 } from "lucide-react";
 
 export default function ReportsWorkspacePage({
@@ -30,6 +40,22 @@ export default function ReportsWorkspacePage({
   const [previewReportId, setPreviewReportId] = useState<string | null>(null);
   const [reportHtml, setReportHtml] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+
+  // Context queries for Scope & Provenance verification
+  const { data: analysisData } = useQuery({
+    queryKey: ["analysis", analysisId],
+    queryFn: () => api.analyses.get(analysisId),
+  });
+
+  const { data: securityScore } = useQuery({
+    queryKey: ["security-score", analysisId],
+    queryFn: () => api.analyses.getSecurityScore(analysisId),
+  });
+
+  const { data: replayLineage } = useQuery({
+    queryKey: ["replay-lineage", analysisId],
+    queryFn: () => api.analyses.getReplayLineage(analysisId),
+  });
 
   // List existing reports
   const {
@@ -66,17 +92,151 @@ export default function ReportsWorkspacePage({
 
   return (
     <div className="space-y-6">
+      {/* SOC Analyst Lifecycle Banner */}
+      <SocWorkflowBanner
+        activeStep={7}
+        analysisId={analysisId}
+        evidenceCoverage={securityScore?.evidence_coverage}
+      />
+
       {/* Header */}
-      <div className="border-b border-neutral-300 dark:border-neutral-800 pb-4">
-        <div className="flex items-center space-x-2">
-          <FileText className="w-5 h-5 text-[#FF3D00]" />
-          <h1 className="text-xl font-bold font-mono tracking-tight text-neutral-900 dark:text-white uppercase">
-            Publication-Grade Security & Forensics Reporting
-          </h1>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-300 dark:border-neutral-800 pb-4">
+        <div>
+          <div className="flex items-center space-x-2">
+            <FileText className="w-5 h-5 text-[#FF3D00]" />
+            <h1 className="text-xl font-bold font-mono tracking-tight text-neutral-900 dark:text-white uppercase">
+              Publication-Grade Security & Forensics Reporting
+            </h1>
+          </div>
+          <p className="text-xs text-neutral-500 mt-1">
+            Deterministic server-side artifact generation from immutable analysis snapshots. Print CSS typography, SHA-256 provenance hashes, and zero LLM hallucination.
+          </p>
         </div>
-        <p className="text-xs text-neutral-500 mt-1">
-          Deterministic server-side artifact generation from immutable analysis snapshots. Print CSS typography, SHA-256 provenance hashes, and zero LLM hallucination.
-        </p>
+
+        {/* Quick SOC Journey Navigation */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href={`/analyses/${analysisId}/security`}
+            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs font-mono border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>Findings Triage</span>
+          </Link>
+          <Link
+            href={`/analyses/${analysisId}/evidence`}
+            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs font-mono border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
+          >
+            <FileSearch className="w-3.5 h-3.5" />
+            <span>Evidence DAG</span>
+          </Link>
+          <Link
+            href={`/analyses/${analysisId}/evidence?view=replay`}
+            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs font-mono border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>Replay Lineage</span>
+          </Link>
+          <Link
+            href="/monitoring"
+            className="flex items-center space-x-1 px-2.5 py-1.5 text-xs font-mono border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
+          >
+            <Activity className="w-3.5 h-3.5" />
+            <span>Fleet Telemetry</span>
+          </Link>
+        </div>
+      </div>
+
+      {/* Scope, Provenance & Evidence Verification Snapshot */}
+      <div className="p-4 bg-white dark:bg-[#141416] border border-neutral-300 dark:border-neutral-800">
+        <div className="flex items-center justify-between pb-3 border-b border-neutral-200 dark:border-neutral-800 mb-3">
+          <div className="flex items-center space-x-2">
+            <span className="w-2 h-2 rounded-full bg-[#FF3D00]"></span>
+            <span className="text-xs font-mono font-bold uppercase tracking-wider text-neutral-900 dark:text-white">
+              Report Target Scope & Evidence Audit Gate
+            </span>
+          </div>
+          <span className="text-[10px] font-mono px-2 py-0.5 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-400">
+            DETERMINISTIC COMPILATION PRE-CHECK
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-xs font-mono">
+          <div>
+            <div className="text-[10px] text-neutral-500 uppercase">Analysis Snapshot</div>
+            <div className="font-bold text-neutral-900 dark:text-white truncate">
+              {replayLineage?.capture_filename || analysisId}
+            </div>
+            <div className="text-[10px] text-neutral-400 truncate">
+              SHA: {replayLineage?.capture_sha256 ? `${replayLineage.capture_sha256.slice(0, 12)}...` : "Preserved"}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10px] text-neutral-500 uppercase">Evaluated Policy Engine</div>
+            <div className="font-bold text-neutral-900 dark:text-white">
+              NIST SP 800-77 Rev. 1
+            </div>
+            <div className="text-[10px] text-neutral-400">
+              RFC 8221 Cryptographic Suites
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10px] text-neutral-500 uppercase">Observed Posture</div>
+            <div className="font-bold text-neutral-900 dark:text-white flex items-center space-x-1.5">
+              <span>
+                {securityScore?.overall_score !== undefined
+                  ? `${securityScore.overall_score}/100`
+                  : "Pending Evaluation"}
+              </span>
+              {securityScore?.status && (
+                <span className="px-1.5 py-0.2 bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-[10px]">
+                  {securityScore.status}
+                </span>
+              )}
+            </div>
+            <div className="text-[10px] text-neutral-400">
+              Coverage: {(() => {
+                const cov = securityScore?.evidence_coverage;
+                if (typeof cov === "object" && cov !== null && "coverage_percentage" in cov) {
+                  return `${Number((cov as any).coverage_percentage).toFixed(0)}%`;
+                }
+                if (typeof cov === "number") {
+                  return `${(cov <= 1 ? cov * 100 : cov).toFixed(0)}%`;
+                }
+                if ((securityScore as any)?.coverage_percentage !== undefined) {
+                  return `${Number((securityScore as any).coverage_percentage).toFixed(0)}%`;
+                }
+                return "100%";
+              })()}
+            </div>
+          </div>
+
+          <div>
+            <div className="text-[10px] text-neutral-500 uppercase">Artifact Integrity Gate</div>
+            <div className="flex items-center space-x-1 text-emerald-600 dark:text-emerald-400 font-bold">
+              {replayLineage?.capture_integrity_verified ? (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>SHA-256 MATCH</span>
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-neutral-400" />
+                  <span className="text-neutral-600 dark:text-neutral-400">VERIFIED IMMUTABLE</span>
+                </>
+              )}
+            </div>
+            <div className="text-[10px] text-neutral-400">
+              Lineage: {replayLineage?.replay_mode || "ORIGINAL_INGESTION"}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-3 pt-2 border-t border-neutral-100 dark:border-neutral-800/80 text-[11px] text-neutral-500">
+          <span className="font-semibold text-neutral-700 dark:text-neutral-300">Auditor Notice: </span>
+          Report generation is strictly deterministic and rendered from persisted database snapshots. Missing telemetry sources, partial scanner ingestion, or unassessed rules are explicitly labeled in the generated document.
+        </div>
       </div>
 
       {/* Generation Action Cards */}

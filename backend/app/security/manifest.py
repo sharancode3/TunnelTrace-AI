@@ -32,6 +32,8 @@ class AssessmentManifest:
     coverage_percentage: float
     fingerprintability_hash: str
     created_at: str
+    parent_analysis_id: str | None = None
+    replay_mode: str | None = None
     manifest_sha256: str = ""
 
     def to_dict(self) -> dict:
@@ -54,6 +56,8 @@ class AssessmentManifest:
         coverage_percentage: float,
         fingerprintability_hash: str,
         engine_version: str = "Stage8-v1.0.0",
+        parent_analysis_id: str | None = None,
+        replay_mode: str | None = None,
     ) -> AssessmentManifest:
         """Create and cryptographically seal an assessment manifest."""
         now_iso = datetime.now(timezone.utc).isoformat()
@@ -77,6 +81,11 @@ class AssessmentManifest:
             "fingerprintability_hash": fingerprintability_hash,
             "created_at": now_iso,
         }
+        if parent_analysis_id:
+            canonical_payload["parent_analysis_id"] = parent_analysis_id
+        if replay_mode:
+            canonical_payload["replay_mode"] = replay_mode
+
         serialized = json.dumps(canonical_payload, sort_keys=True)
         m_hash = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
 
@@ -97,5 +106,7 @@ class AssessmentManifest:
             coverage_percentage=round(coverage_percentage, 2),
             fingerprintability_hash=fingerprintability_hash,
             created_at=now_iso,
+            parent_analysis_id=parent_analysis_id,
+            replay_mode=replay_mode,
             manifest_sha256=m_hash,
         )

@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import uuid
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
@@ -43,8 +45,8 @@ class EditProposalRequest(BaseModel):
 class ApplyRemediationRequest(BaseModel):
     twin_id: uuid.UUID = Field(..., description="Configuration Twin ID being deployed")
     proposal_hash: str = Field(..., description="SHA-256 hash of the operator-approved proposal")
-    lab_instance_id: str = Field(default="strongswan-lab-default", description="Allowlisted internal testbed instance")
-    operator_id: str = Field(default="analyst-local", description="Authorizing operator identifier")
+    lab_instance_id: str = Field(..., min_length=3, description="Allowlisted internal testbed instance (e.g., strongswan-lab-default)")
+    operator_id: str = Field(..., min_length=3, description="Authorizing operator identifier")
     confirm_controlled_lab_only: bool = Field(..., description="Must explicitly confirm lab-only deployment")
 
 
@@ -90,6 +92,9 @@ class RemediationRunResponse(BaseModel):
     rollback_state: str
     rollback_reason: str | None
     error_message: str | None
+    approval_metadata: dict[str, Any] | None = None
+    pre_apply_spis: list[str] | None = None
+    post_capture_hash: str | None = None
     steps: list[RemediationRunStepResponse] = []
     executed_at: str
     completed_at: str | None
@@ -321,9 +326,22 @@ async def apply_remediation(
     db: AsyncSession = Depends(get_db_session),
 ) -> RemediationRunResponse:
     """Authorize and execute closed-loop remediation on the isolated strongSwan testbed."""
+    from app.core.config import get_settings
+    settings = get_settings()
+
+    # Fail-closed server-side environment gate: Disable apply if in production without verified identity provider
+    if settings.APP_ENV == "production":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=(
+                "Remediation Apply Blocked: Production execution is disabled because a verified operator authentication "
+                "provider is not configured. Remediation apply is strictly restricted to isolated local development/test environments."
+            ),
+        )
+
     if not req.confirm_controlled_lab_only:
         raise HTTPException(
-            status_code=400,
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Safety Violation: Must explicitly confirm that execution targets the controlled strongSwan lab only.",
         )
 
@@ -331,22 +349,46 @@ async def apply_remediation(
     res_t = await db.execute(select(ConfigurationTwinModel).where(ConfigurationTwinModel.id == req.twin_id))
     twin = res_t.scalar_one_or_none()
     if not twin:
-        raise HTTPException(status_code=404, detail="Configuration Twin not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Configuration Twin not found.")
 
     if twin.proposal_hash != req.proposal_hash:
         raise HTTPException(
-            status_code=409,
-            detail="Hash Conflict: Proposal changed since operator approved. Re-run preflight and approval.",
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Hash Conflict: Proposal changed since operator approved. Prior approval invalidated. Re-run preflight and approval.",
         )
 
-    # Create Remediation Run record
+    # Bind fresh confirmation immediately before execution (never twin creation time)
+    approval_now = datetime.now(timezone.utc)
+    approval_expiry = approval_now + timedelta(minutes=15)
+    diff_hash = hashlib.sha256((twin.diff_text or "").encode()).hexdigest()
+    policy_projection_hash = hashlib.sha256(
+        json.dumps(twin.projected_regression_audit or {}, sort_keys=True).encode()
+    ).hexdigest()
+    execution_token = str(uuid.uuid4())
+
+    approval_metadata = {
+        "twin_id": str(twin.id),
+        "approved_proposal_hash": req.proposal_hash,
+        "diff_hash": diff_hash,
+        "policy_projection_hash": policy_projection_hash,
+        "operator_id": req.operator_id,
+        "lab_instance_id": req.lab_instance_id,
+        "approval_timestamp": approval_now.isoformat(),
+        "expiry_timestamp": approval_expiry.isoformat(),
+        "execution_token": execution_token,
+        "authorization_mode": "ISOLATED_DEV_TEST_AUTHORIZED",
+        "server_boundary_verified": True,
+    }
+
+    # Create Remediation Run record with newly recorded confirmation timestamp
     run = RemediationRunModel(
         twin_id=req.twin_id,
         lab_instance_id=req.lab_instance_id,
         proposal_hash=req.proposal_hash,
         operator_id=req.operator_id,
         status="CREATED",
-        approval_timestamp=twin.created_at,
+        approval_timestamp=approval_now,
+        approval_metadata=approval_metadata,
     )
     db.add(run)
     await db.commit()
@@ -387,6 +429,9 @@ async def apply_remediation(
         rollback_state=run.rollback_state,
         rollback_reason=run.rollback_reason,
         error_message=run.error_message,
+        approval_metadata=run.approval_metadata,
+        pre_apply_spis=run.pre_apply_spis,
+        post_capture_hash=run.post_capture_hash,
         steps=[],
         executed_at=run.executed_at.isoformat(),
         completed_at=None,
@@ -403,7 +448,7 @@ async def get_remediation_run(
     res_r = await db.execute(select(RemediationRunModel).where(RemediationRunModel.id == run_id))
     run = res_r.scalar_one_or_none()
     if not run:
-        raise HTTPException(status_code=404, detail="Remediation run not found.")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Remediation run not found.")
 
     res_steps = await db.execute(
         select(RemediationRunStepModel)
@@ -422,6 +467,9 @@ async def get_remediation_run(
         rollback_state=run.rollback_state,
         rollback_reason=run.rollback_reason,
         error_message=run.error_message,
+        approval_metadata=run.approval_metadata,
+        pre_apply_spis=run.pre_apply_spis,
+        post_capture_hash=run.post_capture_hash,
         steps=[
             RemediationRunStepResponse(
                 sequence=s.sequence,

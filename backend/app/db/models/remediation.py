@@ -127,6 +127,13 @@ class RemediationRunModel(Base):
     rollback_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     approval_timestamp: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    approval_metadata: Mapped[dict | None] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=True
+    )
+    pre_apply_spis: Mapped[list | None] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=True
+    )
+    post_capture_hash: Mapped[str | None] = mapped_column(String(64), nullable=True)
     executed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
     )

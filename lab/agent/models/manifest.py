@@ -63,3 +63,11 @@ class RunManifest(BaseModel):
     evidence_directory: Optional[str] = None
     workload_profile: Optional[Dict[str, Any]] = None
     workload_result: Optional[Dict[str, Any]] = None
+
+    # Replay & Lineage Provenance
+    parent_run_id: Optional[str] = None
+    replay_mode: Optional[str] = None # "SCENARIO_REPLAY"
+    environment_compatibility: Dict[str, Any] = Field(default_factory=dict)
+    canonical_config_digest: Optional[str] = None # SHA-256 of canonical redacted config
+    semantic_assertions: Dict[str, Any] = Field(default_factory=dict)
+    manifest_sha256: str = ""

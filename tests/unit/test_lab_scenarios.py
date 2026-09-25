@@ -120,7 +120,57 @@ class TestScenarioLoader:
                 assert sc.sha256_hash is not None
                 assert len(sc.sha256_hash) == 64
                 count += 1
-        assert count == 6
+        assert count == 8
+
+    def test_insecure_suite_requires_negative_test_flag(self) -> None:
+        """Attempting to configure weak 3DES/SHA1 without is_negative_test=True must raise ValidationError."""
+        from lab.scenarios.schema import ExpectedOutcome
+        with pytest.raises(ValidationError, match="must be explicitly marked as negative test"):
+            ScenarioDefinition(
+                scenario_id="scn-insecure-unauthorized",
+                topology=TopologyType.TUNNEL_SITE_TO_SITE,
+                crypto_profile=CryptoProfile.IKEV1_3DES_SHA1_DH2,
+                is_negative_test=False,
+                allow_insecure_suite=False,
+            )
+
+        # allow_insecure_suite also required
+        with pytest.raises(ValidationError, match="requires allow_insecure_suite=True"):
+            ScenarioDefinition(
+                scenario_id="scn-insecure-half-authorized",
+                topology=TopologyType.TUNNEL_SITE_TO_SITE,
+                crypto_profile=CryptoProfile.IKEV1_3DES_SHA1_DH2,
+                is_negative_test=True,
+                allow_insecure_suite=False,
+            )
+
+        # Properly authorized negative test succeeds
+        sc = ScenarioDefinition(
+            scenario_id="scn-insecure-authorized",
+            topology=TopologyType.TUNNEL_SITE_TO_SITE,
+            crypto_profile=CryptoProfile.IKEV1_3DES_SHA1_DH2,
+            is_negative_test=True,
+            allow_insecure_suite=True,
+            expected_outcome=ExpectedOutcome.EXPECTED_NEGATIVE,
+        )
+        assert sc.is_negative_test is True
+        assert sc.expected_outcome == ExpectedOutcome.EXPECTED_NEGATIVE
+
+    def test_expected_rejection_scenario_creation(self) -> None:
+        """Scenario with proposal mismatch and EXPECTED_REJECTION passes schema validation."""
+        from lab.scenarios.schema import ExpectedOutcome
+        sc = ScenarioDefinition(
+            scenario_id="scn-mismatch-test",
+            topology=TopologyType.TUNNEL_SITE_TO_SITE,
+            crypto_profile=CryptoProfile.IKEV2_AES256GCM_DH19_PFS,
+            peer_b_crypto_profile=CryptoProfile.IKEV2_AES256CBC_SHA256_DH14_NOPFS,
+            is_negative_test=True,
+            allow_insecure_suite=True,
+            expected_outcome=ExpectedOutcome.EXPECTED_REJECTION,
+            expected_failure_reason="NO_PROPOSAL_CHOSEN",
+        )
+        assert sc.expected_outcome == ExpectedOutcome.EXPECTED_REJECTION
+        assert sc.peer_b_crypto_profile == CryptoProfile.IKEV2_AES256CBC_SHA256_DH14_NOPFS
 
     def test_loader_nonexistent_file(self) -> None:
         with pytest.raises(ScenarioLoadError):

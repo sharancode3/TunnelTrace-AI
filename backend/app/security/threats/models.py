@@ -12,6 +12,39 @@ from app.security.risk.models import Impact, Likelihood, RiskTier
 
 
 @dataclass(frozen=True)
+class MitreAttackMapping:
+    """Normatively supported MITRE ATT&CK technique mapping.
+
+    Represents taxonomy context only; not an assertion of observed incident or compromise.
+    """
+
+    technique_id: str
+    technique_name: str
+    domain: str = "Enterprise"
+    dataset_version: str = "v15.1"
+    mapping_type: str = "EXPLOITS_WEAKNESS"
+    rationale: str = ""
+    source_url: str = ""
+    verification_date: str = "2026-09-25"
+    is_deprecated: bool = False
+    is_revoked: bool = False
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "technique_id": self.technique_id,
+            "technique_name": self.technique_name,
+            "domain": self.domain,
+            "dataset_version": self.dataset_version,
+            "mapping_type": self.mapping_type,
+            "rationale": self.rationale,
+            "source_url": self.source_url,
+            "verification_date": self.verification_date,
+            "is_deprecated": self.is_deprecated,
+            "is_revoked": self.is_revoked,
+        }
+
+
+@dataclass(frozen=True)
 class ThreatCatalogEntry:
     """Pre-authored, verified operational threat scenario in the static catalog."""
 
@@ -27,7 +60,12 @@ class ThreatCatalogEntry:
     default_impact: Impact
     mapped_root_cause_keys: tuple[str, ...]
     authoritative_reference: str
-    mitre_attack_id: str | None = None  # None unless strictly verified
+    mitre_attack: MitreAttackMapping | None = None
+    mitre_attack_id: str | None = None  # Backward-compatible convenience field
+
+    def __post_init__(self) -> None:
+        if self.mitre_attack and not self.mitre_attack_id:
+            object.__setattr__(self, "mitre_attack_id", self.mitre_attack.technique_id)
 
 
 @dataclass(frozen=True)
@@ -53,6 +91,10 @@ class ThreatInstance:
     evidence_state: EvidenceState | str = EvidenceState.VERIFIED
     authoritative_reference: str = ""
     mitre_attack_id: str | None = None
+    mitre_attack_name: str | None = None
+    mitre_attack_url: str | None = None
+    mitre_attack_rationale: str | None = None
+    catalog_hash: str | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def __post_init__(self) -> None:
@@ -80,8 +122,12 @@ class ThreatInstance:
             "likelihood": self.likelihood.value,
             "impact": self.impact.value,
             "risk_tier": self.risk_tier.value,
-            "evidence_state": self.evidence_state.value,
+            "evidence_state": self.evidence_state.value if hasattr(self.evidence_state, "value") else str(self.evidence_state),
             "authoritative_reference": self.authoritative_reference,
             "mitre_attack_id": self.mitre_attack_id,
+            "mitre_attack_name": self.mitre_attack_name,
+            "mitre_attack_url": self.mitre_attack_url,
+            "mitre_attack_rationale": self.mitre_attack_rationale,
+            "catalog_hash": self.catalog_hash,
             "created_at": self.created_at.isoformat(),
         }

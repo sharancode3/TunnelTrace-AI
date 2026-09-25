@@ -1,7 +1,8 @@
 "use client";
 
-import React, { use, useState, useEffect } from "react";
+import React, { use, useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   ReactFlow,
@@ -18,6 +19,7 @@ import { api } from "@/lib/api/client";
 import { Card } from "@/components/ui/card";
 import { InspectorDrawer } from "@/components/ui/inspector-drawer";
 import { CopyableValue } from "@/components/ui/table";
+import { SocWorkflowBanner } from "@/components/soc/soc-workflow-banner";
 import {
   FileSearch,
   AlertCircle,
@@ -28,19 +30,36 @@ import {
   ArrowRight,
   Shield,
   Layers,
+  History,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  ExternalLink,
+  FileText,
 } from "lucide-react";
 
-export default function EvidenceExplorerPage({
-  params,
+function EvidenceExplorerContent({
+  analysisId,
 }: {
-  params: Promise<{ analysisId: string }>;
+  analysisId: string;
 }) {
-  const { analysisId } = use(params);
   const searchParams = useSearchParams();
   const highlightedFindingId = searchParams.get("findingId");
+  const viewParam = searchParams.get("view");
 
   const [selectedNode, setSelectedNode] = useState<any | null>(null);
-  const [viewMode, setViewMode] = useState<"graph" | "lineage">("graph");
+  const [viewMode, setViewMode] = useState<"graph" | "lineage" | "replay">(
+    viewParam === "replay" || viewParam === "lineage" ? viewParam : "graph"
+  );
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
+  const [reanalysisResult, setReanalysisResult] = useState<any | null>(null);
+  const [reanalysisError, setReanalysisError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (viewParam === "replay" || viewParam === "lineage" || viewParam === "graph") {
+      setViewMode(viewParam);
+    }
+  }, [viewParam]);
 
   const {
     data: evidence,
@@ -50,6 +69,15 @@ export default function EvidenceExplorerPage({
   } = useQuery({
     queryKey: ["evidence-graph", analysisId],
     queryFn: () => api.analyses.getEvidenceGraph(analysisId),
+  });
+
+  const {
+    data: replayLineage,
+    isLoading: isLoadingReplay,
+    refetch: refetchReplay,
+  } = useQuery({
+    queryKey: ["replay-lineage", analysisId],
+    queryFn: () => api.analyses.getReplayLineage(analysisId),
   });
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
@@ -130,6 +158,12 @@ export default function EvidenceExplorerPage({
 
   return (
     <div className="space-y-6">
+      {/* SOC Analyst Lifecycle Banner */}
+      <SocWorkflowBanner
+        activeStep={viewMode === "replay" ? 6 : 5}
+        analysisId={analysisId}
+      />
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-300 dark:border-neutral-800 pb-4">
         <div>
@@ -144,8 +178,27 @@ export default function EvidenceExplorerPage({
           </p>
         </div>
 
-        {/* View Switcher */}
-        <div className="flex items-center space-x-1 border border-neutral-300 dark:border-neutral-800 p-0.5 bg-white dark:bg-[#141416]">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Quick SOC Journey Navigation */}
+          <div className="flex items-center space-x-1.5">
+            <Link
+              href={`/analyses/${analysisId}/security`}
+              className="flex items-center space-x-1 px-2.5 py-1.5 text-xs font-mono border border-neutral-300 dark:border-neutral-700 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-700 dark:text-neutral-300"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              <span>Findings Triage</span>
+            </Link>
+            <Link
+              href={`/analyses/${analysisId}/reports`}
+              className="flex items-center space-x-1 px-2.5 py-1.5 text-xs font-mono bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 hover:opacity-90"
+            >
+              <FileText className="w-3.5 h-3.5 text-[#FF3D00]" />
+              <span>Generate Report</span>
+            </Link>
+          </div>
+
+          {/* View Switcher */}
+          <div className="flex items-center space-x-1 border border-neutral-300 dark:border-neutral-800 p-0.5 bg-white dark:bg-[#141416]">
           <button
             onClick={() => setViewMode("graph")}
             className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase transition-colors ${
@@ -168,11 +221,236 @@ export default function EvidenceExplorerPage({
             <ListTree className="w-3.5 h-3.5" />
             <span>Textual Traversal</span>
           </button>
+          <button
+            onClick={() => setViewMode("replay")}
+            className={`flex items-center space-x-1.5 px-3 py-1.5 text-xs font-mono font-bold uppercase transition-colors ${
+              viewMode === "replay"
+                ? "bg-[#FF3D00] text-white"
+                : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
+            }`}
+          >
+            <History className="w-3.5 h-3.5" />
+            <span>Replay Lineage</span>
+          </button>
+        </div>
         </div>
       </div>
 
-      {/* Main Workspace (12 cols) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+      {viewMode === "replay" ? (
+        <div className="space-y-6">
+          {/* Top Status & Integrity Banner */}
+          <div className="p-4 bg-white dark:bg-[#141416] border border-neutral-300 dark:border-neutral-800 space-y-4">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs font-mono text-neutral-400">ANALYSIS LINEAGE:</span>
+                  <span className="font-mono text-sm font-bold text-neutral-900 dark:text-white">{analysisId}</span>
+                  <span className="px-2 py-0.5 font-mono text-[10px] bg-neutral-100 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700">
+                    {replayLineage?.replay_mode || "ORIGINAL_INGESTION"}
+                  </span>
+                </div>
+                <div className="text-xs text-neutral-500 font-mono mt-1 flex flex-wrap items-center gap-3">
+                  <span>Capture: {replayLineage?.capture_filename || "unknown"}</span>
+                  <span>•</span>
+                  <span>SHA-256: {replayLineage?.capture_sha256 ? `${replayLineage.capture_sha256.slice(0, 16)}...` : "unknown"}</span>
+                </div>
+              </div>
+
+              {/* Artifact Integrity Gate */}
+              <div className="flex items-center space-x-2">
+                {replayLineage?.capture_integrity_verified ? (
+                  <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>INTEGRITY VERIFIED (SHA-256 MATCH)</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-rose-700 dark:text-rose-400 text-xs font-mono">
+                    <XCircle className="w-4 h-4" />
+                    <span>INTEGRITY MISMATCH / FAIL-CLOSED</span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Re-Analyze Action Button */}
+            <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+              <p className="text-xs text-neutral-500">
+                Trigger an immutable forensic re-analysis of the same verified capture artifact to test deterministic reproducibility.
+              </p>
+              <button
+                onClick={async () => {
+                  setIsReanalyzing(true);
+                  setReanalysisError(null);
+                  try {
+                    const res = await api.analyses.reAnalyze(analysisId);
+                    setReanalysisResult(res);
+                    refetchReplay();
+                  } catch (err: any) {
+                    setReanalysisError(err?.message || "Re-analysis failed");
+                  } finally {
+                    setIsReanalyzing(false);
+                  }
+                }}
+                disabled={isReanalyzing || !replayLineage?.capture_integrity_verified}
+                className="flex items-center space-x-2 px-4 py-2 bg-[#FF3D00] hover:bg-[#E63700] disabled:bg-neutral-400 text-white text-xs font-mono font-bold uppercase transition-colors"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${isReanalyzing ? "animate-spin" : ""}`} />
+                <span>{isReanalyzing ? "Re-Analyzing..." : "Trigger Forensic Re-Analysis"}</span>
+              </button>
+            </div>
+
+            {reanalysisResult && (
+              <div className="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-xs font-mono text-emerald-700 dark:text-emerald-400 flex items-center justify-between">
+                <div>
+                  <span className="font-bold">Re-Analysis Created: {reanalysisResult.child_analysis_id}</span>
+                  <span className="ml-2">({reanalysisResult.comparison_status})</span>
+                </div>
+                <a
+                  href={`/analyses/${reanalysisResult.child_analysis_id}/evidence`}
+                  className="flex items-center space-x-1 underline hover:text-emerald-300"
+                >
+                  <span>Open Child Run</span>
+                  <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
+            )}
+
+            {reanalysisError && (
+              <div className="p-3 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 text-xs font-mono text-rose-700 dark:text-rose-400">
+                <span className="font-bold">Re-Analysis Error:</span> {reanalysisError}
+              </div>
+            )}
+          </div>
+
+          {/* Grid of Lineage & Comparison Details */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Left: Provenance Lineage */}
+            <Card title="Lineage & Parent/Child Relationships">
+              <div className="space-y-4 text-xs font-mono">
+                <div>
+                  <span className="text-neutral-400 uppercase text-[10px] block">Parent Analysis ID</span>
+                  {replayLineage?.parent_analysis_id ? (
+                    <div className="flex items-center space-x-2 mt-1">
+                      <span className="text-neutral-900 dark:text-white font-bold">{replayLineage.parent_analysis_id}</span>
+                      <a
+                        href={`/analyses/${replayLineage.parent_analysis_id}/evidence`}
+                        className="text-[#FF3D00] hover:underline flex items-center space-x-0.5"
+                      >
+                        <span>View</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  ) : (
+                    <span className="text-neutral-500 italic mt-1 block">None (Root capture ingestion)</span>
+                  )}
+                </div>
+
+                <div>
+                  <span className="text-neutral-400 uppercase text-[10px] block">Child Replay Runs ({replayLineage?.child_runs?.length || 0})</span>
+                  {replayLineage?.child_runs && replayLineage.child_runs.length > 0 ? (
+                    <div className="divide-y divide-neutral-200 dark:divide-neutral-800 border border-neutral-200 dark:border-neutral-800 mt-1">
+                      {replayLineage.child_runs.map((c) => (
+                        <div key={c.analysis_id} className="p-2 flex items-center justify-between">
+                          <div>
+                            <span className="font-bold text-neutral-900 dark:text-white">{c.analysis_id.slice(0, 8)}...</span>
+                            <span className="ml-2 text-[10px] text-neutral-500">[{c.replay_mode || "REPLAY"}]</span>
+                          </div>
+                          <a
+                            href={`/analyses/${c.analysis_id}/evidence`}
+                            className="text-[#FF3D00] hover:underline flex items-center space-x-0.5"
+                          >
+                            <span>Inspect</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-neutral-500 italic mt-1 block">No child replays generated yet.</span>
+                  )}
+                </div>
+
+                <div>
+                  <span className="text-neutral-400 uppercase text-[10px] block">Version Pins & Toolchain</span>
+                  <div className="p-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 space-y-1 mt-1">
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Parser:</span>
+                      <span className="font-bold">{replayLineage?.version_pins?.parser_engine} ({replayLineage?.version_pins?.parser_version})</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Schema:</span>
+                      <span className="font-bold">{replayLineage?.version_pins?.schema_version}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">Policy:</span>
+                      <span className="font-bold">{replayLineage?.version_pins?.pinned_policy_bundle_version || "NIST SP 800-77 (Default)"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-neutral-500">ML Classifier:</span>
+                      <span className="font-bold">{replayLineage?.version_pins?.pinned_model_bundle_id || "NOT_CONFIGURED"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Right: Latest Deterministic Comparison */}
+            <Card title="Deterministic Comparison Verification">
+              {replayLineage?.latest_comparison ? (
+                <div className="space-y-4 text-xs font-mono">
+                  <div className="flex items-center justify-between pb-2 border-b border-neutral-200 dark:border-neutral-800">
+                    <span className="text-neutral-400 uppercase text-[10px]">Outcome</span>
+                    <span
+                      className={`px-2 py-0.5 font-bold uppercase text-[11px] ${
+                        replayLineage.latest_comparison.comparison_status === "EXACT_MATCH" || replayLineage.latest_comparison.comparison_status === "SEMANTIC_MATCH"
+                          ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
+                          : "bg-rose-100 dark:bg-rose-950 text-rose-700 dark:text-rose-400 border border-rose-300 dark:border-rose-800"
+                      }`}
+                    >
+                      {replayLineage.latest_comparison.comparison_status}
+                    </span>
+                  </div>
+
+                  <p className="text-neutral-600 dark:text-neutral-300 leading-relaxed">
+                    {replayLineage.latest_comparison.summary}
+                  </p>
+
+                  {replayLineage.latest_comparison.metrics && (
+                    <div>
+                      <span className="text-neutral-400 uppercase text-[10px] block mb-1">Metrics Verification</span>
+                      <div className="grid grid-cols-2 gap-2">
+                        {Object.entries(replayLineage.latest_comparison.metrics).map(([k, v]) => (
+                          <div key={k} className="p-2 bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800">
+                            <span className="text-[10px] text-neutral-400 uppercase block">{k.replace(/_/g, " ")}</span>
+                            <span className="font-bold text-neutral-900 dark:text-white text-sm">{String(v)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {replayLineage.latest_comparison.differences && (
+                    <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-300 dark:border-rose-800 space-y-1">
+                      <span className="font-bold text-rose-700 dark:text-rose-400 uppercase text-[10px] block">Discrepancies Detected</span>
+                      <pre className="text-[10px] overflow-x-auto text-neutral-800 dark:text-neutral-200">
+                        {JSON.stringify(replayLineage.latest_comparison.differences, null, 2)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="py-12 text-center text-xs font-mono text-neutral-500 space-y-2">
+                  <History className="w-8 h-8 text-neutral-400 mx-auto" />
+                  <p>No comparison recorded yet.</p>
+                  <p className="text-[10px] text-neutral-400">Trigger a forensic re-analysis above to compute itemized deterministic diffs.</p>
+                </div>
+              )}
+            </Card>
+          </div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Main Workspace (12 cols) */}
         <div className={selectedNode ? "lg:col-span-8" : "lg:col-span-12"}>
           {viewMode === "graph" ? (
             <Card title="Evidence Lineage DAG (React Flow)">
@@ -315,6 +593,27 @@ export default function EvidenceExplorerPage({
           </div>
         )}
       </div>
+      )}
     </div>
+  );
+}
+
+export default function EvidenceExplorerPage({
+  params,
+}: {
+  params: Promise<{ analysisId: string }>;
+}) {
+  const { analysisId } = use(params);
+
+  return (
+    <Suspense
+      fallback={
+        <div className="py-20 text-center font-mono text-xs text-neutral-500 animate-pulse">
+          Loading forensic evidence explorer...
+        </div>
+      }
+    >
+      <EvidenceExplorerContent analysisId={analysisId} />
+    </Suspense>
   );
 }

@@ -42,6 +42,8 @@ class EvidenceGraphBuilder:
         risk_assessment: RiskAssessment | None = None,
         score_assessment: ScoreAssessment | None = None,
         fingerprintability: MetadataFingerprintabilityAssessment | None = None,
+        parent_analysis_id: str | None = None,
+        scenario_metadata: dict[str, Any] | None = None,
     ) -> EvidenceGraph:
         """Construct deterministic provenance graph."""
         nodes: dict[str, EvidenceNode] = {}
@@ -61,8 +63,35 @@ class EvidenceGraphBuilder:
                 )
             )
 
-        # 1. Capture Root Node (SHA-256 anchor)
+        # 0. Testbed Scenario Node (if testbed-generated)
         cap_id = f"capture:{capture_sha256[:16]}"
+        if scenario_metadata:
+            sc_id = scenario_metadata.get("scenario_id", "lab-scenario")
+            sc_node_id = f"scenario:{sc_id}"
+            add_node(
+                EvidenceNode(
+                    node_id=sc_node_id,
+                    node_type=EvidenceNodeType.SCENARIO,
+                    label=f"Scenario: {sc_id}",
+                    properties=scenario_metadata,
+                )
+            )
+            add_edge(sc_node_id, cap_id, EvidenceRelationType.GENERATED_BY)
+
+        # 0b. Parent Replay Lineage Node (if re-analyzed from prior run)
+        if parent_analysis_id:
+            parent_node_id = f"replay:{parent_analysis_id[:16]}"
+            add_node(
+                EvidenceNode(
+                    node_id=parent_node_id,
+                    node_type=EvidenceNodeType.REPLAY_RUN,
+                    label=f"Parent Run: {parent_analysis_id[:8]}...",
+                    properties={"parent_analysis_id": parent_analysis_id},
+                )
+            )
+            add_edge(cap_id, parent_node_id, EvidenceRelationType.REPLAYED_FROM)
+
+        # 1. Capture Root Node (SHA-256 anchor)
         add_node(
             EvidenceNode(
                 node_id=cap_id,

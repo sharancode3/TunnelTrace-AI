@@ -114,8 +114,22 @@ class SecurityScoreDTO(BaseModel):
     )
 
 
+class RiskFactorDetailDTO(BaseModel):
+    """Inspectable individual factor contributing to finding risk."""
+
+    factor_name: str
+    factor_value: str
+    scale: str
+    evidence_state: str
+    source: str
+    source_time: str
+    contributes_to_aggregate: bool
+    aggregation_role: str
+    rationale: str
+
+
 class RiskItemDTO(BaseModel):
-    """Deterministic risk evaluation per finding."""
+    """Deterministic risk evaluation per finding with factor-level transparency."""
 
     finding_id: str
     rule_id: str
@@ -126,20 +140,36 @@ class RiskItemDTO(BaseModel):
     evidence_state: str
     threat_mapped: bool
     rationale: str
+    factors: list[RiskFactorDetailDTO] = []
+    contributes_to_aggregate: bool = True
+    aggregation_role: str = "PRIMARY_DRIVER"
+    root_cause_key: str = ""
+    policy_version: str = "1.0.0"
+    policy_hash: str = ""
+    methodology_type: str = "DETERMINISTIC_PRIORITIZATION_HEURISTIC"
 
 
 class RiskAssessmentDTO(BaseModel):
-    """Risk assessment summary."""
+    """Risk assessment summary with explicit evidence coverage and policy lineage."""
 
     analysis_id: uuid.UUID
     risk_policy_id: str
     risk_policy_version: str
+    risk_policy_hash: str
     overall_risk_tier: str
     items: list[RiskItemDTO]
+    evidence_coverage: float | None = None
+    evidence_gaps_count: int = 0
+    methodology_type: str = "DETERMINISTIC_PRIORITIZATION_HEURISTIC"
+    disclaimer: str = (
+        "Internal product-defined deterministic prioritization heuristic. "
+        "Evaluated from protocol policy findings, evidence state, and rule mappings. "
+        "NOT an empirically calibrated attack probability or official safety certification."
+    )
 
 
 class ThreatInstanceDTO(BaseModel):
-    """Pre-authored threat scenario mapped to a finding."""
+    """Pre-authored threat scenario mapped to a finding with verified ATT&CK context."""
 
     finding_id: str
     threat_id: str
@@ -148,6 +178,35 @@ class ThreatInstanceDTO(BaseModel):
     likelihood: str
     impact: str
     risk_tier: str
+    mitre_attack_id: str | None = None
+    mitre_attack_name: str | None = None
+    mitre_attack_url: str | None = None
+    mitre_attack_rationale: str | None = None
+    catalog_hash: str | None = None
+
+
+class ThreatIntelItemDTO(BaseModel):
+    """Offline threat intelligence context for a specific CVE."""
+
+    cve_id: str
+    cisa_kev_status: str
+    cisa_kev_record: dict[str, Any] | None = None
+    cisa_kev_as_of: str | None = None
+    cisa_kev_digest: str | None = None
+    epss_status: str
+    epss_record: dict[str, Any] | None = None
+    epss_as_of: str | None = None
+    epss_digest: str | None = None
+    disclaimer: str
+
+
+class ThreatIntelResponseDTO(BaseModel):
+    """Aggregated threat intelligence context for an analysis run."""
+
+    analysis_id: uuid.UUID
+    intel_items: list[ThreatIntelItemDTO]
+    source_freshness: str
+    disclaimer: str
 
 
 class FingerprintabilityComponentDTO(BaseModel):

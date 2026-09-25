@@ -213,13 +213,25 @@ class ModelBundleLoader:
         with open(manifest_path, encoding="utf-8") as f:
             manifest = json.load(f)
 
-        # 1. Verify SHA-256 hashes of all component files
-        if verify_hashes:
-            files_dict = manifest.get("files", {})
-            for rel_path, expected_hash in files_dict.items():
-                p = bundle_dir / rel_path
-                if not p.exists():
-                    raise ArtifactIntegrityError(f"Missing bundle artifact file: {rel_path}")
+        # 0. Validate manifest structure & required fields
+        required_manifest_keys = ["bundle_id", "bundle_version", "artifact_state", "files"]
+        for key in required_manifest_keys:
+            if key not in manifest:
+                raise ArtifactIntegrityError(f"Manifest missing required property: {key}")
+
+        files_dict = manifest.get("files", {})
+        bundle_resolved = bundle_dir.resolve()
+
+        # 1. Path traversal check and file integrity verification
+        for rel_path, expected_hash in files_dict.items():
+            if Path(rel_path).is_absolute():
+                raise ArtifactIntegrityError(f"Absolute path in bundle manifest rejected: {rel_path}")
+            p = (bundle_dir / rel_path).resolve()
+            if not p.is_relative_to(bundle_resolved):
+                raise ArtifactIntegrityError(f"Path traversal detected in bundle artifact: {rel_path}")
+            if not p.exists():
+                raise ArtifactIntegrityError(f"Missing bundle artifact file: {rel_path}")
+            if verify_hashes:
                 actual_hash = cls._sha256_file(p)
                 if actual_hash != expected_hash:
                     raise ArtifactIntegrityError(
@@ -239,10 +251,36 @@ class ModelBundleLoader:
         with open(bundle_dir / "label_mapping.json", encoding="utf-8") as f:
             label_mapping = json.load(f)
 
-        # 3. Load Preprocessor
+        # 3. Validate class ordering and label mapping
+        classes_in_label = label_mapping.get("classes")
+        if classes_in_label != CANONICAL_CLASSES:
+            raise ArtifactIntegrityError(
+                f"Incompatible class ordering: expected {CANONICAL_CLASSES}, got {classes_in_label}"
+            )
+        if label_mapping.get("num_classes") != len(CANONICAL_CLASSES):
+            raise ArtifactIntegrityError(
+                f"Invalid class count in label mapping: expected {len(CANONICAL_CLASSES)}, got {label_mapping.get('num_classes')}"
+            )
+
+        # 4. Verify Schema Hashes against Manifest
+        if verify_hashes:
+            if "feature_schema_hash" in manifest and feat_schema.schema_hash() != manifest["feature_schema_hash"]:
+                raise ArtifactIntegrityError(
+                    f"Feature schema hash mismatch: {feat_schema.schema_hash()} != {manifest['feature_schema_hash']}"
+                )
+            if "sequence_schema_hash" in manifest and seq_schema.schema_hash() != manifest["sequence_schema_hash"]:
+                raise ArtifactIntegrityError(
+                    f"Sequence schema hash mismatch: {seq_schema.schema_hash()} != {manifest['sequence_schema_hash']}"
+                )
+            if "anomaly_schema_hash" in manifest and anom_schema.schema_hash() != manifest["anomaly_schema_hash"]:
+                raise ArtifactIntegrityError(
+                    f"Anomaly schema hash mismatch: {anom_schema.schema_hash()} != {manifest['anomaly_schema_hash']}"
+                )
+
+        # 5. Load Preprocessor
         preprocessor = FeaturePreprocessor.from_params_file(bundle_dir / "preprocessor.json")
 
-        # 4. Load Models
+        # 6. Load Models
         xgb_model = XGBoostBaselineModel()
         xgb_model.load_model(bundle_dir / "xgboost" / "model.json")
 
@@ -250,7 +288,7 @@ class ModelBundleLoader:
         cnn_model = torch.jit.load(str(cnn_path), map_location=torch.device("cpu"))
         cnn_model.eval()
 
-        # 5. Load Configurations & Subsystems
+        # 7. Load Configurations & Subsystems
         with open(bundle_dir / "fusion_config.json", encoding="utf-8") as f:
             fusion_config = FusionConfig.from_dict(json.load(f))
         fusion_engine = MultimodalFusionEngine(config=fusion_config)
@@ -262,6 +300,14 @@ class ModelBundleLoader:
         with open(bundle_dir / "ood_config.json", encoding="utf-8") as f:
             ood_config = OODConfig.from_dict(json.load(f))
         ood_detector = OODDetector(config=ood_config)
+
+        if verify_hashes:
+            if "fusion_config_hash" in manifest and fusion_config.config_hash() != manifest["fusion_config_hash"]:
+                raise ArtifactIntegrityError("Fusion config hash mismatch")
+            if "calibration_config_hash" in manifest and calib_config.config_hash() != manifest["calibration_config_hash"]:
+                raise ArtifactIntegrityError("Calibration config hash mismatch")
+            if "ood_config_hash" in manifest and ood_config.config_hash() != manifest["ood_config_hash"]:
+                raise ArtifactIntegrityError("OOD config hash mismatch")
 
         explainer = TreeSHAPExplainer(
             xgb_booster=getattr(xgb_model, "inner_model", xgb_model) or xgb_model,
@@ -313,10 +359,14 @@ class ModelBundleLoader:
         p_fused = bundle.fusion_engine.fuse(p_xgb, p_cnn)
         p_cal = bundle.calibrator.calibrate(p_fused)
 
+        # Probability vector & finite parameter validation
+        assert np.all(np.isfinite(p_cal)), "Calibrated probabilities contain non-finite values (NaN/Inf)"
+        assert np.all(p_cal >= 0.0) and np.all(p_cal <= 1.0), "Calibrated probabilities out of [0, 1] range"
+        assert p_cal.shape == (1, len(CANONICAL_CLASSES)), f"Expected shape (1, {len(CANONICAL_CLASSES)}), got {p_cal.shape}"
+        assert abs(float(np.sum(p_cal[0])) - 1.0) < 1e-4, "Calibrated probabilities must sum to 1.0"
+
         ood_dec = bundle.ood_detector.evaluate_flow(p_cal[0])
         anom_dec = bundle.anomaly_detector.evaluate_flow(dict.fromkeys(bundle.anomaly_schema.features, 1.0))
 
-        assert p_cal.shape == (1, 7), f"Expected shape (1, 7), got {p_cal.shape}"
-        assert abs(float(np.sum(p_cal[0])) - 1.0) < 1e-4, "Calibrated probabilities must sum to 1.0"
         assert ood_dec.status in ("KNOWN_ACCEPTED", "UNKNOWN_UNSEEN", "OUT_OF_DISTRIBUTION")
         assert anom_dec.status in ("STATISTICAL_BEHAVIORAL_ANOMALY", "NORMAL_BEHAVIOR")
