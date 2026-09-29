@@ -1,0 +1,4 @@
+import React from "react";
+export interface TabItem { id: string; label: string; count?: number; }
+export interface TabsProps { items: TabItem[]; active: string; onChange: (id: string) => void; className?: string; }
+export function Tabs({ items, active, onChange, className = "" }: TabsProps) { return <div role="tablist" className={`flex max-w-full items-center gap-5 overflow-x-auto border-b border-line [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${className}`}>{items.map((item) => { const selected = active === item.id; return <button key={item.id} type="button" role="tab" aria-selected={selected} onClick={() => onChange(item.id)} className={`editorial-tab -mb-px flex h-11 shrink-0 items-center gap-2 border-b border-transparent text-sm text-ink-3 ${selected ? "font-medium" : "hover:text-ink"}`}>{item.label}{item.count !== undefined && <span className="font-mono text-xs text-ink-3">{item.count}</span>}</button>; })}</div>; }
