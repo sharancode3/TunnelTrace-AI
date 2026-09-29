@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-29T00:00:00.000Z",
+  "title": "Design System: TunnelTrace.AI",
+  "extensions": {
+    "colorMeta": {
+      "ground": { "role": "neutral", "displayName": "Warm Ground", "canonical": "#f0efe8", "tonalRamp": ["#262620", "#41413a", "#5d5d55", "#797970", "#96968c", "#b4b4a9", "#d2d1c7", "#f0efe8"] },
+      "panel": { "role": "neutral", "displayName": "Soft Paper", "canonical": "#f7f6f0", "tonalRamp": ["#292923", "#45443d", "#615f58", "#7e7c74", "#9c9a91", "#bab8af", "#d8d6cd", "#f7f6f0"] },
+      "panel-recessed": { "role": "neutral", "displayName": "Recessed Paper", "canonical": "#e8e7df", "tonalRamp": ["#24241f", "#3e3e38", "#595952", "#74746c", "#909088", "#adada4", "#cbcac2", "#e8e7df"] },
+      "charcoal": { "role": "neutral", "displayName": "Charcoal Field", "canonical": "#151714", "tonalRamp": ["#151714", "#2c2e2a", "#444641", "#5c5f58", "#767971", "#91948b", "#adb0a7", "#c9ccc2"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#171815", "tonalRamp": ["#171815", "#2f302c", "#484944", "#62635e", "#7d7e79", "#999a94", "#b6b7b1", "#d3d4ce"] },
+      "ink-secondary": { "role": "neutral", "displayName": "Secondary Ink", "canonical": "#484a43", "tonalRamp": ["#1e201b", "#363831", "#4f5149", "#696b63", "#84867e", "#a0a199", "#bdbeb6", "#dadbd3"] },
+      "ink-muted": { "role": "neutral", "displayName": "Muted Ink", "canonical": "#686a62", "tonalRamp": ["#242520", "#3d3e37", "#575850", "#71736b", "#8d8e86", "#a9aaa2", "#c6c7be", "#e3e4db"] },
+      "rule": { "role": "neutral", "displayName": "Fine Rule", "canonical": "#d1d0c6", "tonalRamp": ["#22221d", "#3b3b34", "#55554d", "#6f6f67", "#8b8b82", "#a7a79e", "#c4c3ba", "#d1d0c6"] },
+      "rule-strong": { "role": "neutral", "displayName": "Strong Rule", "canonical": "#9e9e92", "tonalRamp": ["#1f201a", "#383931", "#52534b", "#6d6e65", "#88897f", "#9e9e92", "#c2c2b8", "#e2e1d9"] },
+      "signal-lime": { "role": "primary", "displayName": "Muted Signal Lime", "canonical": "#a8c400", "tonalRamp": ["#252900", "#414800", "#5d6700", "#7a8600", "#98a500", "#a8c400", "#d2e24f", "#eef4b6"] },
+      "signal-pressed": { "role": "primary", "displayName": "Pressed Signal Lime", "canonical": "#8ea600", "tonalRamp": ["#202500", "#3a4100", "#545e00", "#6f7c00", "#8a9a00", "#a7b900", "#c5d83e", "#e6eea8"] },
+      "signal-soft": { "role": "primary", "displayName": "Soft Signal Tint", "canonical": "#e7edc8", "tonalRamp": ["#242719", "#3e422b", "#595d3e", "#757953", "#92966a", "#b0b48a", "#cbd4a7", "#e7edc8"] },
+      "danger": { "role": "tertiary", "displayName": "Failure Red", "canonical": "#b83830", "tonalRamp": ["#2a0e0b", "#471713", "#64221d", "#822e28", "#a03a33", "#b83830", "#d57670", "#efb5b1"] },
+      "positive": { "role": "secondary", "displayName": "Verified Olive", "canonical": "#495d3c", "tonalRamp": ["#121a0d", "#26321e", "#3a4a30", "#4f6342", "#657d55", "#7d966a", "#a3b594", "#d0dbc7"] }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Editorial Display", "purpose": "Large hero declarations and the strongest route headlines." },
+      "headline": { "displayName": "Editorial Headline", "purpose": "Page and section hierarchy." },
+      "title": { "displayName": "Serif Title", "purpose": "Wordmark and subsection headings." },
+      "body": { "displayName": "Interface Sans", "purpose": "Readable application prose and controls." },
+      "label": { "displayName": "Instrument Mono", "purpose": "Technical metadata, identifiers, and compact state labels." }
+    },
+    "shadows": [
+      { "name": "schematic-label", "value": "0 1px 4px rgba(0,0,0,0.12)", "purpose": "Subtle separation for the small paper label overlay on the diagram." }
+    ],
+    "motion": [
+      { "name": "editorial-arrival", "value": "850ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Gentle content reveal and page entrance." },
+      { "name": "nav-expand", "value": "420ms cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Expand or collapse the workspace navigation panel." },
+      { "name": "signal-travel", "value": "11s linear infinite", "purpose": "Slow dash travel along the illustrative packet-to-proof path." },
+      { "name": "signal-pulse", "value": "4.6s ease-in-out infinite", "purpose": "Quiet pulsing on schematic nodes; disabled by reduced-motion preference." }
+    ],
+    "breakpoints": [
+      { "name": "mobile", "value": "700px" },
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The primary next step, reserved for actions such as starting an analysis.",
+      "html": "<a class=\"ds-btn-primary\" href=\"#\">Begin an investigation <svg aria-hidden=\"true\" viewBox=\"0 0 24 24\"><path d=\"M7 17 17 7M7 7h10v10\"/></svg></a>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:12px 20px;border:1px solid transparent;background:var(--color-accent);color:#15180a;font:500 14px Arial,Helvetica,sans-serif;text-decoration:none;transition:background-color .2s,color .2s,border-color .2s}.ds-btn-primary svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6}.ds-btn-primary:hover{background:#c5df24}.ds-btn-primary:focus-visible{outline:2px solid #657600;outline-offset:4px}.ds-btn-primary:active{background:var(--color-accent-press)}"
+    },
+    {
+      "name": "Secondary Action",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "A quiet outlined action for adjacent or lower-priority choices.",
+      "html": "<button class=\"ds-btn-secondary\" type=\"button\">Review investigations</button>",
+      "css": ".ds-btn-secondary{display:inline-flex;align-items:center;min-height:40px;padding:8px 16px;border:1px solid var(--color-ink);background:transparent;color:var(--color-ink);font:500 14px Arial,Helvetica,sans-serif;transition:background-color .2s,color .2s}.ds-btn-secondary:hover{background:var(--color-ink);color:var(--color-ground)}.ds-btn-secondary:focus-visible{outline:2px solid #657600;outline-offset:4px}.ds-btn-secondary:active{background:var(--color-ink-secondary)}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "field",
+      "description": "A square, transparent field used for capture names, filters, and technical values.",
+      "html": "<label class=\"ds-field-wrap\">Capture name<input class=\"ds-field\" placeholder=\"capture.pcapng\" /></label>",
+      "css": ".ds-field-wrap{display:grid;gap:8px;color:var(--color-ink);font:500 14px Arial,Helvetica,sans-serif}.ds-field{width:100%;height:44px;padding:0 12px;border:1px solid var(--color-line-strong);border-radius:0;background:transparent;color:var(--color-ink);font:14px Arial,Helvetica,sans-serif}.ds-field::placeholder{color:var(--color-ink-muted)}.ds-field:focus{border-color:var(--color-ink);box-shadow:0 1px 0 var(--color-ink);outline:2px solid #657600;outline-offset:3px}.ds-field:disabled{opacity:.48}.ds-field:focus-visible{outline:2px solid #657600;outline-offset:3px}"
+    },
+    {
+      "name": "Register Section",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "An open, ruled container for grouped investigation information.",
+      "html": "<section class=\"ds-register\"><h3>Recent investigations</h3><p>Capture identity, status, posture, and evidence lineage.</p></section>",
+      "css": ".ds-register{padding:20px 0;border-top:1px solid var(--color-line);border-bottom:1px solid var(--color-line);background:transparent;color:var(--color-ink)}.ds-register h3{margin:0;font:500 28px/1.05 'Iowan Old Style',Georgia,serif;letter-spacing:-.04em}.ds-register p{max-width:65ch;margin:8px 0 0;color:var(--color-ink-secondary);font:14px/1.55 Arial,Helvetica,sans-serif}"
+    },
+    {
+      "name": "Expandable Workspace Navigation",
+      "kind": "nav",
+      "description": "A text-led header link with a discreet expandable destination panel.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Workspace navigation\"><button aria-expanded=\"false\">Workspace <span>⌄</span></button><div><a href=\"#\">Protocol reconstruction</a><a href=\"#\">Security posture</a><a href=\"#\">Evidence register</a></div></nav>",
+      "css": ".ds-nav{color:var(--color-ink);font:14px Arial,Helvetica,sans-serif}.ds-nav button{padding:8px 12px;border:0;background:transparent;color:var(--color-ink-secondary);font:inherit;cursor:pointer}.ds-nav button:hover,.ds-nav button[aria-expanded=true]{color:var(--color-ink)}.ds-nav button span{margin-left:5px;color:var(--color-ink-muted)}.ds-nav div{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 24px;padding:16px 12px;border-top:1px solid var(--color-line)}.ds-nav a{padding:10px 0;border-bottom:1px solid var(--color-line);color:var(--color-ink-secondary);text-decoration:none}.ds-nav a:hover,.ds-nav a:focus-visible{color:var(--color-ink)}.ds-nav a:focus-visible,.ds-nav button:focus-visible{outline:2px solid #657600;outline-offset:3px}"
+    },
+    {
+      "name": "State Marker",
+      "kind": "chip",
+      "description": "A compact text state with a dot rather than a rounded pill.",
+      "html": "<span class=\"ds-state\"><i></i>Completed</span>",
+      "css": ".ds-state{display:inline-flex;align-items:center;gap:8px;color:var(--color-positive);font:500 11px/1.3 'SFMono-Regular',Consolas,monospace;letter-spacing:.075em;text-transform:uppercase}.ds-state i{width:6px;height:6px;border-radius:50%;background:currentColor}.ds-state.ds-state-error{color:var(--color-critical)}.ds-state.ds-state-active i{animation:ds-pulse 2.8s ease-in-out infinite}@keyframes ds-pulse{50%{opacity:.5;transform:scale(.82)}}@media(prefers-reduced-motion:reduce){.ds-state.ds-state-active i{animation:none}}"
+    },
+    {
+      "name": "Packet Atlas",
+      "kind": "custom",
+      "description": "Illustrative packet-to-evidence path with explicit schematic labeling.",
+      "html": "<div class=\"ds-atlas\"><span class=\"ds-atlas-label\">SCHEMATIC · NOT CAPTURE DATA</span><svg viewBox=\"0 0 320 120\" aria-hidden=\"true\"><path class=\"ds-path\" d=\"M12 90C75 90 66 25 135 25s54 70 105 70 45-40 68-40\"/><circle cx=\"12\" cy=\"90\" r=\"4\"/><circle cx=\"135\" cy=\"25\" r=\"4\"/><circle cx=\"240\" cy=\"95\" r=\"4\"/><circle cx=\"308\" cy=\"55\" r=\"4\"/></svg></div>",
+      "css": ".ds-atlas{position:relative;min-height:180px;overflow:hidden;padding:28px;background:#151714;color:#f0efe8}.ds-atlas-label{position:absolute;right:16px;bottom:14px;color:#a6a79c;font:10px 'SFMono-Regular',Consolas,monospace;letter-spacing:.08em}.ds-atlas svg{width:100%;height:auto;min-height:110px;overflow:visible}.ds-atlas path{fill:none;stroke:#e8e7df;stroke-opacity:.28;stroke-width:1}.ds-atlas .ds-path{stroke:#a8c400;stroke-width:1.6;stroke-dasharray:2 8;animation:ds-travel 9s linear infinite}.ds-atlas circle{fill:#151714;stroke:#a8c400;stroke-width:1.5;animation:ds-pulse 3.6s ease-in-out infinite}@keyframes ds-travel{to{stroke-dashoffset:-80}}@keyframes ds-pulse{50%{opacity:.55;transform:scale(.86);transform-origin:center}}@media(prefers-reduced-motion:reduce){.ds-atlas .ds-path,.ds-atlas circle{animation:none}}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Evidence Register",
+    "overview": "TunnelTrace is an editorial field register for IPsec forensics. Warm paper, sharply ruled sections, oversized serif headlines, and compact instrument typography make complex protocol evidence feel legible without turning the application into a generic dashboard. The shell and investigation pages prioritize open space and asymmetry; dense technical records stay orderly and data-forward.\n\nThe light paper workspace is balanced by charcoal narrative panels. Muted lime marks active paths, important actions, and verified or live signals. Runtime status and investigation records come from the local API, while the home diagram is explicitly marked as a schematic. Motion traces paths and reveals content gently, with reduced-motion settings honored.",
+    "keyCharacteristics": [
+      "Editorial serif display paired with neutral sans and monospaced instrument labels.",
+      "Warm paper and charcoal surfaces, divided by fine rules rather than card grids.",
+      "Lime is a scarce signal color; red communicates real failures and critical risk.",
+      "Asymmetric layouts and expansive typography frame precise, API-backed evidence."
+    ],
+    "rules": [
+      { "name": "The Signal-Not-Wash Rule", "body": "Keep lime to a small, meaningful signal. Use it for actions, active navigation, state markers, and selected data points; leave broad surfaces paper or charcoal.", "section": "colors" },
+      { "name": "The Truthful-State Rule", "body": "Render service health, scores, findings, and captures from actual application data. Red is reserved for real failures and critical risk.", "section": "colors" },
+      { "name": "The Three-Voice Rule", "body": "Use serif for editorial hierarchy, sans serif for readable interface copy, and mono for measurements, identifiers, and instrument labels.", "section": "typography" }
+    ],
+    "dos": [
+      "Do use warm paper as the default reading surface and charcoal for deliberate narrative contrast.",
+      "Do reserve the lime accent for real actions, active paths, and meaningful state indicators.",
+      "Do keep status and evidence values tied to the backend; label illustrative diagrams as schematics.",
+      "Do keep the serif/sans/mono roles distinct and honor reduced-motion preferences.",
+      "Do use thin rules and aligned columns to organize dense investigation data."
+    ],
+    "donts": [
+      "Don't introduce blue, cyan, purple, violet, pink, magenta, orange, or yellow as interface colors.",
+      "Don't use lime as a broad background or decorate unrelated elements with it.",
+      "Don't turn the shell into a sidebar-first, rounded-card dashboard.",
+      "Don't imply service readiness, capture records, or security findings that the API has not supplied.",
+      "Don't use red for ordinary emphasis or informational decoration."
+    ]
+  }
+}
